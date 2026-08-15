@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -270,6 +271,12 @@ private fun ARScreen(
 
     fun clearSelection() = selectNode(null, null)
 
+    fun clearAllDishes() {
+        placedDishes.forEach { it.anchor.detach() }
+        placedDishes.clear()
+        clearSelection()
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         ArSceneContent(
             engine = engine,
@@ -288,35 +295,34 @@ private fun ARScreen(
             loadedModel = viewModel.loadedModels[currentMenuItem.modelUrl],
             onNodeTapped = { node, dishId -> selectNode(node, dishId) },
             onEmptyTap = { hit ->
-                // If menu is open, a tap on the camera feed (top 25%) closes it.
                 if (isMenuOpen) {
                     isMenuOpen = false
-                    return@ArSceneContent
-                }
-
-                val model = viewModel.loadedModels[currentMenuItem.modelUrl]
-                if (model != null) {
-                    if (placedDishes.size < MAX_PLACED_OBJECTS) {
-                        val instance = modelLoader.assetLoader.createInstance(model)
-                        if (instance != null) {
-                            placedDishes.add(
-                                PlacedDish(
-                                    anchor = hit.createAnchor(),
-                                    menuItem = currentMenuItem,
-                                    model = model,
-                                    modelInstance = instance
+                } else if (transform.selectedNodeId != null) {
+                    clearSelection()
+                } else if (!isMarkerMode) {
+                    val model = viewModel.loadedModels[currentMenuItem.modelUrl]
+                    if (model != null) {
+                        if (placedDishes.size < MAX_PLACED_OBJECTS) {
+                            val instance = modelLoader.assetLoader.createInstance(model)
+                            if (instance != null) {
+                                placedDishes.add(
+                                    PlacedDish(
+                                        anchor = hit.createAnchor(),
+                                        menuItem = currentMenuItem,
+                                        model = model,
+                                        modelInstance = instance
+                                    )
                                 )
-                            )
+                            }
+                        } else {
+                            Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
                 }
             },
             onClearSelection = {
-                // If menu is open, a background tap closes it.
                 if (isMenuOpen) {
                     isMenuOpen = false
                 } else {
@@ -325,33 +331,115 @@ private fun ARScreen(
             }
         )
 
+        // Guide Message Overlay
+        if (!isMenuOpen && transform.selectedNodeId == null) {
+            val guideText = if (isMarkerMode) {
+                if (markerAnchor == null) "Scan the AR marker to view dish" else ""
+            } else {
+                if (placedDishes.isEmpty()) "Move device slowly and tap to place dish" else ""
+            }
+
+            if (guideText.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 100.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Surface(
+                        color = Color.Black.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text(
+                            text = guideText,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+
         // Top UI: Mode Toggle
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp).statusBarsPadding(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .statusBarsPadding(),
             horizontalArrangement = Arrangement.End
         ) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            Surface(
+                modifier = Modifier.wrapContentSize(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White.copy(alpha = 0.9f),
+                shadowElevation = 4.dp
             ) {
-                Button(
-                    onClick = {
-                        isMarkerMode = !isMarkerMode
-                        clearSelection()
-                        if (isMarkerMode) markerAnchor = null
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = DINEAR_ORANGE
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                Row(
+                    modifier = Modifier.padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        if (isMarkerMode) "Plane Mode" else "Marker Mode",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
+                    // PLANE Mode Segment
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (!isMarkerMode) DINEAR_ORANGE else Color.Transparent)
+                            .clickable {
+                                if (isMarkerMode) {
+                                    isMarkerMode = false
+                                    clearAllDishes()
+                                    markerAnchor?.detach()
+                                    markerAnchor = null
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.icon_3d),
+                            contentDescription = null,
+                            tint = if (!isMarkerMode) Color.White else Color.Gray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Plane",
+                            color = if (!isMarkerMode) Color.White else Color.Gray,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // MARKER Mode Segment
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (isMarkerMode) DINEAR_ORANGE else Color.Transparent)
+                            .clickable {
+                                if (!isMarkerMode) {
+                                    isMarkerMode = true
+                                    clearAllDishes()
+                                    markerAnchor = null
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.icon_qr),
+                            contentDescription = null,
+                            tint = if (isMarkerMode) Color.White else Color.Gray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Marker",
+                            color = if (isMarkerMode) Color.White else Color.Gray,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
