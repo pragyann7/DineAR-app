@@ -31,21 +31,27 @@ xmlns:tools="http://schemas.android.com/tools">
         tools:replace="android:value" />
 
     <activity android:name=".ServerConfigActivity" />
+    <activity android:name=".location.LocationActivity" />
+    <activity android:name=".menu.MenuActivity" />
+    <activity android:name=".menu.FoodDetailsActivity" />
+    <activity android:name=".RestaurantDetailsActivity" />
+    <activity android:name=".auth.AuthActivity"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+    <activity android:name=".auth.LoginActivity" />
+    <activity android:name=".auth.SignupActivity" />
 
     <activity
         android:name=".MainActivity"
         android:exported="true">
 
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-
     </activity>
 
     <activity android:name=".ARActivity" />
-    <activity android:name=".ARAugmentedImage" />
 
 </application>
 
