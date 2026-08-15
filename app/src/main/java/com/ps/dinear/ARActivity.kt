@@ -1,4 +1,4 @@
-package com.ps.dinear;
+package com.ps.dinear
 
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -15,11 +15,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,17 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
-import com.google.ar.core.Anchor
-import com.google.ar.core.AugmentedImage
-import com.google.ar.core.AugmentedImageDatabase
-import com.google.ar.core.Config
-import com.google.ar.core.HitResult
-import com.google.ar.core.Plane
-import com.google.ar.core.Session
-import com.google.ar.core.TrackingState
+import com.google.ar.core.*
 import io.github.sceneview.ar.ARSceneView
+import io.github.sceneview.ar.node.AnchorNode
+import io.github.sceneview.ar.node.ReticleNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
+import io.github.sceneview.model.Model
+import io.github.sceneview.node.CylinderNode
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberMaterialLoader
@@ -58,21 +54,21 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
+import java.util.UUID
 
 private const val MAX_PLACED_OBJECTS = 8
-
-private const val MODEL_SCALE = 0.2f
+private const val MODEL_SCALE_INITIAL = 1.0f
+private val DINEAR_ORANGE = Color(0xFFF45905)
 
 data class PlacedDish(
+    val id: String = UUID.randomUUID().toString(),
     val anchor: Anchor,
-    var rotationY: Float = 0f
+    var rotationY: Float = 0f,
+    var scale: Float = 1.0f
 )
 
-
 class ARViewModel : ViewModel() {
-
     val httpClient: OkHttpClient by lazy { OkHttpClient() }
-
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
 
@@ -89,7 +85,6 @@ sealed class DownloadState {
 }
 
 class ARActivity : ComponentActivity() {
-
     private val viewModel: ARViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,257 +107,192 @@ class ARActivity : ComponentActivity() {
             }
         }
 
-        when {
-            modelFile.exists() -> viewModel.setReady()
-            else -> {
-                Toast.makeText(this, "Downloading model…", Toast.LENGTH_SHORT).show()
-                downloadModel(modelUrl, modelFile)
-            }
+        if (modelFile.exists()) {
+            viewModel.setReady()
+        } else {
+            downloadModel(modelUrl, modelFile)
         }
     }
 
     private fun downloadModel(modelUrl: String, destinationFile: File) {
         viewModel.setDownloading()
-
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val request  = Request.Builder().url(modelUrl).build()
                 val response = viewModel.httpClient.newCall(request).execute()
-
-                if (!response.isSuccessful || response.body == null) {
-                    throw Exception("Server returned ${response.code}")
-                }
-
-                // Stream to disk – avoids loading the full GLB into heap.
+                if (!response.isSuccessful || response.body == null) throw Exception("Server returned ${response.code}")
                 response.body!!.byteStream().use { input ->
-                    FileOutputStream(destinationFile).use { output ->
-                        input.copyTo(output)
-                    }
+                    FileOutputStream(destinationFile).use { output -> input.copyTo(output) }
                 }
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ARActivity, "Model ready", Toast.LENGTH_SHORT).show()
-                    viewModel.setReady()
-                }
-
+                withContext(Dispatchers.Main) { viewModel.setReady() }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    viewModel.setError("Download failed: ${e.message}")
-                }
+                withContext(Dispatchers.Main) { viewModel.setError("Download failed: ${e.message}") }
             }
         }
     }
 
     private fun launchAR(modelFile: File) {
-        setContent {
-            ARScreen(modelFile = modelFile, activity = this)
-        }
+        setContent { ARScreen(modelFile = modelFile, activity = this) }
     }
 }
 
 @Composable
 private fun ARScreen(modelFile: File, activity: ARActivity) {
-
     val context = LocalContext.current
-    val engine        = rememberEngine()
-    val modelLoader   = rememberModelLoader(engine)
+    val engine = rememberEngine()
+    val modelLoader = rememberModelLoader(engine)
     val materialLoader = rememberMaterialLoader(engine)
 
-    var session         by remember { mutableStateOf<Session?>(null) }
-    var lastHitResult   by remember { mutableStateOf<HitResult?>(null) }
-    var isTrackingPlane by remember { mutableStateOf(false) }
+    var session by remember { mutableStateOf<Session?>(null) }
+    var lastHitResult by remember { mutableStateOf<HitResult?>(null) }
 
-    var isMarkerMode    by remember { mutableStateOf(false) }
-    var markerAnchor    by remember { mutableStateOf<Anchor?>(null) }
-
-    // Optimization: Pre-load database from cache or create it once session is ready
+    var isMarkerMode by remember { mutableStateOf(false) }
+    var markerAnchor by remember { mutableStateOf<Anchor?>(null) }
     var markerDatabase by remember { mutableStateOf<AugmentedImageDatabase?>(null) }
 
     val placedDishes = remember { mutableStateListOf<PlacedDish>() }
+    var selectedNode by remember { mutableStateOf<ModelNode?>(null) }
+    var selectedDish by remember { mutableStateOf<PlacedDish?>(null) }
 
-    var selectedNode    by remember { mutableStateOf<ModelNode?>(null) }
-    var selectedDish    by remember { mutableStateOf<PlacedDish?>(null) }
     var rotationDegrees by remember { mutableStateOf(0f) }
+    var currentScale by remember { mutableStateOf(1.0f) }
 
-    val reticleMaterial   = remember(materialLoader) {
+    // Load the model once
+    val model by produceState<Model?>(initialValue = null, modelFile) {
+        value = withContext(Dispatchers.IO) {
+            modelLoader.loadModel("file://${modelFile.absolutePath}")
+        }
+    }
+
+    LaunchedEffect(model) {
+        if (model != null) {
+            Toast.makeText(context, "Model loaded! Move camera to find a surface.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val reticleMaterial = remember(materialLoader) {
         materialLoader.createColorInstance(Color(0xFF4CAF50).copy(alpha = 0.6f))
     }
     val selectionMaterial = remember(materialLoader) {
         materialLoader.createColorInstance(Color.Cyan.copy(alpha = 0.4f))
     }
 
-    // Initialize database once session is ready
+    // Initialize Marker Database
     LaunchedEffect(session) {
         val s = session ?: return@LaunchedEffect
-        if (markerDatabase == null) {
-            withContext(Dispatchers.IO) {
-                val dbFile = File(context.getExternalFilesDir(null), "marker_database.imgdb")
-                val db = try {
-                    if (dbFile.exists()) {
-                        dbFile.inputStream().use { AugmentedImageDatabase.deserialize(s, it) }
-                    } else {
-                        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ar_marker)
-                        val newDb = AugmentedImageDatabase(s)
-                        newDb.addImage("universal_marker", bitmap, 0.15f)
-                        dbFile.outputStream().use { newDb.serialize(it) }
-                        newDb
-                    }
-                } catch (_: Exception) {
+        withContext(Dispatchers.IO) {
+            val dbFile = File(context.getExternalFilesDir(null), "marker_database.imgdb")
+            val db = try {
+                if (dbFile.exists()) {
+                    dbFile.inputStream().use { AugmentedImageDatabase.deserialize(s, it) }
+                } else {
                     val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ar_marker)
                     val newDb = AugmentedImageDatabase(s)
                     newDb.addImage("universal_marker", bitmap, 0.15f)
+                    dbFile.outputStream().use { newDb.serialize(it) }
                     newDb
                 }
-                withContext(Dispatchers.Main) {
-                    markerDatabase = db
-                }
+            } catch (_: Exception) {
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ar_marker)
+                val newDb = AugmentedImageDatabase(s)
+                newDb.addImage("universal_marker", bitmap, 0.15f)
+                newDb
             }
+            withContext(Dispatchers.Main) { markerDatabase = db }
         }
     }
 
-    // Reconfigure session when mode changes (or database is ready)
+    // Configure Session
     LaunchedEffect(isMarkerMode, session, markerDatabase) {
-        val s = session
-        val db = markerDatabase
-        if (s != null) {
-            // If switching to marker mode, we need the database to be ready
-            if (isMarkerMode && db == null) return@LaunchedEffect
-            configureSession(s, isMarkerMode, db)
+        session?.let { s ->
+            if (isMarkerMode && markerDatabase == null) return@LaunchedEffect
+            configureSession(s, isMarkerMode, markerDatabase)
         }
     }
 
     val gestureListener = rememberOnGestureListener(
         onSingleTapConfirmed = { _, tappedNode ->
-            if (isMarkerMode) {
-                if (tappedNode is ModelNode) {
-                    selectedNode = tappedNode
-                    rotationDegrees = tappedNode.rotation.y
-                    Toast.makeText(activity, "Marker dish selected", Toast.LENGTH_SHORT).show()
-                } else {
-                    selectedNode = null
-                }
-                return@rememberOnGestureListener
-            }
-
-            when {
-                // Tap on an existing model → select it
-                tappedNode is ModelNode -> {
-                    selectedNode    = tappedNode
-                    rotationDegrees = tappedNode.rotation.y
-                    // Find which PlacedDish owns this node so we can mutate its rotationY
-                    selectedDish = placedDishes.firstOrNull { dish ->
-                        // The node association is set via the apply{} block below
-                        dish.anchor.cloudAnchorId == tappedNode.name
-                    }
-                    Toast.makeText(activity, "Dish selected", Toast.LENGTH_SHORT).show()
-                }
-
-                // Tap on empty space while tracking → place a dish
-                tappedNode == null && isTrackingPlane -> {
-                    if (placedDishes.size >= MAX_PLACED_OBJECTS) {
-                        Toast.makeText(
-                            activity,
-                            "Maximum dishes reached (${MAX_PLACED_OBJECTS})",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        lastHitResult?.let { hit ->
-                            val anchor = hit.createAnchor()
-                            placedDishes.add(PlacedDish(anchor = anchor))
-                            Toast.makeText(activity, "Dish placed", Toast.LENGTH_SHORT).show()
+            if (tappedNode is ModelNode) {
+                selectedNode = tappedNode
+                rotationDegrees = tappedNode.rotation.y
+                currentScale = tappedNode.scale.x / MODEL_SCALE_INITIAL
+                selectedDish = placedDishes.find { it.id == tappedNode.name }
+            } else {
+                if (!isMarkerMode) {
+                    lastHitResult?.let { hit ->
+                        if (placedDishes.size < MAX_PLACED_OBJECTS) {
+                            placedDishes.add(PlacedDish(anchor = hit.createAnchor()))
+                        } else {
+                            Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    // Deselect on empty-space tap
-                    selectedNode = null
-                    selectedDish = null
                 }
-
-                // Tap on empty space, no plane → deselect
-                else -> {
-                    selectedNode = null
-                    selectedDish = null
-                }
+                selectedNode = null
+                selectedDish = null
             }
         }
     )
 
-    // ── Layout ───────────────────────────────────────────────────────────────
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-
         val centerXPx = with(LocalDensity.current) { constraints.maxWidth / 2f }
         val centerYPx = with(LocalDensity.current) { constraints.maxHeight / 2f }
 
-        // ── AR scene ─────────────────────────────────────────────────────────
         ARSceneView(
-            modifier       = Modifier.fillMaxSize(),
-            engine         = engine,
-            modelLoader    = modelLoader,
+            modifier = Modifier.fillMaxSize(),
+            engine = engine,
+            modelLoader = modelLoader,
             materialLoader = materialLoader,
-            planeRenderer  = false,
-            onSessionCreated = { arSession ->
-                session = arSession
-            },
+            planeRenderer = !isMarkerMode,
+            onSessionCreated = { session = it },
             onSessionUpdated = { _, frame ->
                 if (isMarkerMode) {
                     val updatedImages = frame.getUpdatedTrackables(AugmentedImage::class.java)
-                    val marker = updatedImages.find { it.name == "universal_marker" }
-                    if (marker != null) {
-                        if (marker.trackingState == TrackingState.TRACKING && markerAnchor == null) {
-                            markerAnchor = marker.createAnchor(marker.centerPose)
-                        } else if (marker.trackingState == TrackingState.STOPPED) {
-                            markerAnchor = null
-                        }
+                    updatedImages.find { it.name == "universal_marker" && it.trackingState == TrackingState.TRACKING }?.let {
+                        if (markerAnchor == null) markerAnchor = it.createAnchor(it.centerPose)
                     }
                 }
             },
             onGestureListener = gestureListener
         ) {
-
             if (!isMarkerMode) {
                 ReticleNode(
                     xPx = centerXPx,
                     yPx = centerYPx,
-                    onHitResultChanged = { hit ->
-                        lastHitResult   = hit
-                        isTrackingPlane = hit != null &&
-                                hit.trackable is Plane &&
-                                (hit.trackable as Plane).isPoseInPolygon(hit.hitPose)
-                    }
+                    point = true,
+                    planePoseInPolygon = false,
+                    onHitResultChanged = { lastHitResult = it }
                 ) {
-                    if (isTrackingPlane) {
-                        CylinderNode(
-                            radius           = 0.05f,
-                            height           = 0.01f,
-                            materialInstance = reticleMaterial   // reused, not recreated
-                        )
-                    }
+                    CylinderNode(
+                        radius = 0.05f,
+                        height = 0.01f,
+                        materialInstance = reticleMaterial
+                    )
                 }
 
                 placedDishes.forEach { dish ->
-                    key(dish.anchor) {
+                    key(dish.id) {
+                        val dishInstance = remember(model, dish.id) {
+                            model?.let { modelLoader.assetLoader.createInstance(it) }
+                        }
                         AnchorNode(anchor = dish.anchor) {
-                            rememberModelInstance(
-                                modelLoader  = modelLoader,
-                                fileLocation = Uri.fromFile(modelFile).toString()
-                            )?.let { modelInstance ->
+                            dishInstance?.let { instance ->
                                 ModelNode(
-                                    modelInstance = modelInstance,
-                                    scaleToUnits  = MODEL_SCALE,
-                                    centerOrigin  = Position(0f, 0f, 0f),
-                                    apply         = {
-                                        name     = dish.anchor.cloudAnchorId ?: dish.anchor.hashCode().toString()
+                                    modelInstance = instance,
+                                    scaleToUnits = null,
+                                    centerOrigin = Position(0f, 0f, 0f),
+                                    apply = {
+                                        name = dish.id
+                                        scale = Scale(MODEL_SCALE_INITIAL * dish.scale)
                                         rotation = Rotation(0f, dish.rotationY, 0f)
-                                        if (selectedNode == null && selectedDish == dish) {
-                                            selectedNode = this
-                                        }
+                                        if (selectedNode == null && selectedDish == dish) selectedNode = this
                                     }
                                 )
                                 if (selectedDish == dish) {
                                     CylinderNode(
-                                        radius           = 0.15f,
-                                        height           = 0.002f,
-                                        position         = Position(0f, 0.001f, 0f),
-                                        materialInstance = selectionMaterial  // reused
+                                        radius = 0.15f,
+                                        height = 0.002f,
+                                        position = Position(0f, 0.001f, 0f),
+                                        materialInstance = selectionMaterial
                                     )
                                 }
                             }
@@ -370,22 +300,20 @@ private fun ARScreen(modelFile: File, activity: ARActivity) {
                     }
                 }
             } else {
-                // Marker Mode Rendering
                 markerAnchor?.let { anchor ->
+                    val markerInstance = remember(model) {
+                        model?.let { modelLoader.assetLoader.createInstance(it) }
+                    }
                     AnchorNode(anchor = anchor) {
-                        rememberModelInstance(
-                            modelLoader = modelLoader,
-                            fileLocation = Uri.fromFile(modelFile).toString()
-                        )?.let { modelInstance ->
+                        markerInstance?.let { instance ->
                             ModelNode(
-                                modelInstance = modelInstance,
-                                scaleToUnits = MODEL_SCALE,
+                                modelInstance = instance,
+                                scaleToUnits = null,
                                 centerOrigin = Position(0f, 0f, 0f),
                                 apply = {
+                                    scale = Scale(MODEL_SCALE_INITIAL * currentScale)
                                     rotation = Rotation(0f, rotationDegrees, 0f)
-                                    if (selectedNode == null) {
-                                        selectedNode = this
-                                    }
+                                    if (selectedNode == null) selectedNode = this
                                 }
                             )
                         }
@@ -394,7 +322,7 @@ private fun ARScreen(modelFile: File, activity: ARActivity) {
             }
         }
 
-        // Mode Toggle Button
+        // Mode Toggle
         Button(
             onClick = {
                 isMarkerMode = !isMarkerMode
@@ -402,29 +330,37 @@ private fun ARScreen(modelFile: File, activity: ARActivity) {
                 selectedDish = null
                 if (isMarkerMode) markerAnchor = null
             },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Black.copy(alpha = 0.5f)
-            ),
+            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).statusBarsPadding(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black.copy(alpha = 0.5f)),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(if (isMarkerMode) "Switch to Plane Mode" else "Switch to Marker Mode")
         }
 
+        // Transform Panel
         AnimatedVisibility(
             visible = selectedNode != null,
-            enter   = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit    = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
-            RotationPanel(
-                rotationDegrees = rotationDegrees,
-                onRotationChange = { value ->
-                    rotationDegrees = value
-                    selectedNode?.rotation = Rotation(0f, value, 0f)
-                    selectedDish?.rotationY = value   // persist into PlacedDish
+            TransformPanel(
+                rotation = rotationDegrees,
+                scale = currentScale,
+                onRotationChange = {
+                    rotationDegrees = it
+                    selectedNode?.rotation = Rotation(0f, it, 0f)
+                    selectedDish?.rotationY = it
+                },
+                onScaleChange = {
+                    currentScale = it
+                    selectedNode?.scale = Scale(MODEL_SCALE_INITIAL * it)
+                    selectedDish?.scale = it
+                },
+                onDelete = {
+                    selectedDish?.let { placedDishes.remove(it) }
+                    selectedNode = null
+                    selectedDish = null
                 }
             )
         }
@@ -437,51 +373,48 @@ private fun configureSession(session: Session, isMarkerMode: Boolean, markerData
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
         config.augmentedImageDatabase = markerDatabase
     } else {
-        config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
+        config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
         config.setAugmentedImageDatabase(null)
     }
-    
-    config.depthMode            = Config.DepthMode.AUTOMATIC
-    config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
-    config.lightEstimationMode  = Config.LightEstimationMode.AMBIENT_INTENSITY
-    config.focusMode            = Config.FocusMode.AUTO
-    config.updateMode           = Config.UpdateMode.LATEST_CAMERA_IMAGE
-    
+    config.focusMode = Config.FocusMode.AUTO
     session.configure(config)
 }
 
 @Composable
-private fun RotationPanel(
-    rotationDegrees: Float,
-    onRotationChange: (Float) -> Unit
+fun TransformPanel(
+    rotation: Float,
+    scale: Float,
+    onRotationChange: (Float) -> Unit,
+    onScaleChange: (Float) -> Unit,
+    onDelete: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 48.dp, start = 24.dp, end = 24.dp)
-            .background(
-                color = Color.Black.copy(alpha = 0.55f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding(),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.7f)),
+        shape = RoundedCornerShape(24.dp)
     ) {
-        Text(
-            text       = "Rotate Dish  ${rotationDegrees.toInt()}°",
-            color      = Color.White,
-            fontSize   = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Slider(
-            value         = rotationDegrees,
-            onValueChange = onRotationChange,
-            valueRange    = 0f..360f,
-            modifier      = Modifier.fillMaxWidth(),
-            colors        = SliderDefaults.colors(
-                thumbColor       = Color(0xFF4CAF50),
-                activeTrackColor = Color(0xFF4CAF50)
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Transform Object", fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Close, null, tint = Color.Red)
+                }
+            }
+            Text("Rotation: ${rotation.toInt()}°", fontSize = 12.sp, color = Color.LightGray)
+            Slider(
+                value = rotation,
+                onValueChange = onRotationChange,
+                valueRange = 0f..360f,
+                colors = SliderDefaults.colors(thumbColor = DINEAR_ORANGE, activeTrackColor = DINEAR_ORANGE)
             )
-        )
+            Text("Scale: ${"%.1f".format(scale)}x", fontSize = 12.sp, color = Color.LightGray)
+            Slider(
+                value = scale,
+                onValueChange = onScaleChange,
+                valueRange = 0.5f..2.0f,
+                colors = SliderDefaults.colors(thumbColor = DINEAR_ORANGE, activeTrackColor = DINEAR_ORANGE)
+            )
+        }
     }
 }
