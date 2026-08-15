@@ -23,6 +23,8 @@ public class FoodDetailsActivity extends AppCompatActivity {
         String modelUrl = getIntent().getStringExtra("modelUrl");
         String modelName = getIntent().getStringExtra("modelName");
         String modelVersion = getIntent().getStringExtra("modelVersion");
+        java.util.ArrayList<com.ps.dinear.MenuItem> menuList = (java.util.ArrayList<com.ps.dinear.MenuItem>) getIntent().getSerializableExtra("menuList");
+        
         String tag1 = getIntent().getStringExtra("tag1");
         String tag2 = getIntent().getStringExtra("tag2");
 
@@ -41,6 +43,7 @@ public class FoodDetailsActivity extends AppCompatActivity {
             intent.putExtra("modelUrl", modelUrl);
             intent.putExtra("modelName", modelName);
             intent.putExtra("modelVersion", modelVersion);
+            intent.putExtra("menuList", menuList);
             startActivity(intent);
         });
     }
