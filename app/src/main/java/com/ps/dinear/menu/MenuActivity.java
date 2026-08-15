@@ -54,6 +54,8 @@ public class MenuActivity extends AppCompatActivity {
         rvTabs.setAdapter(tabAdapter);
     }
 
+    private List<MenuItem> menuList = new ArrayList<>();
+
     private void setupMenu() {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
         rvMenu.setLayoutManager(new LinearLayoutManager(this));
@@ -66,7 +68,8 @@ public class MenuActivity extends AppCompatActivity {
             public void onResponse(Call<List<MenuItem>> call, Response<List<MenuItem>> response) {
                 swipeRefreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    foodAdapter = new MenuFoodAdapter(MenuActivity.this, response.body(), item -> openFoodDetails(item));
+                    menuList = response.body();
+                    foodAdapter = new MenuFoodAdapter(MenuActivity.this, menuList, item -> openFoodDetails(item));
                     rvMenu.setAdapter(foodAdapter);
                 }
             }
@@ -90,6 +93,10 @@ public class MenuActivity extends AppCompatActivity {
         intent.putExtra("modelVersion", item.getModelVersion());
         intent.putExtra("tag1", item.getTag1());
         intent.putExtra("tag2", item.getTag2());
+        
+        // Pass the full menu list
+        intent.putExtra("menuList", new ArrayList<>(menuList));
+        
         startActivity(intent);
     }
 }
