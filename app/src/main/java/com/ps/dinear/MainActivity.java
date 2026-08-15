@@ -3,102 +3,102 @@ package com.ps.dinear;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.location.LocationActivity;
+import com.ps.dinear.menu.MenuActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 public class MainActivity extends AppCompatActivity {
 
-    private MenuAdapter adapter;
-
-    ProgressBar progressBar;
-    private final List<MenuItem> menuItems = new ArrayList<>();
+    private RestaurantAdapter restaurantAdapter;
+    private FilterAdapter filterAdapter;
+    private ProgressBar progressBar;
+    private TextView tvCurrentLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (SharedPrefManager.getDistrict(this) == null) {
+            startActivity(new Intent(this, LocationActivity.class));
+            finish();
+            return;
+        }
+
+        setContentView(R.layout.activity_main);
+
+        initializeRetrofit();
+
+        tvCurrentLocation = findViewById(R.id.tvCurrentLocation);
+        String locationText = SharedPrefManager.getCity(this) + ", " + SharedPrefManager.getDistrict(this);
+        tvCurrentLocation.setText(locationText);
+
+        findViewById(R.id.btnChangeLocation).setOnClickListener(v -> {
+            startActivity(new Intent(this, LocationActivity.class));
+        });
+
+        setupFilters();
+        setupRestaurants();
+
+        findViewById(R.id.btnARScan).setOnClickListener(v -> {
+            Toast.makeText(this, "AR Scan coming soon!", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void setupFilters() {
+        RecyclerView rvFilters = findViewById(R.id.rvFilters);
+        List<String> filters = new ArrayList<>();
+        filters.add("Home");
+        filters.add("Non Veg Restaurants");
+        filters.add("Veg Restaurants");
+        filters.add("Fast Food");
+
+        filterAdapter = new FilterAdapter(this, filters);
+        rvFilters.setAdapter(filterAdapter);
+    }
+
+    private void setupRestaurants() {
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        List<Restaurant> mockRestaurants = new ArrayList<>();
+        mockRestaurants.add(new Restaurant(1, "Qwerty mi' amor", "Monument of savory indulgence", "French", "$$$", 0.8, 4.8, "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4", "20-30 MIN"));
+        mockRestaurants.add(new Restaurant(2, "The Burger Joint", "Best burgers in town", "American", "$$", 1.2, 4.5, "https://images.unsplash.com/photo-1552566626-52f8b828add9", "15-25 MIN"));
+
+        restaurantAdapter = new RestaurantAdapter(this, mockRestaurants, restaurant -> {
+            Intent intent = new Intent(this, RestaurantDetailsActivity.class);
+            intent.putExtra("restaurantId", restaurant.getId());
+            intent.putExtra("restaurantName", restaurant.getName());
+            intent.putExtra("cuisine", restaurant.getCuisine());
+            intent.putExtra("rating", restaurant.getRating());
+            intent.putExtra("description", restaurant.getDescription());
+            intent.putExtra("imageUrl", restaurant.getImageUrl());
+            startActivity(intent);
+        });
+
+        recyclerView.setAdapter(restaurantAdapter);
+    }
+
+    private void initializeRetrofit() {
         String ip = SharedPrefManager.getIp(this);
         String port = SharedPrefManager.getPort(this);
 
         if (ip == null) {
-            ip = "192.168.1.69";
+            ip = "192.168.1.66"; // Updated to match user's backend IP
         }
 
-        if (port == null) {
-            port = "8000";
-        }
-
-        String baseUrl =
-                "http://" + ip + ":" + port + "/";
-
+        String baseUrl = "http://" + ip + ":" + port + "/";
         RetrofitClient.initialize(baseUrl);
-        setContentView(R.layout.activity_main);
-
-        Button btnServer =
-                findViewById(R.id.btnServer);
-
-        btnServer.setOnClickListener(v -> {
-
-            startActivity(
-                    new Intent(
-                            MainActivity.this,
-                            ServerConfigActivity.class
-                    )
-            );
-        });
-
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        adapter = new MenuAdapter(this);
-
-        progressBar = findViewById(R.id.progressBar);
-
-        recyclerView.setVisibility(View.GONE);
-
-        recyclerView.setAdapter(adapter);
-
-        ApiService apiService =
-                RetrofitClient.getClient().create(ApiService.class);
-
-        progressBar.setVisibility(View.VISIBLE);
-
-        apiService.getMenu().enqueue(new Callback<List<MenuItem>>() {
-            @Override
-            public void onResponse(Call<List<MenuItem>> call,
-                                   Response<List<MenuItem>> response) {
-
-                progressBar.setVisibility(View.GONE);
-
-                if (response.isSuccessful() && response.body() != null) {
-
-                    List<MenuItem> menuList = response.body();
-
-                    adapter.setData(menuList);
-                    recyclerView.setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<MenuItem>> call, Throwable t) {
-
-                progressBar.setVisibility(View.GONE);
-
-                Toast.makeText(MainActivity.this,
-                        "Error: " + t.getMessage(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 }
