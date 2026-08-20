@@ -72,8 +72,8 @@ data class PlacedDish(
     val menuItem: MenuItem,
     val model: Model,
     val modelInstance: ModelInstance,
-    var rotationY: Float = 0f,
-    var scale: Float = 1.0f
+    val rotationY: MutableState<Float> = mutableStateOf(0f),
+    val scale: MutableState<Float> = mutableStateOf(1f)
 )
 
 class ARViewModel : ViewModel() {
@@ -292,9 +292,16 @@ private fun ARScreen(
     fun selectNode(node: ModelNode?, dishId: String?) {
         transform.selectedModelNode = node
         transform.selectedNodeId = dishId ?: node?.name
-        transform.rotationDegrees = node?.rotation?.y ?: 0f
-        transform.currentScale = (node?.scale?.x ?: MODEL_SCALE_INITIAL) / MODEL_SCALE_INITIAL
         selectedDishId = dishId
+
+        if (node != null) {
+            if (dishId != "marker_dish") {
+                placedDishes.find { it.id == dishId }?.let { dish ->
+                    transform.rotationDegrees = dish.rotationY.value
+                    transform.currentScale = dish.scale.value
+                }
+            }
+        }
     }
 
     fun clearSelection() = selectNode(null, null)
@@ -487,29 +494,43 @@ private fun ARScreen(
                     scale = transform.currentScale,
                     onRotationChange = { newRotation ->
                         transform.rotationDegrees = newRotation
-                        transform.selectedModelNode?.let { it.rotation = Rotation(0f, newRotation, 0f) }
+                        // Keeps zero-latency feedback while a node reference is live (dragging).
+                        transform.selectedModelNode?.rotation = Rotation(0f, newRotation, 0f)
+                        // Writes to the State-backed value so it stays correct after deselecting too.
                         if (selectedDishId != "marker_dish") {
-                            placedDishes.find { it.id == selectedDishId }?.rotationY = newRotation
+                            placedDishes.find { it.id == selectedDishId }?.rotationY?.value = newRotation
                         }
                     },
                     onScaleChange = { newScale ->
                         transform.currentScale = newScale
-                        transform.selectedModelNode?.let { it.scale = Scale(MODEL_SCALE_INITIAL * newScale) }
+                        transform.selectedModelNode?.scale = Scale(newScale, newScale, newScale)
                         if (selectedDishId != "marker_dish") {
-                            placedDishes.find { it.id == selectedDishId }?.scale = newScale
+                            placedDishes.find { it.id == selectedDishId }?.scale?.value = newScale
                         }
                     },
                     onClose = { clearSelection() },
+                    onReset = {
+                        transform.rotationDegrees = 0f
+                        transform.currentScale = 1f
+                        transform.selectedModelNode?.let {
+                            it.rotation = Rotation(0f, 0f, 0f)
+                            it.scale = Scale(1f, 1f, 1f)
+                        }
+                        if (selectedDishId != "marker_dish") {
+                            placedDishes.find { it.id == selectedDishId }?.let {
+                                it.rotationY.value = 0f
+                                it.scale.value = 1f
+                            }
+                        }
+                    },
                     onDelete = {
-                        if (selectedDishId == "marker_dish") {
-                            clearSelection()
-                        } else {
+                        if (selectedDishId != "marker_dish") {
                             placedDishes.find { it.id == selectedDishId }?.let { dish ->
                                 dish.anchor.detach()
                                 placedDishes.remove(dish)
                             }
-                            clearSelection()
                         }
+                        clearSelection()
                     }
                 )
             }
@@ -631,25 +652,16 @@ private fun ArSceneContent(
 
                 placedDishes.forEach { dish ->
                     key(dish.id) {
+                        var dishNode by remember(dish.id) { mutableStateOf<ModelNode?>(null) }
                         AnchorNode(anchor = dish.anchor) {
                             ModelNode(
                                 modelInstance = dish.modelInstance,
                                 scaleToUnits = null,
-                                // NOTE: centerOrigin intentionally omitted here.
-                                // SceneView 4.15.3 has a known bug where centerOrigin's
-                                // bounding-box recentering fights with manual scale writes
-                                // on every update, effectively freezing the slider's effect.
-                                // Fixed upstream in 4.21.2+. Re-add once the dependency is
-                                // bumped to io.github.sceneview:arsceneview:4.30.0 if you
-                                // need it for pivot correction.
+                                rotation = Rotation(0f, dish.rotationY.value, 0f),
+                                scale = Scale(MODEL_SCALE_INITIAL * dish.scale.value),
                                 apply = {
                                     name = dish.id
-                                    scale = Scale(
-                                        MODEL_SCALE_INITIAL * dish.scale,
-                                        MODEL_SCALE_INITIAL * dish.scale,
-                                        MODEL_SCALE_INITIAL * dish.scale
-                                    )
-                                    rotation = Rotation(0f, dish.rotationY, 0f)
+                                    dishNode = this
                                     if (transform.selectedModelNode == null && selectedDishId == dish.id) {
                                         transform.selectedModelNode = this
                                     }
@@ -657,7 +669,7 @@ private fun ArSceneContent(
                             )
                             if (selectedDishId == dish.id) {
                                 CylinderNode(
-                                    radius = 0.15f * dish.scale,
+                                    radius = 0.18f, // Static radius
                                     height = 0.002f,
                                     position = Position(0f, 0.001f, 0f),
                                     materialInstance = selectionMaterial
@@ -679,15 +691,10 @@ private fun ArSceneContent(
                                     ModelNode(
                                         modelInstance = inst,
                                         scaleToUnits = null,
-                                        // centerOrigin omitted — see note above.
+                                        rotation = Rotation(0f, transform.rotationDegrees, 0f),
+                                        scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
                                         apply = {
                                             name = "marker_dish"
-                                            scale = Scale(
-                                                MODEL_SCALE_INITIAL * transform.currentScale,
-                                                MODEL_SCALE_INITIAL * transform.currentScale,
-                                                MODEL_SCALE_INITIAL * transform.currentScale
-                                            )
-                                            rotation = Rotation(0f, transform.rotationDegrees, 0f)
                                             if (selectedDishId == "marker_dish") {
                                                 transform.selectedModelNode = this
                                             }
@@ -695,7 +702,7 @@ private fun ArSceneContent(
                                     )
                                     if (selectedDishId == "marker_dish") {
                                         CylinderNode(
-                                            radius = 0.15f * transform.currentScale,
+                                            radius = 0.18f, // Static radius
                                             height = 0.002f,
                                             position = Position(0f, 0.001f, 0f),
                                             materialInstance = selectionMaterial
@@ -718,7 +725,7 @@ private fun MenuOverlay(
     onClose: () -> Unit,
     onItemSelected: (MenuItem) -> Unit
 ) {
-    var activeTab by remember { mutableStateOf("MENU") } // MENU, ORDERS, CART
+    var activeTab by remember { mutableStateOf("MENU") }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -958,7 +965,8 @@ fun TransformPanel(
     onRotationChange: (Float) -> Unit,
     onScaleChange: (Float) -> Unit,
     onClose: () -> Unit,
-    onDelete: () -> Unit
+    onReset: () -> Unit = {},
+    onDelete: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding(),
@@ -970,6 +978,12 @@ fun TransformPanel(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Transform Object", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 18.sp)
                 Spacer(Modifier.weight(1f))
+
+                IconButton(onClick = onReset, modifier = Modifier.background(Color(0xFFF5F5F5), CircleShape)) {
+                    Icon(Icons.Default.RestartAlt, contentDescription = "Reset", tint = Color.Black, modifier = Modifier.size(20.dp))
+                }
+                Spacer(Modifier.width(8.dp))
+
                 IconButton(onClick = onDelete, modifier = Modifier.background(Color(0xFFFFEBEE), CircleShape)) {
                     Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(20.dp))
                 }
