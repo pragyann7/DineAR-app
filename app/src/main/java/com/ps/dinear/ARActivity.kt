@@ -159,6 +159,13 @@ private class ArTransformState {
     var rotationDegrees by mutableStateOf(0f)
     var currentScale by mutableStateOf(1.0f)
     var selectedModelNode: ModelNode? = null
+
+    fun reset() {
+        rotationDegrees = 0f
+        currentScale = 1.0f
+        selectedNodeId = null
+        selectedModelNode = null
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -421,6 +428,7 @@ private fun ARScreen(
                                 if (isMarkerMode) {
                                     isMarkerMode = false
                                     clearAllDishes()
+                                    transform.reset()
                                     markerAnchor?.detach()
                                     markerAnchor = null
                                 }
@@ -451,6 +459,7 @@ private fun ARScreen(
                                 if (!isMarkerMode) {
                                     isMarkerMode = true
                                     clearAllDishes()
+                                    transform.reset()
                                     markerAnchor = null
                                 }
                             }
@@ -523,15 +532,15 @@ private fun ARScreen(
                             }
                         }
                     },
-                    onDelete = {
-                        if (selectedDishId != "marker_dish") {
+                    onDelete = if (selectedDishId != "marker_dish") {
+                        {
                             placedDishes.find { it.id == selectedDishId }?.let { dish ->
                                 dish.anchor.detach()
                                 placedDishes.remove(dish)
                             }
+                            clearSelection()
                         }
-                        clearSelection()
-                    }
+                    } else null
                 )
             }
         }
@@ -966,7 +975,7 @@ fun TransformPanel(
     onScaleChange: (Float) -> Unit,
     onClose: () -> Unit,
     onReset: () -> Unit = {},
-    onDelete: () -> Unit = {}
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding(),
@@ -984,10 +993,12 @@ fun TransformPanel(
                 }
                 Spacer(Modifier.width(8.dp))
 
-                IconButton(onClick = onDelete, modifier = Modifier.background(Color(0xFFFFEBEE), CircleShape)) {
-                    Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(20.dp))
+                if (onDelete != null) {
+                    IconButton(onClick = onDelete, modifier = Modifier.background(Color(0xFFFFEBEE), CircleShape)) {
+                        Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.width(8.dp))
                 }
-                Spacer(Modifier.width(8.dp))
                 IconButton(onClick = onClose, modifier = Modifier.background(Color(0xFFF5F5F5), CircleShape)) {
                     Icon(Icons.Default.Close, null, tint = Color.Black, modifier = Modifier.size(20.dp))
                 }
