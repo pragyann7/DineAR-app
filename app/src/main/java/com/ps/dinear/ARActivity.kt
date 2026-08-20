@@ -2,6 +2,7 @@ package com.ps.dinear
 
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -84,6 +85,25 @@ class ARViewModel : ViewModel() {
     private val _downloadStates = mutableStateMapOf<String, DownloadState>()
     val downloadStates: Map<String, DownloadState> = _downloadStates
 
+    private val _menuItems = mutableStateListOf<MenuItem>()
+    val menuItems: List<MenuItem> = _menuItems
+
+    fun fetchMenu(context: android.content.Context, restaurantId: Int) {
+        if (_menuItems.isNotEmpty()) return
+
+        val api = RetrofitClient.getClient(context).create(ApiService::class.java)
+        api.getMenu(restaurantId).enqueue(object : retrofit2.Callback<List<MenuItem>> {
+            override fun onResponse(call: retrofit2.Call<List<MenuItem>>, response: retrofit2.Response<List<MenuItem>>) {
+                if (response.isSuccessful && response.body() != null) {
+                    _menuItems.clear()
+                    _menuItems.addAll(response.body()!!)
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<List<MenuItem>>, t: Throwable) {
+            }
+        })
+    }
+
     fun setModelReady(url: String, model: Model) {
         _loadedModels[url] = model
         _downloadStates[url] = DownloadState.Ready
@@ -111,21 +131,22 @@ class ARActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val menuList = intent.getSerializableExtra("menuList") as? ArrayList<MenuItem> ?: arrayListOf()
-        val initialItem = MenuItem(
-            0,
-            intent.getStringExtra("foodName") ?: "Dish",
-            0,
-            "",
-            intent.getStringExtra("modelUrl") ?: "",
-            intent.getStringExtra("modelName") ?: "",
-            intent.getStringExtra("modelVersion") ?: "v1"
-        )
+        val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
+
+        if (selectedItem == null) {
+            Toast.makeText(this, "Error: Food item not found", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        selectedItem.restaurantId?.let { id ->
+            viewModel.fetchMenu(this, id)
+        }
 
         setContent {
             ARScreen(
-                initialMenuItem = initialItem,
-                menuList = menuList,
+                initialMenuItem = selectedItem,
+                menuList = viewModel.menuItems,
                 activity = this,
                 viewModel = viewModel
             )
@@ -167,10 +188,17 @@ private fun ARScreen(
     var isMenuOpen by remember { mutableStateOf(false) }
 
     fun downloadModel(item: MenuItem) {
-        val url = item.modelUrl
-        if (viewModel.loadedModels.containsKey(url) || viewModel.downloadStates[url] is DownloadState.Downloading) return
+        val rawUrl = item.modelUrl ?: ""
+        if (rawUrl.isEmpty()) {
+            viewModel.setError("", "No 3D model available")
+            return
+        }
 
-        val modelFile = File(context.getExternalFilesDir("models"), item.modelName)
+        val url = RetrofitClient.getFullUrl(context, rawUrl) ?: ""
+        if (url.isEmpty() || viewModel.loadedModels.containsKey(url) || viewModel.downloadStates[url] is DownloadState.Downloading) return
+
+        val filename = "${item.id}_${item.modelName ?: "dish.glb"}"
+        val modelFile = File(context.getExternalFilesDir("models"), filename)
 
         if (modelFile.exists()) {
             activity.lifecycleScope.launch {
@@ -180,7 +208,8 @@ private fun ARScreen(
                 if (model != null) {
                     viewModel.setModelReady(url, model)
                 } else {
-                    viewModel.setError(url, "Failed to load model from disk")
+                    modelFile.delete()
+                    viewModel.setError(url, "Corrupted local file deleted. Retrying.")
                 }
             }
             return
@@ -205,7 +234,7 @@ private fun ARScreen(
                     if (model != null) {
                         viewModel.setModelReady(url, model)
                     } else {
-                        viewModel.setError(url, "Failed to load downloaded model")
+                        viewModel.setError(url, "Load failed after download")
                     }
                 }
             } catch (e: Exception) {
@@ -220,7 +249,6 @@ private fun ARScreen(
         downloadModel(currentMenuItem)
     }
 
-    // Initialize Marker Database (unchanged from before — already off the main thread)
     LaunchedEffect(session) {
         val s = session ?: return@LaunchedEffect
         withContext(Dispatchers.IO) {
@@ -263,7 +291,7 @@ private fun ARScreen(
 
     fun selectNode(node: ModelNode?, dishId: String?) {
         transform.selectedModelNode = node
-        transform.selectedNodeId = node?.name
+        transform.selectedNodeId = dishId ?: node?.name
         transform.rotationDegrees = node?.rotation?.y ?: 0f
         transform.currentScale = (node?.scale?.x ?: MODEL_SCALE_INITIAL) / MODEL_SCALE_INITIAL
         selectedDishId = dishId
@@ -292,7 +320,7 @@ private fun ARScreen(
             transform = transform,
             selectedDishId = selectedDishId,
             currentMenuItem = currentMenuItem,
-            loadedModel = viewModel.loadedModels[currentMenuItem.modelUrl],
+            loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
             onNodeTapped = { node, dishId -> selectNode(node, dishId) },
             onEmptyTap = { hit ->
                 if (isMenuOpen) {
@@ -300,7 +328,7 @@ private fun ARScreen(
                 } else if (transform.selectedNodeId != null) {
                     clearSelection()
                 } else if (!isMarkerMode) {
-                    val model = viewModel.loadedModels[currentMenuItem.modelUrl]
+                    val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
                     if (model != null) {
                         if (placedDishes.size < MAX_PLACED_OBJECTS) {
                             val instance = modelLoader.assetLoader.createInstance(model)
@@ -331,7 +359,6 @@ private fun ARScreen(
             }
         )
 
-        // Guide Message Overlay
         if (!isMenuOpen && transform.selectedNodeId == null) {
             val guideText = if (isMarkerMode) {
                 if (markerAnchor == null) "Scan the AR marker to view dish" else ""
@@ -362,7 +389,6 @@ private fun ARScreen(
             }
         }
 
-        // Top UI: Mode Toggle
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -380,7 +406,6 @@ private fun ARScreen(
                     modifier = Modifier.padding(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // PLANE Mode Segment
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
@@ -411,7 +436,6 @@ private fun ARScreen(
                         )
                     }
 
-                    // MARKER Mode Segment
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
@@ -444,7 +468,6 @@ private fun ARScreen(
             }
         }
 
-        // Bottom UI: Menu FAB and Transform Panel
         Box(modifier = Modifier.fillMaxSize().padding(bottom = 32.dp), contentAlignment = Alignment.BottomCenter) {
             if (transform.selectedNodeId == null) {
                 ExtendedFloatingActionButton(
@@ -464,21 +487,29 @@ private fun ARScreen(
                     scale = transform.currentScale,
                     onRotationChange = { newRotation ->
                         transform.rotationDegrees = newRotation
-                        transform.selectedModelNode?.rotation = Rotation(0f, newRotation, 0f)
-                        placedDishes.find { it.id == selectedDishId }?.rotationY = newRotation
+                        transform.selectedModelNode?.let { it.rotation = Rotation(0f, newRotation, 0f) }
+                        if (selectedDishId != "marker_dish") {
+                            placedDishes.find { it.id == selectedDishId }?.rotationY = newRotation
+                        }
                     },
                     onScaleChange = { newScale ->
                         transform.currentScale = newScale
-                        transform.selectedModelNode?.scale = Scale(MODEL_SCALE_INITIAL * newScale)
-                        placedDishes.find { it.id == selectedDishId }?.scale = newScale
+                        transform.selectedModelNode?.let { it.scale = Scale(MODEL_SCALE_INITIAL * newScale) }
+                        if (selectedDishId != "marker_dish") {
+                            placedDishes.find { it.id == selectedDishId }?.scale = newScale
+                        }
                     },
                     onClose = { clearSelection() },
                     onDelete = {
-                        placedDishes.find { it.id == selectedDishId }?.let { dish ->
-                            dish.anchor.detach()
-                            placedDishes.remove(dish)
+                        if (selectedDishId == "marker_dish") {
+                            clearSelection()
+                        } else {
+                            placedDishes.find { it.id == selectedDishId }?.let { dish ->
+                                dish.anchor.detach()
+                                placedDishes.remove(dish)
+                            }
+                            clearSelection()
                         }
-                        clearSelection()
                     }
                 )
             }
@@ -532,12 +563,19 @@ private fun ArSceneContent(
     val onSessionCreatedStable = remember { { s: Session -> stableOnSessionCreated.value(s) } }
 
     val stableOnMarkerAnchorFound = rememberUpdatedState(onMarkerAnchorFound)
-    val onSessionUpdatedStable = remember(isMarkerMode) {
-        { _: Any?, frame: Frame ->
+    val onSessionUpdatedStable = remember(isMarkerMode, markerAnchor) {
+        { s: Session, frame: Frame ->
             if (isMarkerMode) {
-                val updatedImages = frame.getUpdatedTrackables(AugmentedImage::class.java)
-                updatedImages.find { it.name == "universal_marker" && it.trackingState == TrackingState.TRACKING }
-                    ?.let { stableOnMarkerAnchorFound.value(it.createAnchor(it.centerPose)) }
+                val images = s.getAllTrackables(AugmentedImage::class.java)
+                val marker = images.find { it.name == "universal_marker" && it.trackingState == TrackingState.TRACKING }
+
+                if (marker != null) {
+                    val currentAnchor = markerAnchor
+                    if (currentAnchor == null || currentAnchor.trackingState == TrackingState.STOPPED) {
+                        Log.d("DineAR", "Marker found! Creating anchor at: ${marker.centerPose}")
+                        stableOnMarkerAnchorFound.value(marker.createAnchor(marker.centerPose))
+                    }
+                }
             }
         }
     }
@@ -549,8 +587,12 @@ private fun ArSceneContent(
     val gestureListener = rememberOnGestureListener(
         onSingleTapConfirmed = { _, tappedNode ->
             if (tappedNode is ModelNode) {
-                val dishId = placedDishes.find { it.id == tappedNode.name }?.id
-                stableOnNodeTapped.value(tappedNode, dishId)
+                if (tappedNode.name == "marker_dish") {
+                    stableOnNodeTapped.value(tappedNode, "marker_dish")
+                } else {
+                    val dishId = placedDishes.find { it.id == tappedNode.name }?.id
+                    stableOnNodeTapped.value(tappedNode, dishId)
+                }
             } else if (!isMarkerMode) {
                 lastHitResult?.let { stableOnEmptyTap.value(it) }
                 stableOnClearSelection.value()
@@ -593,12 +635,21 @@ private fun ArSceneContent(
                             ModelNode(
                                 modelInstance = dish.modelInstance,
                                 scaleToUnits = null,
-                                centerOrigin = Position(0f, 0f, 0f),
+                                // NOTE: centerOrigin intentionally omitted here.
+                                // SceneView 4.15.3 has a known bug where centerOrigin's
+                                // bounding-box recentering fights with manual scale writes
+                                // on every update, effectively freezing the slider's effect.
+                                // Fixed upstream in 4.21.2+. Re-add once the dependency is
+                                // bumped to io.github.sceneview:arsceneview:4.30.0 if you
+                                // need it for pivot correction.
                                 apply = {
                                     name = dish.id
-                                    scale = Scale(MODEL_SCALE_INITIAL * dish.scale)
+                                    scale = Scale(
+                                        MODEL_SCALE_INITIAL * dish.scale,
+                                        MODEL_SCALE_INITIAL * dish.scale,
+                                        MODEL_SCALE_INITIAL * dish.scale
+                                    )
                                     rotation = Rotation(0f, dish.rotationY, 0f)
-                                    // Compare by id, not full structural equality.
                                     if (transform.selectedModelNode == null && selectedDishId == dish.id) {
                                         transform.selectedModelNode = this
                                     }
@@ -606,7 +657,7 @@ private fun ArSceneContent(
                             )
                             if (selectedDishId == dish.id) {
                                 CylinderNode(
-                                    radius = 0.15f,
+                                    radius = 0.15f * dish.scale,
                                     height = 0.002f,
                                     position = Position(0f, 0.001f, 0f),
                                     materialInstance = selectionMaterial
@@ -618,23 +669,38 @@ private fun ArSceneContent(
             } else {
                 markerAnchor?.let { anchor ->
                     loadedModel?.let { model ->
-                        val instance = remember(model, anchor) { modelLoader.assetLoader.createInstance(model) }
-                        key(model) {
+                        val instance = remember(model) {
+                            Log.d("DineAR", "Creating model instance for marker mode")
+                            modelLoader.assetLoader.createInstance(model)
+                        }
+                        key("marker_dish_node") {
                             AnchorNode(anchor = anchor) {
                                 instance?.let { inst ->
                                     ModelNode(
                                         modelInstance = inst,
                                         scaleToUnits = null,
-                                        centerOrigin = Position(0f, 0f, 0f),
+                                        // centerOrigin omitted — see note above.
                                         apply = {
                                             name = "marker_dish"
-                                            scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale)
+                                            scale = Scale(
+                                                MODEL_SCALE_INITIAL * transform.currentScale,
+                                                MODEL_SCALE_INITIAL * transform.currentScale,
+                                                MODEL_SCALE_INITIAL * transform.currentScale
+                                            )
                                             rotation = Rotation(0f, transform.rotationDegrees, 0f)
-                                            if (transform.selectedModelNode == null) {
+                                            if (selectedDishId == "marker_dish") {
                                                 transform.selectedModelNode = this
                                             }
                                         }
                                     )
+                                    if (selectedDishId == "marker_dish") {
+                                        CylinderNode(
+                                            radius = 0.15f * transform.currentScale,
+                                            height = 0.002f,
+                                            position = Position(0f, 0.001f, 0f),
+                                            materialInstance = selectionMaterial
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -763,6 +829,7 @@ private fun MenuTabContent(
     downloadStates: Map<String, DownloadState>,
     onItemSelected: (MenuItem) -> Unit
 ) {
+    val context = LocalContext.current
     Column {
         OutlinedTextField(
             value = "",
@@ -816,7 +883,7 @@ private fun MenuTabContent(
             items(menuList, key = { it.name }) { item ->
                 VerticalMenuItemRow(
                     item = item,
-                    downloadState = downloadStates[item.modelUrl] ?: DownloadState.Idle,
+                    downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
                     onClick = { onItemSelected(item) }
                 )
             }
@@ -830,6 +897,7 @@ fun VerticalMenuItemRow(
     downloadState: DownloadState,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
@@ -842,7 +910,7 @@ fun VerticalMenuItemRow(
         ) {
             Box(modifier = Modifier.size(80.dp)) {
                 AsyncImage(
-                    model = item.imageUrl,
+                    model = RetrofitClient.getFullUrl(context, item.imageUrl),
                     contentDescription = item.name,
                     modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)),
                     contentScale = ContentScale.Crop
