@@ -39,10 +39,26 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         Restaurant restaurant = list.get(position);
         holder.tvName.setText(restaurant.getName());
         holder.tvRating.setText(String.valueOf(restaurant.getRating()));
-        holder.tvCuisine.setText(restaurant.getCuisine() + " • " + restaurant.getPriceRange() + " • " + restaurant.getDistance() + " km");
+        
+        // Cleaner cuisine and price info
+        String info = restaurant.getCuisine();
+        if (restaurant.getPriceRange() != null && !restaurant.getPriceRange().isEmpty()) {
+            info += " • " + restaurant.getPriceRange();
+        }
+        holder.tvCuisine.setText(info);
+        
         holder.tvTime.setText(restaurant.getDeliveryTime());
+        
+        if (holder.tvDistance != null) {
+            holder.tvDistance.setVisibility(View.VISIBLE);
+            holder.tvDistance.setText(restaurant.getDistance() + " km");
+        }
 
-        Glide.with(context).load(restaurant.getImageUrl()).into(holder.ivRestaurant);
+        String fullImageUrl = RetrofitClient.getFullUrl(context, restaurant.getImageUrl());
+        Glide.with(context).load(fullImageUrl)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .centerCrop()
+                .into(holder.ivRestaurant);
 
         holder.itemView.setOnClickListener(v -> listener.onRestaurantClick(restaurant));
     }
@@ -54,7 +70,7 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivRestaurant;
-        TextView tvName, tvRating, tvCuisine, tvTime;
+        TextView tvName, tvRating, tvCuisine, tvTime, tvDistance;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -63,6 +79,7 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
             tvRating = itemView.findViewById(R.id.tvRating);
             tvCuisine = itemView.findViewById(R.id.tvCuisine);
             tvTime = itemView.findViewById(R.id.tvTime);
+            tvDistance = itemView.findViewById(R.id.tvDistance);
         }
     }
 }
