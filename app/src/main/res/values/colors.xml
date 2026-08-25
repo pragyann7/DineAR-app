@@ -5,5 +5,8 @@
     <color name="orange_primary">#F45905</color>
     <color name="gray_light">#F5F5F5</color>
     <color name="gray_text">#757575</color>
+    <color name="gray_dark">#424242</color>
     <color name="divider">#EEEEEE</color>
+    <color name="red_600">#E53935</color>
+    <color name="app_bg">#F4F4F4</color>
 </resources>
