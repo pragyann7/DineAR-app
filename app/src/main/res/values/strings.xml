@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">DineAR</string>
+    <string name="explore_restaurants">Explore Restaurants</string>
+    <string name="discover">Discover</string>
 </resources>

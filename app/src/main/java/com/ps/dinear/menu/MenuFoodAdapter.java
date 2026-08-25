@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.R;
+import com.ps.dinear.RetrofitClient;
+
 import java.util.List;
 
 public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHolder> {
@@ -44,7 +46,8 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
         holder.tvTag1.setText(item.getTag1() != null ? item.getTag1() : "");
         holder.tvTag2.setText(item.getTag2() != null ? item.getTag2() : "");
 
-        Glide.with(context).load(item.getImageUrl()).into(holder.ivFood);
+        String fullImageUrl = RetrofitClient.getFullUrl(item.getImageUrl());
+        Glide.with(context).load(fullImageUrl).into(holder.ivFood);
 
         holder.itemView.setOnClickListener(v -> listener.onFoodClick(item));
     }

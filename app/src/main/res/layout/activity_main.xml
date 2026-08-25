@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA">
+    android:background="@color/app_bg">
 
     <!-- Top Bar -->
     <RelativeLayout
@@ -25,7 +25,7 @@
                 android:id="@+id/tvWelcome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hello, Qwerty!"
+                android:text="Hello!"
                 android:textColor="@color/black"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -39,10 +39,10 @@
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@android:drawable/ic_menu_mylocation"
-                    app:tint="@color/orange_primary" />
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/icon_location"
+                     />
 
                 <TextView
                     android:id="@+id/tvCurrentLocation"
@@ -56,17 +56,18 @@
                 <ImageView
                     android:layout_width="16dp"
                     android:layout_height="16dp"
-                    android:src="@android:drawable/arrow_down_float"
-                    app:tint="@color/gray_text" />
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/icon_dropdown"
+                    app:tint="@color/black"/>
 
             </LinearLayout>
 
         </LinearLayout>
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/btnProfile"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:id="@+id/btnCart"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             app:cardCornerRadius="24.dp"
@@ -76,38 +77,56 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="8.dp"
-                android:src="@android:drawable/ic_menu_myplaces"
-                app:tint="@color/orange_primary" />
+                android:src="@drawable/icon_foodcart"/>
+<!--                app:tint="@color/orange_primary" />-->
         </androidx.cardview.widget.CardView>
-
-        <ImageButton
-            android:id="@+id/btnHeaderServerSettings"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginEnd="8.dp"
-            android:layout_toStartOf="@id/btnProfile"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_preferences"
-            app:tint="@color/gray_text"
-            android:visibility="gone" />
 
     </RelativeLayout>
 
-    <!-- Search Bar -->
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchViewHome"
-        android:layout_width="0.dp"
-        android:layout_height="wrap_content"
+    <!-- Search and Filter Bar -->
+    <LinearLayout
+        android:id="@+id/llSearchContainer"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
         android:layout_marginHorizontal="24.dp"
         android:layout_marginTop="20.dp"
-        android:background="@drawable/bg_search"
-        app:iconifiedByDefault="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/rlHeader"
-        app:queryBackground="@android:color/transparent"
-        app:queryHint="Restaurants or Dishes" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/rlHeader">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchViewHome"
+            android:layout_width="0.dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_search"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:theme="@style/SearchViewTheme"
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:queryHint="Search food, restaurants..." />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnFilter"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="12.dp"
+            app:cardBackgroundColor="@color/white"
+            app:strokeColor="#FFA672"
+            app:cardCornerRadius="12.dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="center"
+                android:src="@drawable/icon_filter"
+                 />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
 
     <!-- Main Content -->
     <androidx.core.widget.NestedScrollView
@@ -115,39 +134,29 @@
         android:layout_height="0.dp"
         android:layout_marginTop="16.dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/searchViewHome">
+        app:layout_constraintTop_toBottomOf="@id/llSearchContainer">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Category Filter -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvFilters"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16.dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_filter" />
+
 
             <!-- Promo Banner -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="180dp"
                 android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="24.dp"
                 app:cardCornerRadius="20.dp"
-                app:cardElevation="0dp">
+                app:cardElevation="0dp"
+                android:backgroundTint="@color/white">
 
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@android:drawable/ic_menu_gallery" />
+                    android:src="@drawable/burger" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -181,17 +190,29 @@
 
             </androidx.cardview.widget.CardView>
 
-            <!-- Nearby Restaurants Header -->
+            <!-- Category Filter -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvFilters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16.dp"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingHorizontal="24.dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_filter" />
+
+            <!-- Explore Restaurants Header -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
+                android:layout_marginTop="27.dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nearby Restaurants"
+                    android:text="@string/explore_restaurants"
                     android:textColor="@color/black"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -206,7 +227,7 @@
 
             </RelativeLayout>
 
-            <!-- Nearby Restaurants List -->
+            <!-- Explore Restaurants List -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
@@ -328,7 +349,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nearby"
+                android:text="@string/discover"
                 android:textColor="@color/gray_text"
                 android:textSize="10sp" />
         </LinearLayout>
