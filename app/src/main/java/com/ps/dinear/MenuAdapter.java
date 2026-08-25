@@ -46,15 +46,17 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         holder.name.setText(item.getName());
         holder.price.setText("₹" + item.getPrice());
 
+        String fullImageUrl = RetrofitClient.getFullUrl(context, item.getImageUrl());
         Glide.with(context)
-                .load(item.getImageUrl())
+                .load(fullImageUrl)
                 .into(holder.image);
 
         holder.btnViewAR.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ARActivity.class); // markerless ko lagi
-//            Intent intent = new Intent(context, ARAugmentedImage.class); // marker based ko lagi
-            intent.putExtra("modelUrl", item.getModelUrl());
+            Intent intent = new Intent(context, ARActivity.class);
+            intent.putExtra("foodName", item.getName());
+            intent.putExtra("modelUrl", RetrofitClient.getFullUrl(context, item.getModelUrl()));
             intent.putExtra("modelName", item.getModelName());
+            intent.putExtra("modelVersion", item.getModelVersion());
             context.startActivity(intent);
         });
     }

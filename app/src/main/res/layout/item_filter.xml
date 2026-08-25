@@ -12,7 +12,6 @@
         android:id="@+id/tvFilterName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:gravity="center"
         android:minWidth="80dp"
         android:paddingHorizontal="20.dp"

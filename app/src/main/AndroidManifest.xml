@@ -14,6 +14,7 @@ xmlns:tools="http://schemas.android.com/tools">
     android:required="true" />
 
 <application
+    android:name=".DineARApplication"
     android:usesCleartextTraffic="true"
     android:allowBackup="true"
     android:dataExtractionRules="@xml/data_extraction_rules"
@@ -32,9 +33,11 @@ xmlns:tools="http://schemas.android.com/tools">
 
     <activity android:name=".ServerConfigActivity" />
     <activity android:name=".location.LocationActivity" />
+    <activity android:name=".ProfileActivity" />
     <activity android:name=".menu.MenuActivity" />
     <activity android:name=".menu.FoodDetailsActivity" />
     <activity android:name=".RestaurantDetailsActivity" />
+    <activity android:name=".CategoryActivity" />
     <activity android:name=".auth.AuthActivity"
         android:exported="true">
         <intent-filter>

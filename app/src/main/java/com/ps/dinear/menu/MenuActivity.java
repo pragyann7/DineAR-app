@@ -45,32 +45,39 @@ public class MenuActivity extends AppCompatActivity {
     private void setupTabs() {
         RecyclerView rvTabs = findViewById(R.id.rvMenuTabs);
         List<String> tabs = new ArrayList<>();
-        tabs.add("Appetizers");
-        tabs.add("Mains");
-        tabs.add("Drinks");
+        tabs.add("All");
+        tabs.add("Popular");
+        tabs.add("Italian");
+        tabs.add("Burgers");
         tabs.add("Desserts");
+        tabs.add("Drinks");
 
-        tabAdapter = new FilterAdapter(this, tabs);
+        tabAdapter = new FilterAdapter(this, tabs, category -> filterMenuByCategory(category));
         rvTabs.setAdapter(tabAdapter);
     }
 
-    private List<MenuItem> menuList = new ArrayList<>();
+    private List<MenuItem> fullMenuList = new ArrayList<>();
 
     private void setupMenu() {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
         rvMenu.setLayoutManager(new LinearLayoutManager(this));
 
+        int restaurantId = getIntent().getIntExtra("restaurantId", -1);
         swipeRefreshLayout.setRefreshing(true);
 
-        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        apiService.getMenu().enqueue(new Callback<List<MenuItem>>() {
+        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        apiService.getMenu(restaurantId).enqueue(new Callback<List<MenuItem>>() {
             @Override
             public void onResponse(Call<List<MenuItem>> call, Response<List<MenuItem>> response) {
                 swipeRefreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    menuList = response.body();
-                    foodAdapter = new MenuFoodAdapter(MenuActivity.this, menuList, item -> openFoodDetails(item));
-                    rvMenu.setAdapter(foodAdapter);
+                    fullMenuList = response.body();
+                    if (fullMenuList.isEmpty()) {
+                        Toast.makeText(MenuActivity.this, "This restaurant has no menu items yet.", Toast.LENGTH_LONG).show();
+                    }
+                    displayMenuItems(fullMenuList);
+                } else {
+                    Toast.makeText(MenuActivity.this, "Server error: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -82,21 +89,30 @@ public class MenuActivity extends AppCompatActivity {
         });
     }
 
+    private void filterMenuByCategory(String category) {
+        if (category.equals("All")) {
+            displayMenuItems(fullMenuList);
+        } else {
+            List<MenuItem> filtered = new ArrayList<>();
+            for (MenuItem item : fullMenuList) {
+                if (item.getCategory() != null && item.getCategory().equalsIgnoreCase(category)) {
+                    filtered.add(item);
+                }
+            }
+            displayMenuItems(filtered);
+        }
+    }
+
+    private void displayMenuItems(List<MenuItem> items) {
+        RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
+        foodAdapter = new MenuFoodAdapter(this, items, item -> openFoodDetails(item));
+        rvMenu.setAdapter(foodAdapter);
+    }
+
     private void openFoodDetails(MenuItem item) {
         Intent intent = new Intent(this, FoodDetailsActivity.class);
-        intent.putExtra("foodName", item.getName());
-        intent.putExtra("foodPrice", item.getPrice());
-        intent.putExtra("foodDesc", item.getDescription());
-        intent.putExtra("foodImage", item.getImageUrl());
-        intent.putExtra("modelUrl", item.getModelUrl());
-        intent.putExtra("modelName", item.getModelName());
-        intent.putExtra("modelVersion", item.getModelVersion());
-        intent.putExtra("tag1", item.getTag1());
-        intent.putExtra("tag2", item.getTag2());
-        
-        // Pass the full menu list
-        intent.putExtra("menuList", new ArrayList<>(menuList));
-        
+        intent.putExtra("selectedItem", item);
+        // No longer passing fullMenuList to avoid Intent size limits
         startActivity(intent);
     }
 }
