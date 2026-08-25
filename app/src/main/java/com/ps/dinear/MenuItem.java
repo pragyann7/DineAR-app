@@ -1,6 +1,8 @@
 package com.ps.dinear;
 
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.io.Serializable;
 
 public class MenuItem implements Serializable {
@@ -10,6 +12,12 @@ public class MenuItem implements Serializable {
     
     @SerializedName("restaurant_id")
     private Integer restaurantId;
+
+    @SerializedName(value = "restaurant_name", alternate = {"restaurant_title", "restaurantName"})
+    private String restaurantName;
+
+    @SerializedName("restaurant")
+    private JsonElement restaurant;
     
     private String name;
     private double price;
@@ -55,7 +63,36 @@ public class MenuItem implements Serializable {
     }
 
     public int getId() { return id; }
-    public Integer getRestaurantId() { return restaurantId; }
+    public Integer getRestaurantId() {
+        if (restaurantId != null) return restaurantId;
+        if (restaurant != null && restaurant.isJsonPrimitive() && restaurant.getAsJsonPrimitive().isNumber()) {
+            return restaurant.getAsInt();
+        }
+        return null;
+    }
+    public String getRestaurantName() {
+        if (restaurantName != null && !restaurantName.isEmpty()) {
+            return restaurantName;
+        }
+        if (restaurant != null) {
+            if (restaurant.isJsonPrimitive()) {
+                if (restaurant.getAsJsonPrimitive().isString()) {
+                    return restaurant.getAsString();
+                }
+            } else if (restaurant.isJsonObject()) {
+                JsonObject obj = restaurant.getAsJsonObject();
+                if (obj.has("name")) {
+                    return obj.get("name").getAsString();
+                } else if (obj.has("restaurant_name")) {
+                    return obj.get("restaurant_name").getAsString();
+                } else if (obj.has("restaurant")) {
+                    JsonElement nested = obj.get("restaurant");
+                    if (nested.isJsonPrimitive()) return nested.getAsString();
+                }
+            }
+        }
+        return null;
+    }
     public String getName() { return name; }
     public double getPrice() { return price; }
     public String getDescription() { return description; }
