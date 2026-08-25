@@ -3,6 +3,8 @@ package com.ps.dinear;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -19,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ps.dinear.data.model.Restaurant;
 import com.ps.dinear.location.LocationActivity;
 import com.ps.dinear.menu.MenuActivity;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +33,20 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private RestaurantAdapter restaurantAdapter;
+    private MenuAdapter menuAdapter;
     private FilterAdapter filterAdapter;
     private ProgressBar progressBar;
     private TextView tvCurrentLocation;
     private TextView tvWelcome;
+    private TabLayout tabLayoutSearch;
     
     private String currentSearchQuery = "";
     private String currentCategory = "Home";
+    private List<Restaurant> lastResResults = new ArrayList<>();
+    private List<MenuItem> lastFoodResults = new ArrayList<>();
+
+    private Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
 
     private final ActivityResultLauncher<Intent> categoryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -89,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         setupSearchView();
         setupFilters();
         setupRestaurants();
+        setupTabs();
 
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
             Toast.makeText(this, "AR Scan coming soon!", Toast.LENGTH_SHORT).show();
@@ -104,6 +115,14 @@ public class MainActivity extends AppCompatActivity {
             intent.setData(Uri.parse(url));
             startActivity(intent);
         });
+
+        findViewById(R.id.btnRetry).setOnClickListener(v -> {
+            if (currentSearchQuery != null && !currentSearchQuery.isEmpty()) {
+                performSearch();
+            } else {
+                setupRestaurants();
+            }
+        });
     }
 
     private void setupSearchView() {
@@ -112,21 +131,55 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 currentSearchQuery = query;
-                performSearch();
+                if (!query.isEmpty()) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                    toggleHomeContent(false);
+                    if (tabLayoutSearch != null) tabLayoutSearch.setVisibility(View.VISIBLE);
+                    performSearch();
+                }
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 currentSearchQuery = newText;
+                searchHandler.removeCallbacks(searchRunnable);
+
                 if (newText.isEmpty()) {
+                    toggleHomeContent(true);
+                    if (tabLayoutSearch != null) {
+                        tabLayoutSearch.setVisibility(View.GONE);
+                        if (tabLayoutSearch.getTabAt(0) != null) {
+                            tabLayoutSearch.getTabAt(0).select();
+                        }
+                    }
                     setupRestaurants(); // Reset to normal list
                 } else {
-                    performSearch(); // Search as you type
+                    toggleHomeContent(false);
+                    if (tabLayoutSearch != null) tabLayoutSearch.setVisibility(View.VISIBLE);
+                    
+                    searchRunnable = () -> performSearch();
+                    searchHandler.postDelayed(searchRunnable, 400);
                 }
                 return true;
             }
         });
+    }
+
+    private void toggleHomeContent(boolean show) {
+        int visibility = show ? View.VISIBLE : View.GONE;
+        View promoBanner = findViewById(R.id.cvPromoBanner);
+        View filters = findViewById(R.id.rvFilters);
+        View header = findViewById(R.id.rlExploreHeader);
+        
+        if (promoBanner != null) promoBanner.setVisibility(visibility);
+        if (filters != null) filters.setVisibility(visibility);
+        if (header != null) header.setVisibility(visibility);
+
+        if (show) {
+            findViewById(R.id.llNoResults).setVisibility(View.GONE);
+            findViewById(R.id.llNetworkError).setVisibility(View.GONE);
+        }
     }
 
     private void setupFilters() {
@@ -150,8 +203,47 @@ public class MainActivity extends AppCompatActivity {
         rvFilters.setAdapter(filterAdapter);
     }
 
+    private void setupTabs() {
+        tabLayoutSearch = findViewById(R.id.tabLayoutSearch);
+        tabLayoutSearch.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                updateSearchResultsView();
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+    }
+
+    private void updateSearchResultsView() {
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        int selectedTab = tabLayoutSearch.getSelectedTabPosition();
+
+        if (selectedTab == 0) { // Restaurants
+            recyclerView.setAdapter(restaurantAdapter);
+            if (restaurantAdapter != null) {
+                restaurantAdapter.updateList(lastResResults);
+            }
+        } else { // Foods
+            if (menuAdapter == null) {
+                menuAdapter = new MenuAdapter(this);
+            }
+            menuAdapter.setRestaurants(lastResResults);
+            recyclerView.setAdapter(menuAdapter);
+            menuAdapter.setData(lastFoodResults);
+        }
+    }
+
     private void performSearch() {
         progressBar.setVisibility(View.VISIBLE);
+        findViewById(R.id.llNoResults).setVisibility(View.GONE);
+        findViewById(R.id.llNetworkError).setVisibility(View.GONE);
+        findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
+
         String city = SharedPrefManager.getCity(this);
         ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
         api.search(currentSearchQuery, city).enqueue(new Callback<com.ps.dinear.data.model.SearchResponse>() {
@@ -159,13 +251,23 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<com.ps.dinear.data.model.SearchResponse> call, Response<com.ps.dinear.data.model.SearchResponse> response) {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Restaurant> resResults = response.body().getRestaurants();
-                    List<MenuItem> foodResults = response.body().getFoodItems();
+                    lastResResults = response.body().getRestaurants();
+                    lastFoodResults = response.body().getFoodItems();
                     
-                    restaurantAdapter.updateList(resResults);
+                    updateSearchResultsView();
                     
-                    if (resResults.isEmpty() && foodResults.isEmpty()) {
-                        Toast.makeText(MainActivity.this, "No results found for \"" + currentSearchQuery + "\"", Toast.LENGTH_SHORT).show();
+                    // Scroll to top of results
+                    View scrollView = findViewById(R.id.nestedScrollView);
+                    if (scrollView != null) {
+                        scrollView.scrollTo(0, 0);
+                    }
+                    
+                    boolean noResults = lastResResults.isEmpty() && lastFoodResults.isEmpty();
+                    findViewById(R.id.llNoResults).setVisibility(noResults ? View.VISIBLE : View.GONE);
+                    findViewById(R.id.nestedScrollView).setVisibility(noResults ? View.GONE : View.VISIBLE);
+                    
+                    if (noResults) {
+                        ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No results for \"" + currentSearchQuery + "\"");
                     }
                 }
             }
@@ -173,7 +275,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<com.ps.dinear.data.model.SearchResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, "Search error", Toast.LENGTH_SHORT).show();
+                findViewById(R.id.llNetworkError).setVisibility(View.VISIBLE);
+                findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
             }
         });
     }
@@ -182,6 +285,10 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         progressBar = findViewById(R.id.progressBar);
+
+        findViewById(R.id.llNoResults).setVisibility(View.GONE);
+        findViewById(R.id.llNetworkError).setVisibility(View.GONE);
+        findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
 
         progressBar.setVisibility(View.VISIBLE);
         String selectedCity = SharedPrefManager.getCity(this);
@@ -204,19 +311,21 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("imageUrl", restaurant.getImageUrl());
                             startActivity(intent);
                         });
-                        recyclerView.setAdapter(restaurantAdapter);
                     } else {
                         restaurantAdapter.updateList(restaurants);
                     }
+                    recyclerView.setAdapter(restaurantAdapter);
+                    findViewById(R.id.nestedScrollView).setVisibility(View.VISIBLE);
                 } else {
-                    Toast.makeText(MainActivity.this, "Failed to load restaurants", Toast.LENGTH_SHORT).show();
+                    findViewById(R.id.llNetworkError).setVisibility(View.VISIBLE);
                 }
             }
 
             @Override
             public void onFailure(Call<List<Restaurant>> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                findViewById(R.id.llNetworkError).setVisibility(View.VISIBLE);
+                findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
             }
         });
     }
