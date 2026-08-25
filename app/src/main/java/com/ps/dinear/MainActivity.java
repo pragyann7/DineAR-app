@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 currentSearchQuery = query;
+                toggleHomeContent(false);
                 performSearch();
                 return true;
             }
@@ -120,13 +121,26 @@ public class MainActivity extends AppCompatActivity {
             public boolean onQueryTextChange(String newText) {
                 currentSearchQuery = newText;
                 if (newText.isEmpty()) {
+                    toggleHomeContent(true);
                     setupRestaurants(); // Reset to normal list
                 } else {
+                    toggleHomeContent(false);
                     performSearch(); // Search as you type
                 }
                 return true;
             }
         });
+    }
+
+    private void toggleHomeContent(boolean show) {
+        int visibility = show ? View.VISIBLE : View.GONE;
+        View promoBanner = findViewById(R.id.cvPromoBanner);
+        View filters = findViewById(R.id.rvFilters);
+        View header = findViewById(R.id.rlExploreHeader);
+        
+        if (promoBanner != null) promoBanner.setVisibility(visibility);
+        if (filters != null) filters.setVisibility(visibility);
+        if (header != null) header.setVisibility(visibility);
     }
 
     private void setupFilters() {
@@ -163,6 +177,12 @@ public class MainActivity extends AppCompatActivity {
                     List<MenuItem> foodResults = response.body().getFoodItems();
                     
                     restaurantAdapter.updateList(resResults);
+                    
+                    // Scroll to top of results
+                    View scrollView = findViewById(R.id.nestedScrollView);
+                    if (scrollView != null) {
+                        scrollView.scrollTo(0, 0);
+                    }
                     
                     if (resResults.isEmpty() && foodResults.isEmpty()) {
                         Toast.makeText(MainActivity.this, "No results found for \"" + currentSearchQuery + "\"", Toast.LENGTH_SHORT).show();
