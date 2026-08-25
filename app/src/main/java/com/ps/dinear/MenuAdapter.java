@@ -5,13 +5,14 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.menu.FoodDetailsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
 public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
 
     private List<MenuItem> list = new ArrayList<>();
+    private List<Restaurant> restaurants = new ArrayList<>();
     private Context context;
 
     public MenuAdapter(Context context) {
@@ -28,6 +30,10 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
     public void setData(List<MenuItem> newList) {
         this.list = newList;
         notifyDataSetChanged();
+    }
+
+    public void setRestaurants(List<Restaurant> restaurants) {
+        this.restaurants = restaurants;
     }
 
     @NonNull
@@ -44,7 +50,24 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         MenuItem item = list.get(position);
 
         holder.name.setText(item.getName());
-        holder.price.setText("₹" + item.getPrice());
+        holder.price.setText("Rs. " + (int)item.getPrice());
+
+        String resName = item.getRestaurantName();
+        if ((resName == null || resName.isEmpty()) && item.getRestaurantId() != null && restaurants != null) {
+            for (Restaurant r : restaurants) {
+                if (r.getId() == item.getRestaurantId().intValue()) {
+                    resName = r.getName();
+                    break;
+                }
+            }
+        }
+
+        if (resName != null && !resName.isEmpty()) {
+            holder.tvRestaurantName.setText(resName);
+            holder.tvRestaurantName.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvRestaurantName.setVisibility(View.GONE);
+        }
 
         String fullImageUrl = RetrofitClient.getFullUrl(context, item.getImageUrl());
         Glide.with(context)
@@ -53,10 +76,13 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
 
         holder.btnViewAR.setOnClickListener(v -> {
             Intent intent = new Intent(context, ARActivity.class);
-            intent.putExtra("foodName", item.getName());
-            intent.putExtra("modelUrl", RetrofitClient.getFullUrl(context, item.getModelUrl()));
-            intent.putExtra("modelName", item.getModelName());
-            intent.putExtra("modelVersion", item.getModelVersion());
+            intent.putExtra("selectedItem", item);
+            context.startActivity(intent);
+        });
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, FoodDetailsActivity.class);
+            intent.putExtra("selectedItem", item);
             context.startActivity(intent);
         });
     }
@@ -67,8 +93,8 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView name, price;
-        Button btnViewAR;
+        TextView name, price, tvRestaurantName;
+        View btnViewAR;
         ImageView image;
 
         public ViewHolder(@NonNull View itemView) {
@@ -76,6 +102,7 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
 
             name = itemView.findViewById(R.id.name);
             price = itemView.findViewById(R.id.price);
+            tvRestaurantName = itemView.findViewById(R.id.tvRestaurantName);
             btnViewAR = itemView.findViewById(R.id.btnViewAR);
 
             image = itemView.findViewById(R.id.image);

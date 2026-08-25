@@ -2,6 +2,7 @@ package com.ps.dinear.menu;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,7 +27,16 @@ public class FoodDetailsActivity extends AppCompatActivity {
         }
 
         ((TextView) findViewById(R.id.tvFoodNameDetails)).setText(item.getName());
-        ((TextView) findViewById(R.id.tvFoodPriceDetails)).setText("₹" + item.getPrice());
+        ((TextView) findViewById(R.id.tvFoodPriceDetails)).setText("Rs. " + (int)item.getPrice());
+        
+        TextView tvResName = findViewById(R.id.tvRestaurantNameDetails);
+        if (item.getRestaurantName() != null && !item.getRestaurantName().isEmpty()) {
+            tvResName.setText(item.getRestaurantName());
+            tvResName.setVisibility(View.VISIBLE);
+        } else {
+            tvResName.setVisibility(View.GONE);
+        }
+
         ((TextView) findViewById(R.id.tvDescriptionDetails)).setText(item.getDescription());
         ((TextView) findViewById(R.id.tvTagDetails1)).setText(item.getTag1());
         ((TextView) findViewById(R.id.tvTagDetails2)).setText(item.getTag2());
