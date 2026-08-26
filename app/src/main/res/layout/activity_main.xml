@@ -72,7 +72,7 @@
             android:layout_centerVertical="true"
             app:cardCornerRadius="24.dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/gray_light">
+            app:cardBackgroundColor="@color/white">
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

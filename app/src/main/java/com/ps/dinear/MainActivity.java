@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     
     private String currentSearchQuery = "";
     private String currentCategory = "Home";
+    private String currentSort = "";
+    private float currentMinRating = 0f;
     private List<Restaurant> lastResResults = new ArrayList<>();
     private List<MenuItem> lastFoodResults = new ArrayList<>();
 
@@ -93,7 +95,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnFilter).setOnClickListener(v -> {
-            Toast.makeText(this, "Filter coming soon!", Toast.LENGTH_SHORT).show();
+            SearchFilterBottomSheet bottomSheet = new SearchFilterBottomSheet(
+                (sort, rating) -> {
+                    currentSort = sort;
+                    currentMinRating = rating;
+                    updateSearchResultsView();
+                },
+                currentSort,
+                currentMinRating
+            );
+            bottomSheet.show(getSupportFragmentManager(), "filter");
         });
 
         setupSearchView();
@@ -146,6 +157,8 @@ public class MainActivity extends AppCompatActivity {
                 searchHandler.removeCallbacks(searchRunnable);
 
                 if (newText.isEmpty()) {
+                    currentSort = "";
+                    currentMinRating = 0f;
                     toggleHomeContent(true);
                     if (tabLayoutSearch != null) {
                         tabLayoutSearch.setVisibility(View.GONE);
@@ -221,20 +234,61 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateSearchResultsView() {
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        if (tabLayoutSearch == null) return;
+        
         int selectedTab = tabLayoutSearch.getSelectedTabPosition();
+        boolean hasResults = false;
 
         if (selectedTab == 0) { // Restaurants
+            List<Restaurant> filtered = new ArrayList<>(lastResResults);
+            
+            if (currentMinRating > 0) {
+                List<Restaurant> temp = new ArrayList<>();
+                for (Restaurant r : filtered) {
+                    if (r.getRating() >= currentMinRating) temp.add(r);
+                }
+                filtered = temp;
+            }
+
+            if (currentSort.equals("rating")) {
+                filtered.sort((r1, r2) -> Double.compare(r2.getRating(), r1.getRating()));
+            } else if (currentSort.equals("distance")) {
+                filtered.sort((r1, r2) -> Double.compare(r1.getDistance(), r2.getDistance()));
+            }
+            
+            hasResults = !filtered.isEmpty();
             recyclerView.setAdapter(restaurantAdapter);
             if (restaurantAdapter != null) {
-                restaurantAdapter.updateList(lastResResults);
+                restaurantAdapter.updateList(filtered);
             }
         } else { // Foods
+            List<MenuItem> filtered = new ArrayList<>(lastFoodResults);
+            
+            if (currentSort.equals("price")) {
+                filtered.sort((f1, f2) -> Double.compare(f1.getPrice(), f2.getPrice()));
+            }
+            
+            hasResults = !filtered.isEmpty();
             if (menuAdapter == null) {
                 menuAdapter = new MenuAdapter(this);
             }
             menuAdapter.setRestaurants(lastResResults);
             recyclerView.setAdapter(menuAdapter);
-            menuAdapter.setData(lastFoodResults);
+            menuAdapter.setData(filtered);
+        }
+
+        // Update Visibility
+        boolean globallyEmpty = lastResResults.isEmpty() && lastFoodResults.isEmpty();
+        if (globallyEmpty) {
+            findViewById(R.id.llNoResults).setVisibility(View.VISIBLE);
+            findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
+            ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No results for \"" + currentSearchQuery + "\"");
+        } else {
+            findViewById(R.id.llNoResults).setVisibility(hasResults ? View.GONE : View.VISIBLE);
+            findViewById(R.id.nestedScrollView).setVisibility(hasResults ? View.VISIBLE : View.GONE);
+            if (!hasResults) {
+                ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No results match your filters");
+            }
         }
     }
 
@@ -260,14 +314,6 @@ public class MainActivity extends AppCompatActivity {
                     View scrollView = findViewById(R.id.nestedScrollView);
                     if (scrollView != null) {
                         scrollView.scrollTo(0, 0);
-                    }
-                    
-                    boolean noResults = lastResResults.isEmpty() && lastFoodResults.isEmpty();
-                    findViewById(R.id.llNoResults).setVisibility(noResults ? View.VISIBLE : View.GONE);
-                    findViewById(R.id.nestedScrollView).setVisibility(noResults ? View.GONE : View.VISIBLE);
-                    
-                    if (noResults) {
-                        ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No results for \"" + currentSearchQuery + "\"");
                     }
                 }
             }

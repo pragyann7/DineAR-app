@@ -18,7 +18,7 @@
             android:id="@+id/btnBackMenu"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@android:drawable/ic_menu_revert"
+            android:src="@drawable/icon_back"
             app:tint="@color/orange_primary" />
 
         <TextView
