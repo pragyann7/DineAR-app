@@ -2,8 +2,11 @@ package com.ps.dinear;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.ps.dinear.data.model.Restaurant;
@@ -17,13 +20,15 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
 
     private int restaurantId;
     private String name;
+    private boolean isFavorite = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         // Set status bar color and light status bar
-        getWindow().setStatusBarColor(getResources().getColor(R.color.white));
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         androidx.core.view.WindowInsetsControllerCompat windowInsetsController =
                 androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         windowInsetsController.setAppearanceLightStatusBars(true);
@@ -50,6 +55,20 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
 
         findViewById(R.id.btnBackRestDetails).setOnClickListener(v -> finish());
 
+        ImageView btnFavorite = findViewById(R.id.btnFavoriteRest);
+        btnFavorite.setOnClickListener(v -> {
+            isFavorite = !isFavorite;
+            if (isFavorite) {
+                btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
+                btnFavorite.setColorFilter(getResources().getColor(R.color.red_600));
+                Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show();
+            } else {
+                btnFavorite.setImageResource(R.drawable.icon_favorite);
+                btnFavorite.setColorFilter(getResources().getColor(R.color.black));
+                Toast.makeText(this, "Removed from favorites", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         findViewById(R.id.btnViewMenu).setOnClickListener(v -> {
             Intent intent = new Intent(this, MenuActivity.class);
             intent.putExtra("restaurantId", restaurantId);
@@ -66,6 +85,14 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     Restaurant details = response.body();
                     ((TextView) findViewById(R.id.tvRestDescriptionDetails)).setText(details.getDescription());
+                    
+                    if (details.getDeliveryTime() != null) {
+                        ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(details.getDeliveryTime());
+                    }
+                    
+                    if (details.getDistance() > 0) {
+                        ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText(details.getDistance() + " km");
+                    }
                 }
             }
 
