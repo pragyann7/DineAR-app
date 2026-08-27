@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardFood"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="16.dp"
     app:cardCornerRadius="20.dp"
-    app:cardElevation="0dp">
+    app:cardElevation="2dp"
+    app:strokeColor="@color/orange_border"
+    app:strokeWidth="0dp">
 
     <LinearLayout
+        android:id="@+id/llFoodItemContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:orientation="horizontal"
         android:padding="12.dp">
 
@@ -60,29 +63,39 @@
             android:layout_marginStart="16.dp"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvFoodName"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_toStartOf="@id/tvFoodPrice"
+                    android:layout_weight="1"
                     android:textColor="@color/black"
                     android:textSize="16sp"
                     android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/ivFavoriteMenuFood"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_favorite_filled"
+                    android:visibility="gone"
+                    app:tint="@color/red_600" />
 
                 <TextView
                     android:id="@+id/tvFoodPrice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
                     android:textColor="@color/orange_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-            </RelativeLayout>
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvFoodDescription"
@@ -129,4 +142,4 @@
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

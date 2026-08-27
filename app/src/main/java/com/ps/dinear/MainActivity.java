@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         setupFilters();
         setupRestaurants();
         setupTabs();
+        FavoritesManager.getInstance().loadFavorites(this);
 
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
             Toast.makeText(this, "AR Scan coming soon!", Toast.LENGTH_SHORT).show();
@@ -123,6 +124,18 @@ public class MainActivity extends AppCompatActivity {
                 setupRestaurants();
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh adapters to show updated favorite status when returning from detail screens
+        if (restaurantAdapter != null) {
+            restaurantAdapter.notifyDataSetChanged();
+        }
+        if (menuAdapter != null) {
+            menuAdapter.notifyDataSetChanged();
+        }
     }
 
     private void setupSearchView() {
@@ -308,6 +321,9 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("restaurantName", restaurant.getName());
                             intent.putExtra("cuisine", restaurant.getCuisine());
                             intent.putExtra("rating", restaurant.getRating());
+                            intent.putExtra("description", restaurant.getDescription());
+                            intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
+                            intent.putExtra("distance", restaurant.getDistance());
                             intent.putExtra("imageUrl", restaurant.getImageUrl());
                             startActivity(intent);
                         });

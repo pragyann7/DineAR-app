@@ -42,6 +42,15 @@ public class MenuActivity extends AppCompatActivity {
         setupMenu();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh favorite status when returning from FoodDetailsActivity
+        if (foodAdapter != null) {
+            foodAdapter.notifyDataSetChanged();
+        }
+    }
+
     private void setupTabs() {
         RecyclerView rvTabs = findViewById(R.id.rvMenuTabs);
         List<String> tabs = new ArrayList<>();
