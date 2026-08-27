@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardRestaurant"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12.dp"
     app:cardCornerRadius="16.dp"
-    app:cardElevation="2dp">
+    app:cardElevation="2dp"
+    app:strokeColor="@color/orange_border"
+    app:strokeWidth="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clRestaurantItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:padding="12.dp">
 
         <androidx.cardview.widget.CardView
@@ -42,9 +45,21 @@
             android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/llRating"
+            app:layout_constraintEnd_toStartOf="@+id/ivFavoriteRestItem"
             app:layout_constraintStart_toEndOf="@id/cvImage"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/ivFavoriteRestItem"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_favorite_filled"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/tvRestaurantName"
+            app:layout_constraintEnd_toStartOf="@+id/llRating"
+            app:layout_constraintTop_toTopOf="@id/tvRestaurantName"
+            app:tint="@color/red_600" />
 
         <LinearLayout
             android:id="@+id/llRating"
@@ -146,4 +161,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardFoodSearch"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12.dp"
-    android:backgroundTint="@color/white"
     app:cardCornerRadius="16.dp"
     app:cardElevation="2dp"
+    app:strokeColor="@color/orange_border"
     app:strokeWidth="0dp">
 
     <LinearLayout
@@ -38,14 +38,32 @@
             android:orientation="vertical"
             android:paddingStart="16.dp">
 
-            <TextView
-                android:id="@+id/name"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Burger"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Burger"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
+
+                <ImageView
+                    android:id="@+id/ivFavoriteFood"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_favorite_filled"
+                    android:visibility="gone"
+                    app:tint="@color/red_600" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvRestaurantName"
@@ -68,24 +86,31 @@
 
         </LinearLayout>
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/btnViewAR"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            app:cardBackgroundColor="#FFF3E0"
-            app:cardCornerRadius="20.dp"
-            app:cardElevation="0dp">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:src="@android:drawable/ic_menu_camera"
-                app:tint="@color/orange_primary" />
-        </androidx.cardview.widget.CardView>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8.dp"
+            android:orientation="vertical">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/btnViewAR"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="#FFF3E0"
+                app:cardCornerRadius="20.dp"
+                app:cardElevation="0dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:tint="@color/orange_primary" />
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
 
     </LinearLayout>
 
