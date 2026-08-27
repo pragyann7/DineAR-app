@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        setContentView(R.layout.activity_main);
+        super.setContentView(R.layout.activity_main);
 
         tvWelcome = findViewById(R.id.tvWelcome);
         String userName = SharedPrefManager.getUserName(this).toUpperCase();

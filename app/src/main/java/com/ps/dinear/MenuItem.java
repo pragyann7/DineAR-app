@@ -35,7 +35,9 @@ public class MenuItem implements Serializable {
     @SerializedName("model_version")
     private String modelVersion;
     
-    private String category;
+    @SerializedName("category_name")
+    private String categoryName;
+    
     private String tag1;
     private String tag2;
     
@@ -56,7 +58,7 @@ public class MenuItem implements Serializable {
         this.modelName = modelName;
         this.modelVersion = modelVersion;
         this.description = "No description available.";
-        this.category = "General";
+        this.categoryName = "General";
         this.tag1 = "DineAR";
         this.tag2 = "Food";
         this.isAvailable = true;
@@ -100,7 +102,7 @@ public class MenuItem implements Serializable {
     public String getModelUrl() { return modelUrl; }
     public String getModelName() { return modelName; }
     public String getModelVersion() { return modelVersion; }
-    public String getCategory() { return category; }
+    public String getCategory() { return categoryName; }
     public String getTag1() { return tag1; }
     public String getTag2() { return tag2; }
     public boolean isAvailable() { return isAvailable; }

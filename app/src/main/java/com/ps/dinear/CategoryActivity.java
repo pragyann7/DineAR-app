@@ -9,7 +9,7 @@ public class CategoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_category);
+        super.setContentView(R.layout.activity_category);
 
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
 

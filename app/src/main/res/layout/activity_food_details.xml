@@ -30,36 +30,43 @@
 
                 <ImageView
                     android:id="@+id/btnBackDetails"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_margin="16.dp"
-                    android:background="@drawable/bg_circle_white"
-                    android:padding="8.dp"
-                    android:src="@android:drawable/ic_menu_revert"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="16.dp"
+                    android:layout_marginTop="50.dp"
+                    android:background="@drawable/bg_glass_circle"
+                    android:elevation="4dp"
+                    android:padding="10.dp"
+                    android:src="@drawable/icon_back"
                     app:tint="@color/black" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:layout_margin="16.dp"
+                    android:layout_marginTop="50.dp"
+                    android:layout_marginEnd="16.dp"
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_circle_white"
-                        android:padding="8.dp"
+                        android:id="@+id/btnShareFood"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_glass_circle"
+                        android:elevation="4dp"
+                        android:padding="10.dp"
                         android:src="@android:drawable/ic_menu_share"
                         app:tint="@color/black" />
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:id="@+id/btnFavoriteFoodDetails"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
                         android:layout_marginStart="12.dp"
-                        android:background="@drawable/bg_circle_white"
-                        android:padding="8.dp"
-                        android:src="@android:drawable/btn_star_big_off"
+                        android:background="@drawable/bg_glass_circle"
+                        android:elevation="4dp"
+                        android:padding="10.dp"
+                        android:src="@drawable/icon_favorite"
                         app:tint="@color/black" />
 
                 </LinearLayout>
@@ -71,6 +78,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-30dp"
                 android:background="@drawable/bg_top_rounded"
+                android:elevation="8dp"
                 android:orientation="vertical"
                 android:padding="24.dp">
 

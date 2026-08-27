@@ -22,7 +22,7 @@ public class LocationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_location);
+        super.setContentView(R.layout.activity_location);
 
         rvLocations = findViewById(R.id.rvLocations);
         SearchView searchView = findViewById(R.id.searchView);

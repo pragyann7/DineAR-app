@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -24,11 +25,12 @@ public class MenuActivity extends AppCompatActivity {
     private MenuFoodAdapter foodAdapter;
     private FilterAdapter tabAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private String currentSearchQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_menu);
+        super.setContentView(R.layout.activity_menu);
 
         String restaurantName = getIntent().getStringExtra("restaurantName");
         ((TextView) findViewById(R.id.tvRestaurantTitle)).setText(restaurantName);
@@ -38,8 +40,26 @@ public class MenuActivity extends AppCompatActivity {
         swipeRefreshLayout = findViewById(R.id.swipeRefreshMenu);
         swipeRefreshLayout.setOnRefreshListener(() -> setupMenu());
 
+        setupSearchView();
         setupTabs();
         setupMenu();
+    }
+
+    private void setupSearchView() {
+        SearchView searchView = findViewById(R.id.searchViewMenu);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                currentSearchQuery = newText;
+                filterMenu();
+                return true;
+            }
+        });
     }
 
     @Override
@@ -55,17 +75,20 @@ public class MenuActivity extends AppCompatActivity {
         RecyclerView rvTabs = findViewById(R.id.rvMenuTabs);
         List<String> tabs = new ArrayList<>();
         tabs.add("All");
-        tabs.add("Popular");
-        tabs.add("Italian");
-        tabs.add("Burgers");
-        tabs.add("Desserts");
+        tabs.add("Main Course");
+        tabs.add("Starter");
+        tabs.add("Momo");
+        tabs.add("Burger");
+        tabs.add("Pizza");
         tabs.add("Drinks");
+        tabs.add("Dessert");
 
         tabAdapter = new FilterAdapter(this, tabs, category -> filterMenuByCategory(category));
         rvTabs.setAdapter(tabAdapter);
     }
 
     private List<MenuItem> fullMenuList = new ArrayList<>();
+    private String currentCategory = "All";
 
     private void setupMenu() {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
@@ -99,23 +122,37 @@ public class MenuActivity extends AppCompatActivity {
     }
 
     private void filterMenuByCategory(String category) {
-        if (category.equals("All")) {
-            displayMenuItems(fullMenuList);
-        } else {
-            List<MenuItem> filtered = new ArrayList<>();
-            for (MenuItem item : fullMenuList) {
-                if (item.getCategory() != null && item.getCategory().equalsIgnoreCase(category)) {
-                    filtered.add(item);
-                }
+        currentCategory = category;
+        filterMenu();
+    }
+
+    private void filterMenu() {
+        List<MenuItem> filtered = new ArrayList<>();
+        String query = currentSearchQuery.toLowerCase().trim();
+
+        for (MenuItem item : fullMenuList) {
+            boolean matchesCategory = currentCategory.equals("All") || 
+                    (item.getCategory() != null && item.getCategory().equalsIgnoreCase(currentCategory));
+            
+            boolean matchesSearch = query.isEmpty() || 
+                    item.getName().toLowerCase().contains(query) || 
+                    (item.getDescription() != null && item.getDescription().toLowerCase().contains(query));
+
+            if (matchesCategory && matchesSearch) {
+                filtered.add(item);
             }
-            displayMenuItems(filtered);
         }
+        displayMenuItems(filtered);
     }
 
     private void displayMenuItems(List<MenuItem> items) {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
-        foodAdapter = new MenuFoodAdapter(this, items, item -> openFoodDetails(item));
-        rvMenu.setAdapter(foodAdapter);
+        if (foodAdapter == null) {
+            foodAdapter = new MenuFoodAdapter(this, new ArrayList<>(items), item -> openFoodDetails(item));
+            rvMenu.setAdapter(foodAdapter);
+        } else {
+            foodAdapter.updateList(items);
+        }
     }
 
     private void openFoodDetails(MenuItem item) {
