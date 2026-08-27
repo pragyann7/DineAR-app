@@ -26,7 +26,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
                 androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         windowInsetsController.setAppearanceLightStatusBars(true);
         
-        setContentView(R.layout.activity_restaurant_details);
+        super.setContentView(R.layout.activity_restaurant_details);
 
         restaurantId = getIntent().getIntExtra("restaurantId", -1);
         name = getIntent().getStringExtra("restaurantName");

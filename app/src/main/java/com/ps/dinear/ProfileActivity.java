@@ -13,7 +13,7 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile);
+        super.setContentView(R.layout.activity_profile);
 
         TextView tvName = findViewById(R.id.tvProfileName);
         TextView tvEmail = findViewById(R.id.tvProfileEmail);

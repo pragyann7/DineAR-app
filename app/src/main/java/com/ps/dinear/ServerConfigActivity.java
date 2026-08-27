@@ -18,7 +18,7 @@ public class ServerConfigActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(
+        super.setContentView(
                 R.layout.activity_server_config
         );
 

@@ -35,6 +35,11 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
         this.listener = listener;
     }
 
+    public void updateList(List<MenuItem> newList) {
+        this.list = newList;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

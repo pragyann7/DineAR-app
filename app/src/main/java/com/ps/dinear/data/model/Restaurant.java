@@ -8,7 +8,9 @@ public class Restaurant {
     private int id;
     private String name;
     private String description;
-    private String cuisine;
+    
+    @SerializedName("cuisine_names")
+    private List<String> cuisineNames;
     
     @SerializedName("price_range")
     private String priceRange;
@@ -22,34 +24,36 @@ public class Restaurant {
     @SerializedName("delivery_time")
     private String deliveryTime;
 
-    private String category;
+    @SerializedName("category_name")
+    private String categoryName;
 
     @SerializedName("menu_items")
     private List<MenuItem> menuItems;
 
-    public Restaurant(int id, String name, String description, String cuisine, String priceRange, double distance, double rating, String imageUrl, String deliveryTime, String category, List<MenuItem> menuItems) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.cuisine = cuisine;
-        this.priceRange = priceRange;
-        this.distance = distance;
-        this.rating = rating;
-        this.imageUrl = imageUrl;
-        this.deliveryTime = deliveryTime;
-        this.category = category;
-        this.menuItems = menuItems;
+    public Restaurant() {
     }
 
     public int getId() { return id; }
     public String getName() { return name; }
     public String getDescription() { return description; }
-    public String getCuisine() { return cuisine; }
+    
+    public List<String> getCuisineNames() { return cuisineNames; }
+    
+    public String getCuisine() {
+        if (cuisineNames == null || cuisineNames.isEmpty()) return "International";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < cuisineNames.size(); i++) {
+            sb.append(cuisineNames.get(i));
+            if (i < cuisineNames.size() - 1) sb.append(", ");
+        }
+        return sb.toString();
+    }
+    
     public String getPriceRange() { return priceRange; }
     public double getDistance() { return distance; }
     public double getRating() { return rating; }
     public String getImageUrl() { return imageUrl; }
     public String getDeliveryTime() { return deliveryTime; }
-    public String getCategory() { return category; }
+    public String getCategory() { return categoryName; }
     public List<MenuItem> getMenuItems() { return menuItems; }
 }

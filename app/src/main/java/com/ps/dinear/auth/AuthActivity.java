@@ -23,7 +23,7 @@ public class AuthActivity extends AppCompatActivity {
             return;
         }
 
-        setContentView(R.layout.activity_auth);
+        super.setContentView(R.layout.activity_auth);
 
         findViewById(R.id.btnServerSettings).setOnClickListener(v -> {
             startActivity(new Intent(this, ServerConfigActivity.class));
