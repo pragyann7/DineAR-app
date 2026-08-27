@@ -121,6 +121,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, ProfileActivity.class));
         });
 
+        findViewById(R.id.navFavorites).setOnClickListener(v -> {
+            startActivity(new Intent(this, FavoritesActivity.class));
+        });
+
         findViewById(R.id.btnRegisterRestaurant).setOnClickListener(v -> {
             String url = RetrofitClient.getBaseUrl() + "dashboard/register/";
             Intent intent = new Intent(Intent.ACTION_VIEW);

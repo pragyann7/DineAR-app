@@ -41,6 +41,9 @@ public interface ApiService {
     @GET("api/favorites/ids/")
     Call<FavoriteIdsResponse> getFavoriteIds(@Header("Authorization") String token);
 
+    @GET("api/favorites/details/")
+    Call<SearchResponse> getFavoriteDetails(@Header("Authorization") String token);
+
     @POST("api/favorites/")
     Call<Void> addFavorite(@Header("Authorization") String token, @Body FavoriteRequest request);
 
