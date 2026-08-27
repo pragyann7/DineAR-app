@@ -88,11 +88,11 @@ class ARViewModel : ViewModel() {
     private val _menuItems = mutableStateListOf<MenuItem>()
     val menuItems: List<MenuItem> = _menuItems
 
-    fun fetchMenu(context: android.content.Context, restaurantId: Int) {
+    fun fetchMenu(context: android.content.Context, restaurantSlug: String) {
         if (_menuItems.isNotEmpty()) return
 
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
-        api.getMenu(restaurantId).enqueue(object : retrofit2.Callback<List<MenuItem>> {
+        api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<List<MenuItem>> {
             override fun onResponse(call: retrofit2.Call<List<MenuItem>>, response: retrofit2.Response<List<MenuItem>>) {
                 if (response.isSuccessful && response.body() != null) {
                     _menuItems.clear()
@@ -132,6 +132,7 @@ class ARActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
+        val restaurantSlug = intent.getStringExtra("restaurantSlug")
 
         if (selectedItem == null) {
             Toast.makeText(this, "Error: Food item not found", Toast.LENGTH_SHORT).show()
@@ -139,8 +140,8 @@ class ARActivity : ComponentActivity() {
             return
         }
 
-        selectedItem.restaurantId?.let { id ->
-            viewModel.fetchMenu(this, id)
+        restaurantSlug?.let { slug ->
+            viewModel.fetchMenu(this, slug)
         }
 
         setContent {

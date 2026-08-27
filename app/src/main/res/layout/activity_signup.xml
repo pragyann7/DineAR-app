@@ -23,6 +23,22 @@
         android:inputType="text" />
 
     <EditText
+        android:id="@+id/etSignupFirstName"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16.dp"
+        android:hint="First Name"
+        android:inputType="textPersonName" />
+
+    <EditText
+        android:id="@+id/etSignupLastName"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16.dp"
+        android:hint="Last Name"
+        android:inputType="textPersonName" />
+
+    <EditText
         android:id="@+id/etSignupEmail"
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -31,20 +47,20 @@
         android:inputType="textEmailAddress" />
 
     <EditText
+        android:id="@+id/etSignupPhoneNumber"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16.dp"
+        android:hint="Phone Number"
+        android:inputType="phone" />
+
+    <EditText
         android:id="@+id/etSignupPassword"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="16.dp"
         android:hint="Password"
         android:inputType="textPassword" />
-
-    <EditText
-        android:id="@+id/etSignupPhone"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="16.dp"
-        android:hint="Phone Number"
-        android:inputType="phone" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSubmitSignup"

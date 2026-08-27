@@ -26,11 +26,11 @@ public interface ApiService {
         @Query("category") String category
     );
 
-    @GET("api/restaurants/{id}/")
-    Call<Restaurant> getRestaurantDetails(@Path("id") int id);
+    @GET("api/restaurants/{slug}/")
+    Call<Restaurant> getRestaurantDetails(@Path("slug") String slug);
 
-    @GET("api/menu-items/")
-    Call<List<MenuItem>> getMenu(@Query("restaurant") Integer restaurantId);
+    @GET("api/menu/restaurant/{slug}/")
+    Call<List<MenuItem>> getMenu(@Path("slug") String slug);
 
     @GET("api/search/")
     Call<SearchResponse> search(
