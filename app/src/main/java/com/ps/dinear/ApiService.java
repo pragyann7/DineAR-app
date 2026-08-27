@@ -3,13 +3,17 @@ package com.ps.dinear;
 import com.ps.dinear.auth.LoginRequest;
 import com.ps.dinear.auth.RegistrationRequest;
 import com.ps.dinear.auth.TokenResponse;
+import com.ps.dinear.data.model.FavoriteIdsResponse;
+import com.ps.dinear.data.model.FavoriteRequest;
 import com.ps.dinear.data.model.Restaurant;
 import com.ps.dinear.data.model.SearchResponse;
 
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -32,6 +36,19 @@ public interface ApiService {
     Call<SearchResponse> search(
         @Query("q") String query,
         @Query("city") String city
+    );
+
+    @GET("api/favorites/ids/")
+    Call<FavoriteIdsResponse> getFavoriteIds(@Header("Authorization") String token);
+
+    @POST("api/favorites/")
+    Call<Void> addFavorite(@Header("Authorization") String token, @Body FavoriteRequest request);
+
+    @DELETE("api/favorites/{type}/{id}/")
+    Call<Void> removeFavorite(
+        @Header("Authorization") String token,
+        @Path("type") String type,
+        @Path("id") int id
     );
 
     @POST("api/register/")

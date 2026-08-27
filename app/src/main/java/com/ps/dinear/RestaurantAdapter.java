@@ -6,10 +6,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.google.android.material.card.MaterialCardView;
 import com.ps.dinear.data.model.Restaurant;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.ViewHolder> {
@@ -65,6 +70,18 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
                 .centerCrop()
                 .into(holder.ivRestaurant);
 
+        // Favorite Logic (Premium Glow Effect)
+        boolean isFav = FavoritesManager.getInstance().isRestaurantFavorite(restaurant.getId());
+        if (isFav) {
+            holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.orange_fav_bg));
+            holder.cardView.setStrokeWidth(3); // Apply thin orange border
+            holder.ivFavorite.setVisibility(View.VISIBLE);
+        } else {
+            holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white));
+            holder.cardView.setStrokeWidth(0); // Hide border
+            holder.ivFavorite.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> listener.onRestaurantClick(restaurant));
     }
 
@@ -74,12 +91,15 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivRestaurant;
+        MaterialCardView cardView;
+        ImageView ivRestaurant, ivFavorite;
         TextView tvName, tvRating, tvCuisine, tvTime, tvDistance;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            cardView = (MaterialCardView) itemView;
             ivRestaurant = itemView.findViewById(R.id.ivRestaurant);
+            ivFavorite = itemView.findViewById(R.id.ivFavoriteRestItem);
             tvName = itemView.findViewById(R.id.tvRestaurantName);
             tvRating = itemView.findViewById(R.id.tvRating);
             tvCuisine = itemView.findViewById(R.id.tvCuisine);
