@@ -124,6 +124,7 @@ public class FavoritesActivity extends AppCompatActivity {
                 restaurantAdapter = new RestaurantAdapter(this, new ArrayList<>(favRestaurants), restaurant -> {
                     Intent intent = new Intent(this, RestaurantDetailsActivity.class);
                     intent.putExtra("restaurantId", restaurant.getId());
+                    intent.putExtra("restaurantSlug", restaurant.getSlug());
                     intent.putExtra("restaurantName", restaurant.getName());
                     intent.putExtra("cuisine", restaurant.getCuisine());
                     intent.putExtra("rating", restaurant.getRating());

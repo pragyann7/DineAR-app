@@ -13,6 +13,7 @@ import com.ps.dinear.menu.MenuActivity;
 public class RestaurantDetailsActivity extends AppCompatActivity {
 
     private int restaurantId;
+    private String restaurantSlug;
     private String name;
 
     @Override
@@ -29,6 +30,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         super.setContentView(R.layout.activity_restaurant_details);
 
         restaurantId = getIntent().getIntExtra("restaurantId", -1);
+        restaurantSlug = getIntent().getStringExtra("restaurantSlug");
         name = getIntent().getStringExtra("restaurantName");
         String cuisine = getIntent().getStringExtra("cuisine");
         double rating = getIntent().getDoubleExtra("rating", 0.0);
@@ -88,6 +90,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         findViewById(R.id.btnViewMenu).setOnClickListener(v -> {
             Intent intent = new Intent(this, MenuActivity.class);
             intent.putExtra("restaurantId", restaurantId);
+            intent.putExtra("restaurantSlug", restaurantSlug);
             intent.putExtra("restaurantName", name);
             startActivity(intent);
         });

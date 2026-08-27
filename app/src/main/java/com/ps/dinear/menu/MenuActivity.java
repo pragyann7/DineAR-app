@@ -94,11 +94,11 @@ public class MenuActivity extends AppCompatActivity {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
         rvMenu.setLayoutManager(new LinearLayoutManager(this));
 
-        int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+        String restaurantSlug = getIntent().getStringExtra("restaurantSlug");
         swipeRefreshLayout.setRefreshing(true);
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getMenu(restaurantId).enqueue(new Callback<List<MenuItem>>() {
+        apiService.getMenu(restaurantSlug).enqueue(new Callback<List<MenuItem>>() {
             @Override
             public void onResponse(Call<List<MenuItem>> call, Response<List<MenuItem>> response) {
                 swipeRefreshLayout.setRefreshing(false);
@@ -158,6 +158,7 @@ public class MenuActivity extends AppCompatActivity {
     private void openFoodDetails(MenuItem item) {
         Intent intent = new Intent(this, FoodDetailsActivity.class);
         intent.putExtra("selectedItem", item);
+        intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
         // No longer passing fullMenuList to avoid Intent size limits
         startActivity(intent);
     }

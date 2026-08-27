@@ -24,23 +24,27 @@ public class SignupActivity extends AppCompatActivity {
         super.setContentView(R.layout.activity_signup);
 
         EditText etUsername = findViewById(R.id.etSignupUsername);
+        EditText etFirstName = findViewById(R.id.etSignupFirstName);
+        EditText etLastName = findViewById(R.id.etSignupLastName);
         EditText etEmail = findViewById(R.id.etSignupEmail);
+        EditText etPhoneNumber = findViewById(R.id.etSignupPhoneNumber);
         EditText etPassword = findViewById(R.id.etSignupPassword);
-        EditText etPhone = findViewById(R.id.etSignupPhone);
 
         findViewById(R.id.btnSubmitSignup).setOnClickListener(v -> {
             String username = etUsername.getText().toString().trim();
+            String firstName = etFirstName.getText().toString().trim();
+            String lastName = etLastName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
+            String phoneNumber = etPhoneNumber.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
-            String phone = etPhone.getText().toString().trim();
 
-            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (username.isEmpty() || firstName.isEmpty() || email.isEmpty() || phoneNumber.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            RegistrationRequest request = new RegistrationRequest(username, email, password, phone);
-            ApiService api = RetrofitClient.getClient().create(ApiService.class);
+            RegistrationRequest request = new RegistrationRequest(username, email, phoneNumber, firstName, lastName, password);
+            ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
             
             api.register(request).enqueue(new Callback<Void>() {
                 @Override

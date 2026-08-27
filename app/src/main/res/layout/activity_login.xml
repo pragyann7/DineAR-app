@@ -15,12 +15,12 @@
         android:textStyle="bold" />
 
     <EditText
-        android:id="@+id/etLoginUsername"
+        android:id="@+id/etLoginEmail"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="32.dp"
-        android:hint="Username"
-        android:inputType="text" />
+        android:hint="Email"
+        android:inputType="textEmailAddress" />
 
     <EditText
         android:id="@+id/etLoginPassword"
