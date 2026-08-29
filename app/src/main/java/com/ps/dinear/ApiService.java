@@ -33,6 +33,9 @@ public interface ApiService {
         @Query("category") String category
     );
 
+    @GET("api/restaurants/categories/")
+    Call<List<Restaurant.Category>> getCategories();
+
     @GET("api/restaurants/{slug}/")
     Call<Restaurant> getRestaurantDetails(@Path("slug") String slug);
 

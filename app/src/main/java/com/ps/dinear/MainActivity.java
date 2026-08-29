@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
 
+    private CartManager.CartListener cartListener = this::updateCartBadge;
+
     private final ActivityResultLauncher<Intent> categoryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -118,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
         setupRestaurants();
         setupTabs();
         FavoritesManager.getInstance().loadFavorites(this);
+        CartManager.getInstance().addListener(cartListener);
 
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
             Toast.makeText(this, "AR Scan coming soon!", Toast.LENGTH_SHORT).show();
@@ -158,6 +161,12 @@ public class MainActivity extends AppCompatActivity {
         if (menuAdapter != null) {
             menuAdapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        CartManager.getInstance().removeListener(cartListener);
     }
 
     private void updateCartBadge() {
@@ -232,23 +241,47 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupFilters() {
         RecyclerView rvFilters = findViewById(R.id.rvFilters);
-        List<String> filters = new ArrayList<>();
-        filters.add("Home");
-        filters.add("Veg Restaurants");
-        filters.add("Non Veg Restaurants");
-        filters.add("Fast Food");
-        filters.add("Café");
-        filters.add("More →");
+        ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
+        api.getCategories().enqueue(new Callback<List<Restaurant.Category>>() {
+            @Override
+            public void onResponse(Call<List<Restaurant.Category>> call, Response<List<Restaurant.Category>> response) {
+                List<String> filters = new ArrayList<>();
+                filters.add("Home");
+                if (response.isSuccessful() && response.body() != null) {
+                    for (Restaurant.Category cat : response.body()) {
+                        filters.add(cat.getName());
+                    }
+                }
+                filters.add("More →");
 
-        filterAdapter = new FilterAdapter(this, filters, category -> {
-            if (category.equals("More →")) {
-                categoryLauncher.launch(new Intent(this, CategoryActivity.class));
-            } else {
-                currentCategory = category;
-                setupRestaurants(); // Fetch with category filter
+                filterAdapter = new FilterAdapter(MainActivity.this, filters, category -> {
+                    if (category.equals("More →")) {
+                        categoryLauncher.launch(new Intent(MainActivity.this, CategoryActivity.class));
+                    } else {
+                        currentCategory = category;
+                        setupRestaurants(); // Fetch with category filter
+                    }
+                });
+                rvFilters.setAdapter(filterAdapter);
+            }
+
+            @Override
+            public void onFailure(Call<List<Restaurant.Category>> call, Throwable t) {
+                // Fallback to minimal hardcoded if API fails
+                List<String> filters = new ArrayList<>();
+                filters.add("Home");
+                filters.add("More →");
+                filterAdapter = new FilterAdapter(MainActivity.this, filters, category -> {
+                    if (category.equals("More →")) {
+                        categoryLauncher.launch(new Intent(MainActivity.this, CategoryActivity.class));
+                    } else {
+                        currentCategory = category;
+                        setupRestaurants();
+                    }
+                });
+                rvFilters.setAdapter(filterAdapter);
             }
         });
-        rvFilters.setAdapter(filterAdapter);
     }
 
     private void setupTabs() {

@@ -108,6 +108,7 @@ public class MenuItem implements Serializable {
     
     public Integer getCategoryId() { return categoryId; }
     public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public boolean has3d() { return getModelUrl() != null; }
     public String getStatus() { return status; }
     public boolean isFeatured() { return isFeatured; }
