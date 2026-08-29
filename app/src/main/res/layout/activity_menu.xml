@@ -30,6 +30,34 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
+        <RelativeLayout
+            android:id="@+id/btnCartMenu"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerInParent="true"
+                android:src="@drawable/icon_foodcart" />
+
+            <TextView
+                android:id="@+id/tvCartBadgeMenu"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:background="@drawable/bg_badge_red"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+
     </RelativeLayout>
 
     <!-- Search Bar -->

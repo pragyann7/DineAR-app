@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.ps.dinear.ARActivity;
+import com.ps.dinear.CartManager;
 import com.ps.dinear.FavoritesManager;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.R;
@@ -96,6 +97,16 @@ public class FoodDetailsActivity extends AppCompatActivity {
             intent.putExtra("selectedItem", item);
             intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
             startActivity(intent);
+        });
+
+        findViewById(R.id.btnAddToCart).setOnClickListener(v -> {
+            int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+            if (restaurantId != -1) {
+                CartManager.getInstance().addItem(item, restaurantId);
+                Toast.makeText(this, "Added to cart!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Error: Restaurant ID missing", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

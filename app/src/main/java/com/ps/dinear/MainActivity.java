@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvCurrentLocation;
     private TextView tvWelcome;
     private TabLayout tabLayoutSearch;
+    private TextView tvCartBadge;
     
     private String currentSearchQuery = "";
     private String currentCategory = "Home";
@@ -89,6 +90,11 @@ public class MainActivity extends AppCompatActivity {
         tvCurrentLocation = findViewById(R.id.tvCurrentLocation);
         String locationText = SharedPrefManager.getCity(this) + ", " + SharedPrefManager.getDistrict(this);
         tvCurrentLocation.setText(locationText);
+
+        tvCartBadge = findViewById(R.id.tvCartBadge);
+        findViewById(R.id.btnCart).setOnClickListener(v -> {
+            startActivity(new Intent(this, CartActivity.class));
+        });
 
         findViewById(R.id.btnChangeLocation).setOnClickListener(v -> {
             startActivity(new Intent(this, LocationActivity.class));
@@ -144,12 +150,24 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateCartBadge();
         // Refresh adapters to show updated favorite status when returning from detail screens
         if (restaurantAdapter != null) {
             restaurantAdapter.notifyDataSetChanged();
         }
         if (menuAdapter != null) {
             menuAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void updateCartBadge() {
+        if (tvCartBadge == null) return;
+        int count = CartManager.getInstance().getItemCount();
+        if (count > 0) {
+            tvCartBadge.setText(String.valueOf(count));
+            tvCartBadge.setVisibility(View.VISIBLE);
+        } else {
+            tvCartBadge.setVisibility(View.GONE);
         }
     }
 
