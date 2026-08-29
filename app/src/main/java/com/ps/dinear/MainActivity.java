@@ -376,6 +376,7 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
                             intent.putExtra("distance", restaurant.getDistance());
                             intent.putExtra("imageUrl", restaurant.getImageUrl());
+                            intent.putExtra("bannerImage", restaurant.getBannerImage());
                             startActivity(intent);
                         });
                     } else {

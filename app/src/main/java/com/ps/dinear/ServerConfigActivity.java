@@ -65,7 +65,8 @@ public class ServerConfigActivity
                             "/";
 
             RetrofitClient.initialize(
-                    baseUrl
+                    baseUrl,
+                    this
             );
 
             startActivity(

@@ -1,6 +1,7 @@
 package com.ps.dinear;
 
 import com.ps.dinear.auth.LoginRequest;
+import com.ps.dinear.auth.RefreshRequest;
 import com.ps.dinear.auth.RegistrationRequest;
 import com.ps.dinear.auth.RegistrationResponse;
 import com.ps.dinear.auth.ResendOtpRequest;
@@ -69,4 +70,7 @@ public interface ApiService {
 
     @POST("api/auth/login/")
     Call<TokenResponse> login(@Body LoginRequest request);
+
+    @POST("api/auth/token/refresh/")
+    Call<TokenResponse> refreshToken(@Body RefreshRequest request);
 }
