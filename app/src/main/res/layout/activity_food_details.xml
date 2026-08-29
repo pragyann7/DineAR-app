@@ -204,6 +204,7 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
         <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnAddToCart"
             android:layout_width="0.dp"
             android:layout_height="56dp"
             android:layout_weight="1"

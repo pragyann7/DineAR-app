@@ -2,6 +2,7 @@ package com.ps.dinear.menu;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +27,7 @@ public class MenuActivity extends AppCompatActivity {
     private MenuFoodAdapter foodAdapter;
     private FilterAdapter tabAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private TextView tvCartBadge;
     private String currentSearchQuery = "";
 
     @Override
@@ -37,6 +39,11 @@ public class MenuActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvRestaurantTitle)).setText(restaurantName);
 
         findViewById(R.id.btnBackMenu).setOnClickListener(v -> finish());
+
+        tvCartBadge = findViewById(R.id.tvCartBadgeMenu);
+        findViewById(R.id.btnCartMenu).setOnClickListener(v -> {
+            startActivity(new Intent(this, com.ps.dinear.CartActivity.class));
+        });
 
         swipeRefreshLayout = findViewById(R.id.swipeRefreshMenu);
         swipeRefreshLayout.setOnRefreshListener(() -> setupMenu());
@@ -66,9 +73,21 @@ public class MenuActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateCartBadge();
         // Refresh favorite status when returning from FoodDetailsActivity
         if (foodAdapter != null) {
             foodAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void updateCartBadge() {
+        if (tvCartBadge == null) return;
+        int count = com.ps.dinear.CartManager.getInstance().getItemCount();
+        if (count > 0) {
+            tvCartBadge.setText(String.valueOf(count));
+            tvCartBadge.setVisibility(View.VISIBLE);
+        } else {
+            tvCartBadge.setVisibility(View.GONE);
         }
     }
 
@@ -158,10 +177,13 @@ public class MenuActivity extends AppCompatActivity {
 
     private void displayMenuItems(List<MenuItem> items) {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
+        int restaurantId = getIntent().getIntExtra("restaurantId", -1);
         if (foodAdapter == null) {
             foodAdapter = new MenuFoodAdapter(this, new ArrayList<>(items), item -> openFoodDetails(item));
+            foodAdapter.setRestaurantId(restaurantId);
             rvMenu.setAdapter(foodAdapter);
         } else {
+            foodAdapter.setRestaurantId(restaurantId);
             foodAdapter.updateList(items);
         }
     }
@@ -169,6 +191,7 @@ public class MenuActivity extends AppCompatActivity {
     private void openFoodDetails(MenuItem item) {
         Intent intent = new Intent(this, FoodDetailsActivity.class);
         intent.putExtra("selectedItem", item);
+        intent.putExtra("restaurantId", getIntent().getIntExtra("restaurantId", -1));
         intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
         // No longer passing fullMenuList to avoid Intent size limits
         startActivity(intent);

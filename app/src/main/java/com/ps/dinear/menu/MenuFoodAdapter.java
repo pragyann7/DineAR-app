@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.card.MaterialCardView;
+import com.ps.dinear.CartManager;
 import com.ps.dinear.FavoritesManager;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.R;
@@ -24,6 +25,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
     private Context context;
     private List<MenuItem> list;
     private OnFoodClickListener listener;
+    private int restaurantId;
 
     public interface OnFoodClickListener {
         void onFoodClick(MenuItem item);
@@ -33,6 +35,10 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
         this.context = context;
         this.list = list;
         this.listener = listener;
+    }
+    
+    public void setRestaurantId(int restaurantId) {
+        this.restaurantId = restaurantId;
     }
 
     public void updateList(List<MenuItem> newList) {
@@ -71,6 +77,13 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
             holder.ivFavorite.setVisibility(View.GONE);
         }
 
+        holder.btnAddToCart.setOnClickListener(v -> {
+            if (restaurantId != -1) {
+                CartManager.getInstance().addItem(item, restaurantId);
+                Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         holder.itemView.setOnClickListener(v -> listener.onFoodClick(item));
     }
 
@@ -81,7 +94,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
-        ImageView ivFood, ivFavorite;
+        ImageView ivFood, ivFavorite, btnAddToCart;
         TextView tvName, tvPrice, tvDescription, tvTag1, tvTag2;
 
         public ViewHolder(@NonNull View itemView) {
@@ -89,6 +102,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
             cardView = (MaterialCardView) itemView;
             ivFood = itemView.findViewById(R.id.ivFood);
             ivFavorite = itemView.findViewById(R.id.ivFavoriteMenuFood);
+            btnAddToCart = itemView.findViewById(R.id.btnAddToCartMenu);
             tvName = itemView.findViewById(R.id.tvFoodName);
             tvPrice = itemView.findViewById(R.id.tvFoodPrice);
             tvDescription = itemView.findViewById(R.id.tvFoodDescription);

@@ -39,6 +39,8 @@ xmlns:tools="http://schemas.android.com/tools">
     <activity android:name=".menu.FoodDetailsActivity" />
     <activity android:name=".RestaurantDetailsActivity" />
     <activity android:name=".CategoryActivity" />
+    <activity android:name=".CartActivity" />
+    <activity android:name=".OrdersActivity" />
     <activity android:name=".auth.AuthActivity"
         android:exported="true">
         <intent-filter>

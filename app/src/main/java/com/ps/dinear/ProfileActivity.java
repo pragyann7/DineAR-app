@@ -23,6 +23,10 @@ public class ProfileActivity extends AppCompatActivity {
 
         findViewById(R.id.btnBackProfile).setOnClickListener(v -> finish());
 
+        findViewById(R.id.btnProfileOrders).setOnClickListener(v -> {
+            startActivity(new Intent(this, OrdersActivity.class));
+        });
+
         findViewById(R.id.btnProfileRegisterRestaurant).setOnClickListener(v -> {
             String url = RetrofitClient.getBaseUrl() + "dashboard/register/";
             Intent intent = new Intent(Intent.ACTION_VIEW);

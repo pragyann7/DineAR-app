@@ -9,6 +9,8 @@ import com.ps.dinear.auth.TokenResponse;
 import com.ps.dinear.auth.VerifyOtpRequest;
 import com.ps.dinear.data.model.FavoriteIdsResponse;
 import com.ps.dinear.data.model.FavoriteRequest;
+import com.ps.dinear.data.model.Order;
+import com.ps.dinear.data.model.OrderRequest;
 import com.ps.dinear.data.model.Restaurant;
 import com.ps.dinear.data.model.RestaurantMenuResponse;
 import com.ps.dinear.data.model.SearchResponse;
@@ -73,4 +75,14 @@ public interface ApiService {
 
     @POST("api/auth/token/refresh/")
     Call<TokenResponse> refreshToken(@Body RefreshRequest request);
+
+    // Orders
+    @POST("api/orders/")
+    Call<Order> placeOrder(@Header("Authorization") String token, @Body OrderRequest request);
+
+    @GET("api/orders/")
+    Call<List<Order>> getOrders(@Header("Authorization") String token);
+
+    @GET("api/orders/{id}/")
+    Call<Order> getOrderDetails(@Header("Authorization") String token, @Path("id") int id);
 }
