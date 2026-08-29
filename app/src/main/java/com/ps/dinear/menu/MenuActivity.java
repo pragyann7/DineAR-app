@@ -10,6 +10,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import com.ps.dinear.CartManager;
 import com.ps.dinear.ApiService;
 import com.ps.dinear.FilterAdapter;
 import com.ps.dinear.MenuItem;
@@ -29,6 +30,9 @@ public class MenuActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private TextView tvCartBadge;
     private String currentSearchQuery = "";
+    private List<MenuItem> fullMenuList = new ArrayList<>();
+    private String currentCategory = "All";
+    private CartManager.CartListener cartListener = this::updateCartBadge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +53,9 @@ public class MenuActivity extends AppCompatActivity {
         swipeRefreshLayout.setOnRefreshListener(() -> setupMenu());
 
         setupSearchView();
-        setupTabs();
+        // setupTabs(); // Tabs will be setup inside setupMenu now
         setupMenu();
+        CartManager.getInstance().addListener(cartListener);
     }
 
     private void setupSearchView() {
@@ -80,6 +85,12 @@ public class MenuActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        CartManager.getInstance().removeListener(cartListener);
+    }
+
     private void updateCartBadge() {
         if (tvCartBadge == null) return;
         int count = com.ps.dinear.CartManager.getInstance().getItemCount();
@@ -90,25 +101,6 @@ public class MenuActivity extends AppCompatActivity {
             tvCartBadge.setVisibility(View.GONE);
         }
     }
-
-    private void setupTabs() {
-        RecyclerView rvTabs = findViewById(R.id.rvMenuTabs);
-        List<String> tabs = new ArrayList<>();
-        tabs.add("All");
-        tabs.add("Main Course");
-        tabs.add("Starter");
-        tabs.add("Momo");
-        tabs.add("Burger");
-        tabs.add("Pizza");
-        tabs.add("Drinks");
-        tabs.add("Dessert");
-
-        tabAdapter = new FilterAdapter(this, tabs, category -> filterMenuByCategory(category));
-        rvTabs.setAdapter(tabAdapter);
-    }
-
-    private List<MenuItem> fullMenuList = new ArrayList<>();
-    private String currentCategory = "All";
 
     private void setupMenu() {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
@@ -123,12 +115,29 @@ public class MenuActivity extends AppCompatActivity {
             public void onResponse(Call<RestaurantMenuResponse> call, Response<RestaurantMenuResponse> response) {
                 swipeRefreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    List<MenuItem> flattenedList = new ArrayList<>();
                     RestaurantMenuResponse body = response.body();
+                    
+                    // 1. Setup Tabs
+                    List<String> tabs = new ArrayList<>();
+                    tabs.add("All");
+                    if (body.getCategories() != null) {
+                        for (RestaurantMenuResponse.CategoryGroup group : body.getCategories()) {
+                            tabs.add(group.getName());
+                        }
+                    }
+                    RecyclerView rvTabs = findViewById(R.id.rvMenuTabs);
+                    tabAdapter = new FilterAdapter(MenuActivity.this, tabs, category -> filterMenuByCategory(category));
+                    rvTabs.setAdapter(tabAdapter);
+
+                    // 2. Flatten and display menu
+                    List<MenuItem> flattenedList = new ArrayList<>();
                     if (body.getCategories() != null) {
                         for (RestaurantMenuResponse.CategoryGroup group : body.getCategories()) {
                             if (group.getMenuItems() != null) {
-                                flattenedList.addAll(group.getMenuItems());
+                                for (MenuItem item : group.getMenuItems()) {
+                                    item.setCategory(group.getName());
+                                    flattenedList.add(item);
+                                }
                             }
                         }
                     }

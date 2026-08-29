@@ -95,6 +95,7 @@ public class FoodDetailsActivity extends AppCompatActivity {
         findViewById(R.id.btnViewARDetails).setOnClickListener(v -> {
             Intent intent = new Intent(this, ARActivity.class);
             intent.putExtra("selectedItem", item);
+            intent.putExtra("restaurantId", getIntent().getIntExtra("restaurantId", -1));
             intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
             startActivity(intent);
         });

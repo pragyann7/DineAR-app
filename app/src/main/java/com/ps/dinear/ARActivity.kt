@@ -99,6 +99,28 @@ class ARViewModel : ViewModel() {
 
     private val _favoriteFoods = mutableStateListOf<MenuItem>()
     val favoriteFoods: List<MenuItem> = _favoriteFoods
+    
+    var cartItemCount by mutableIntStateOf(CartManager.getInstance().itemCount)
+        private set
+        
+    private val _cartItems = mutableStateListOf<CartItem>()
+    val cartItems: List<CartItem> = _cartItems
+
+    private val cartListener = CartManager.CartListener {
+        cartItemCount = CartManager.getInstance().itemCount
+        _cartItems.clear()
+        _cartItems.addAll(CartManager.getInstance().items)
+    }
+
+    init {
+        CartManager.getInstance().addListener(cartListener)
+        _cartItems.addAll(CartManager.getInstance().items)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        CartManager.getInstance().removeListener(cartListener)
+    }
 
     fun fetchMenu(context: android.content.Context, restaurantSlug: String) {
         if (_menuItems.isNotEmpty()) return
@@ -109,7 +131,10 @@ class ARViewModel : ViewModel() {
                 if (response.isSuccessful && response.body() != null) {
                     val flattenedList = mutableListOf<MenuItem>()
                     response.body()?.categories?.forEach { group ->
-                        group.menuItems?.let { flattenedList.addAll(it) }
+                        group.menuItems?.forEach { item ->
+                            item.category = group.name
+                            flattenedList.add(item)
+                        }
                     }
                     _menuItems.clear()
                     _menuItems.addAll(flattenedList)
@@ -179,12 +204,17 @@ class ARActivity : ComponentActivity() {
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
         val restaurantSlug = intent.getStringExtra("restaurantSlug")
-        val restaurantId = intent.getIntExtra("restaurantId", -1)
+        var restaurantId = intent.getIntExtra("restaurantId", -1)
 
         if (selectedItem == null) {
             Toast.makeText(this, "Error: Food item not found", Toast.LENGTH_SHORT).show()
             finish()
             return
+        }
+        
+        // Fallback: Try to get restaurant ID from the selected item if not in intent
+        if (restaurantId == -1) {
+            restaurantId = selectedItem.restaurantId ?: -1
         }
 
         restaurantSlug?.let { slug ->
@@ -814,7 +844,7 @@ private fun MenuOverlay(
     val context = LocalContext.current
     
     LaunchedEffect(activeTab) {
-        if (activeTab == "ORDERS") {
+        if (activeTab == "CART") {
             viewModel.fetchOrders(context)
         } else if (activeTab == "FAVORITES") {
             viewModel.fetchFavorites(context)
@@ -847,8 +877,7 @@ private fun MenuOverlay(
 
                     Text(
                         text = when (activeTab) {
-                            "ORDERS" -> "My Orders"
-                            "CART" -> "My Cart"
+                            "CART" -> "Cart & Orders"
                             "FAVORITES" -> "My Favorites"
                             else -> "Menu"
                         },
@@ -859,21 +888,29 @@ private fun MenuOverlay(
 
                     Box {
                         IconButton(onClick = { activeTab = "CART" }) {
-                            Icon(Icons.Outlined.ShoppingCart, null, tint = Color.Black)
-                        }
-                        Surface(
-                            modifier = Modifier.size(18.dp).align(Alignment.TopEnd),
-                            color = Color(0xFF6B6B00),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                text = CartManager.getInstance().itemCount.toString(),
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 1.dp)
+                            Icon(
+                                imageVector = if (activeTab == "CART") Icons.Filled.ShoppingCart else Icons.Outlined.ShoppingCart,
+                                contentDescription = null,
+                                tint = if (activeTab == "CART") DINEAR_ORANGE else Color.Black
                             )
+                        }
+                        
+                        val cartCount = viewModel.cartItemCount
+                        if (cartCount > 0) {
+                            Surface(
+                                modifier = Modifier.size(18.dp).align(Alignment.TopEnd),
+                                color = Color.Red,
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = cartCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 1.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -882,8 +919,7 @@ private fun MenuOverlay(
                     when (activeTab) {
                         "MENU" -> MenuTabContent(menuList, restaurantId, downloadStates, onItemSelected)
                         "FAVORITES" -> FavoritesTabContent(viewModel.favoriteFoods, downloadStates, onItemSelected)
-                        "ORDERS" -> OrdersTabContent(viewModel.orders)
-                        "CART" -> CartTabContent(onClose)
+                        "CART" -> CartOrdersTabContent(viewModel, viewModel.orders, onClose)
                     }
                 }
 
@@ -901,14 +937,6 @@ private fun MenuOverlay(
                             Text("MENU", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "MENU") DINEAR_ORANGE else Color.Gray)
                         }
 
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { activeTab = "FAVORITES" }
-                        ) {
-                            Icon(Icons.Default.Star, null, tint = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
-                            Text("FAVORITES", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
-                        }
-
                         IconButton(
                             onClick = onClose,
                             modifier = Modifier.size(64.dp).background(Color(0xFF6B6B00), CircleShape)
@@ -918,10 +946,10 @@ private fun MenuOverlay(
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { activeTab = "ORDERS" }
+                            modifier = Modifier.clickable { activeTab = "FAVORITES" }
                         ) {
-                            Icon(Icons.Default.ReceiptLong, null, tint = if (activeTab == "ORDERS") DINEAR_ORANGE else Color.Gray)
-                            Text("ORDERS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "ORDERS") DINEAR_ORANGE else Color.Gray)
+                            Icon(Icons.Default.Star, null, tint = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
+                            Text("FAVORITE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
                         }
                     }
                 }
@@ -938,14 +966,41 @@ private fun MenuTabContent(
     onItemSelected: (MenuItem) -> Unit
 ) {
     val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("All") }
+
+    val categories = remember(menuList) {
+        val cats = mutableListOf("All")
+        val uniqueCats = menuList.mapNotNull { it.category }.distinct().sorted()
+        cats.addAll(uniqueCats)
+        cats
+    }
+
+    val filteredList = remember(menuList, searchQuery, selectedCategory) {
+        menuList.filter { item ->
+            val matchesSearch = item.name.contains(searchQuery, ignoreCase = true) ||
+                    (item.getDescription() != null && item.getDescription().contains(searchQuery, ignoreCase = true))
+            val matchesCategory = selectedCategory == "All" || item.category == selectedCategory
+            matchesSearch && matchesCategory
+        }
+    }
+
     Column {
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             placeholder = { Text("Search culinary delights...") },
             leadingIcon = { Icon(Icons.Default.Search, null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(Icons.Default.Clear, null)
+                    }
+                }
+            },
             shape = RoundedCornerShape(16.dp),
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = Color(0xFFF5F5F5),
                 focusedContainerColor = Color(0xFFF5F5F5),
@@ -956,8 +1011,6 @@ private fun MenuTabContent(
 
         Spacer(Modifier.height(16.dp))
 
-        val categories = listOf("Popular", "Italian", "Burgers", "Desserts", "Drinks")
-        var selectedCategory by remember { mutableStateOf("Popular") }
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 24.dp),
@@ -984,17 +1037,23 @@ private fun MenuTabContent(
 
         Spacer(Modifier.height(16.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            items(menuList, key = { it.id }) { item ->
-                VerticalMenuItemRow(
-                    item = item,
-                    restaurantId = restaurantId,
-                    downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
-                    onClick = { onItemSelected(item) }
-                )
+        if (filteredList.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No items match your search", color = Color.Gray)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                items(filteredList, key = { it.id }) { item ->
+                    VerticalMenuItemRow(
+                        item = item,
+                        restaurantId = restaurantId,
+                        downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
+                        onClick = { onItemSelected(item) }
+                    )
+                }
             }
         }
     }
@@ -1054,8 +1113,9 @@ fun VerticalMenuItemRow(
 
             IconButton(
                 onClick = {
-                    if (restaurantId != -1) {
-                        CartManager.getInstance().addItem(item, restaurantId)
+                    val finalResId = if (restaurantId != -1) restaurantId else (item.restaurantId ?: -1)
+                    if (finalResId != -1) {
+                        CartManager.getInstance().addItem(item, finalResId)
                         Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, "Error: Restaurant ID unknown", Toast.LENGTH_SHORT).show()
@@ -1098,44 +1158,67 @@ private fun FavoritesTabContent(
 }
 
 @Composable
-private fun CartTabContent(onClose: () -> Unit) {
+private fun CartOrdersTabContent(
+    viewModel: ARViewModel,
+    orders: List<Order>,
+    onClose: () -> Unit
+) {
     val context = LocalContext.current
-    val cartItems = remember { mutableStateListOf<CartItem>() }
-    
-    // Initial load
-    LaunchedEffect(Unit) {
-        cartItems.clear()
-        cartItems.addAll(CartManager.getInstance().items)
-    }
+    val cartItems = viewModel.cartItems
 
-    if (cartItems.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Your cart is empty", color = Color.Gray)
-        }
-    } else {
-        Column(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(cartItems) { item ->
-                    VerticalCartItemRow(item) {
-                        CartManager.getInstance().removeItem(item.menuItem.id)
-                        cartItems.remove(item)
-                    }
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        if (cartItems.isNotEmpty()) {
+            item {
+                Text(
+                    "Active Cart",
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            items(cartItems) { item ->
+                VerticalCartItemRow(item) {
+                    CartManager.getInstance().removeItem(item.menuItem.id)
                 }
             }
-            
-            Button(
-                onClick = {
-                    // Simple checkout logic for demo
-                    val intent = android.content.Intent(context, CartActivity::class.java)
-                    context.startActivity(intent)
-                    onClose()
-                },
-                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DINEAR_ORANGE)
-            ) {
-                Text("Proceed to Checkout (Rs. ${CartManager.getInstance().totalPrice.toInt()})", color = Color.White)
+            item {
+                Button(
+                    onClick = {
+                        val intent = android.content.Intent(context, CartActivity::class.java)
+                        context.startActivity(intent)
+                        onClose()
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DINEAR_ORANGE)
+                ) {
+                    Text("Checkout (Rs. ${CartManager.getInstance().totalPrice.toInt()})", color = Color.White)
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
             }
         }
+
+        item {
+            Text(
+                "Order History",
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (orders.isEmpty()) {
+            item {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text("No past orders", color = Color.Gray)
+                }
+            }
+        } else {
+            items(orders) { order ->
+                OrderRow(order)
+            }
+        }
+        
+        item { Spacer(Modifier.height(32.dp)) }
     }
 }
 
@@ -1154,21 +1237,6 @@ private fun VerticalCartItemRow(item: CartItem, onRemove: () -> Unit) {
             Text("Rs. ${(item.menuItem.price * item.quantity).toInt()}", fontWeight = FontWeight.Bold)
             IconButton(onClick = onRemove) {
                 Icon(Icons.Default.Delete, null, tint = Color.Red)
-            }
-        }
-    }
-}
-
-@Composable
-private fun OrdersTabContent(orders: List<Order>) {
-    if (orders.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No orders found", color = Color.Gray)
-        }
-    } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(orders) { order ->
-                OrderRow(order)
             }
         }
     }
