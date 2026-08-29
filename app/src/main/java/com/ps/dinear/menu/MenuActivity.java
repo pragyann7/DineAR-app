@@ -14,6 +14,7 @@ import com.ps.dinear.FilterAdapter;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.R;
 import com.ps.dinear.RetrofitClient;
+import com.ps.dinear.data.model.RestaurantMenuResponse;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -98,12 +99,22 @@ public class MenuActivity extends AppCompatActivity {
         swipeRefreshLayout.setRefreshing(true);
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getMenu(restaurantSlug).enqueue(new Callback<List<MenuItem>>() {
+        apiService.getMenu(restaurantSlug).enqueue(new Callback<RestaurantMenuResponse>() {
             @Override
-            public void onResponse(Call<List<MenuItem>> call, Response<List<MenuItem>> response) {
+            public void onResponse(Call<RestaurantMenuResponse> call, Response<RestaurantMenuResponse> response) {
                 swipeRefreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    fullMenuList = response.body();
+                    List<MenuItem> flattenedList = new ArrayList<>();
+                    RestaurantMenuResponse body = response.body();
+                    if (body.getCategories() != null) {
+                        for (RestaurantMenuResponse.CategoryGroup group : body.getCategories()) {
+                            if (group.getMenuItems() != null) {
+                                flattenedList.addAll(group.getMenuItems());
+                            }
+                        }
+                    }
+                    
+                    fullMenuList = flattenedList;
                     if (fullMenuList.isEmpty()) {
                         Toast.makeText(MenuActivity.this, "This restaurant has no menu items yet.", Toast.LENGTH_LONG).show();
                     }
@@ -114,7 +125,7 @@ public class MenuActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<List<MenuItem>> call, Throwable t) {
+            public void onFailure(Call<RestaurantMenuResponse> call, Throwable t) {
                 swipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(MenuActivity.this, "API Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }

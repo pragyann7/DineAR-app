@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
+import com.ps.dinear.data.model.RestaurantMenuResponse
 import com.google.ar.core.*
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.configure
@@ -92,14 +93,18 @@ class ARViewModel : ViewModel() {
         if (_menuItems.isNotEmpty()) return
 
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
-        api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<List<MenuItem>> {
-            override fun onResponse(call: retrofit2.Call<List<MenuItem>>, response: retrofit2.Response<List<MenuItem>>) {
+        api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<RestaurantMenuResponse> {
+            override fun onResponse(call: retrofit2.Call<RestaurantMenuResponse>, response: retrofit2.Response<RestaurantMenuResponse>) {
                 if (response.isSuccessful && response.body() != null) {
+                    val flattenedList = mutableListOf<MenuItem>()
+                    response.body()?.categories?.forEach { group ->
+                        group.menuItems?.let { flattenedList.addAll(it) }
+                    }
                     _menuItems.clear()
-                    _menuItems.addAll(response.body()!!)
+                    _menuItems.addAll(flattenedList)
                 }
             }
-            override fun onFailure(call: retrofit2.Call<List<MenuItem>>, t: Throwable) {
+            override fun onFailure(call: retrofit2.Call<RestaurantMenuResponse>, t: Throwable) {
             }
         })
     }

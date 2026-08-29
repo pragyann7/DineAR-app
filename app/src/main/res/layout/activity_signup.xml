@@ -15,18 +15,10 @@
         android:textStyle="bold" />
 
     <EditText
-        android:id="@+id/etSignupUsername"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="32.dp"
-        android:hint="Username"
-        android:inputType="text" />
-
-    <EditText
         android:id="@+id/etSignupFirstName"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginTop="16.dp"
+        android:layout_marginTop="32.dp"
         android:hint="First Name"
         android:inputType="textPersonName" />
 
@@ -45,14 +37,6 @@
         android:layout_marginTop="16.dp"
         android:hint="Email"
         android:inputType="textEmailAddress" />
-
-    <EditText
-        android:id="@+id/etSignupPhoneNumber"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="16.dp"
-        android:hint="Phone Number"
-        android:inputType="phone" />
 
     <EditText
         android:id="@+id/etSignupPassword"
