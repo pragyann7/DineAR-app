@@ -9,6 +9,10 @@ public class Restaurant {
     private String name;
     private String slug;
     private String description;
+    private String email;
+    
+    @SerializedName("phone_number")
+    private String phoneNumber;
     
     @SerializedName("categories")
     private List<Category> categories;
@@ -41,6 +45,8 @@ public class Restaurant {
     public String getName() { return name; }
     public String getSlug() { return slug; }
     public String getDescription() { return description; }
+    public String getEmail() { return email; }
+    public String getPhoneNumber() { return phoneNumber; }
     
     public String getCuisine() {
         if (categories == null || categories.isEmpty()) return "General";

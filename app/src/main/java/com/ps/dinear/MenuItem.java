@@ -27,8 +27,8 @@ public class MenuItem implements Serializable {
 
     private String description;
     
-    @SerializedName("primary_image")
-    private String imageUrl;
+    @SerializedName("images")
+    private List<FoodImage> images;
     
     @SerializedName("ar_mapping")
     private ARMapping arMapping;
@@ -50,7 +50,7 @@ public class MenuItem implements Serializable {
         this.id = id;
         this.name = name;
         this.price = price;
-        this.imageUrl = imageUrl;
+        // Legacy constructor, might not set images properly but keeps compatibility
     }
 
     public int getId() { return id; }
@@ -75,7 +75,15 @@ public class MenuItem implements Serializable {
     public String getDescription() {
         return (description != null && !description.isEmpty()) ? description : "No description available.";
     }
-    public String getImageUrl() { return imageUrl; }
+    public String getImageUrl() {
+        if (images != null && !images.isEmpty()) {
+            for (FoodImage img : images) {
+                if (img.isPrimary) return img.image;
+            }
+            return images.get(0).image;
+        }
+        return null;
+    }
     
     public String getModelUrl() {
         if (arMapping != null && arMapping.arAsset != null) {
@@ -119,5 +127,12 @@ public class MenuItem implements Serializable {
         public String modelFile;
         public String format;
         public int version;
+    }
+
+    public static class FoodImage implements Serializable {
+        public int id;
+        public String image;
+        @SerializedName("is_primary")
+        public boolean isPrimary;
     }
 }
