@@ -132,6 +132,11 @@ public class SharedPrefManager {
         return prefs.getString(KEY_ACCESS_TOKEN, null);
     }
 
+    public static String getRefreshToken(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
+    }
+
     public static void saveUserInfo(Context context, String name, String email) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit()

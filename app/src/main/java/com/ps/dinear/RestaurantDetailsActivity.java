@@ -38,6 +38,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         String deliveryTime = getIntent().getStringExtra("deliveryTime");
         double distance = getIntent().getDoubleExtra("distance", 0.0);
         String imageUrl = getIntent().getStringExtra("imageUrl");
+        String bannerImage = getIntent().getStringExtra("bannerImage");
 
         // Set all data from intent immediately (INSTANT LOAD)
         ((TextView) findViewById(R.id.tvRestNameDetails)).setText(name);
@@ -54,8 +55,13 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText(distance + " km");
         }
 
-        String fullImageUrl = RetrofitClient.getFullUrl(this, imageUrl);
+        String displayImageUrl = (bannerImage != null && !bannerImage.isEmpty()) ? bannerImage : imageUrl;
+        String fullImageUrl = RetrofitClient.getFullUrl(this, displayImageUrl);
         Glide.with(this).load(fullImageUrl).into((ImageView) findViewById(R.id.ivRestaurantHeader));
+
+        // Load front icon (logo) next to name
+        String fullLogoUrl = RetrofitClient.getFullUrl(this, imageUrl);
+        Glide.with(this).load(fullLogoUrl).into((ImageView) findViewById(R.id.ivRestLogoDetails));
 
         findViewById(R.id.btnBackRestDetails).setOnClickListener(v -> finish());
 
