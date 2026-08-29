@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
+import com.ps.dinear.data.model.RestaurantMenuResponse
 import com.google.ar.core.*
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.configure
@@ -88,18 +89,22 @@ class ARViewModel : ViewModel() {
     private val _menuItems = mutableStateListOf<MenuItem>()
     val menuItems: List<MenuItem> = _menuItems
 
-    fun fetchMenu(context: android.content.Context, restaurantId: Int) {
+    fun fetchMenu(context: android.content.Context, restaurantSlug: String) {
         if (_menuItems.isNotEmpty()) return
 
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
-        api.getMenu(restaurantId).enqueue(object : retrofit2.Callback<List<MenuItem>> {
-            override fun onResponse(call: retrofit2.Call<List<MenuItem>>, response: retrofit2.Response<List<MenuItem>>) {
+        api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<RestaurantMenuResponse> {
+            override fun onResponse(call: retrofit2.Call<RestaurantMenuResponse>, response: retrofit2.Response<RestaurantMenuResponse>) {
                 if (response.isSuccessful && response.body() != null) {
+                    val flattenedList = mutableListOf<MenuItem>()
+                    response.body()?.categories?.forEach { group ->
+                        group.menuItems?.let { flattenedList.addAll(it) }
+                    }
                     _menuItems.clear()
-                    _menuItems.addAll(response.body()!!)
+                    _menuItems.addAll(flattenedList)
                 }
             }
-            override fun onFailure(call: retrofit2.Call<List<MenuItem>>, t: Throwable) {
+            override fun onFailure(call: retrofit2.Call<RestaurantMenuResponse>, t: Throwable) {
             }
         })
     }
@@ -132,6 +137,7 @@ class ARActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
+        val restaurantSlug = intent.getStringExtra("restaurantSlug")
 
         if (selectedItem == null) {
             Toast.makeText(this, "Error: Food item not found", Toast.LENGTH_SHORT).show()
@@ -139,8 +145,8 @@ class ARActivity : ComponentActivity() {
             return
         }
 
-        selectedItem.restaurantId?.let { id ->
-            viewModel.fetchMenu(this, id)
+        restaurantSlug?.let { slug ->
+            viewModel.fetchMenu(this, slug)
         }
 
         setContent {

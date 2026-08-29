@@ -21,33 +21,35 @@ public class SignupActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_signup);
+        super.setContentView(R.layout.activity_signup);
 
-        EditText etUsername = findViewById(R.id.etSignupUsername);
+        EditText etFirstName = findViewById(R.id.etSignupFirstName);
+        EditText etLastName = findViewById(R.id.etSignupLastName);
         EditText etEmail = findViewById(R.id.etSignupEmail);
         EditText etPassword = findViewById(R.id.etSignupPassword);
-        EditText etPhone = findViewById(R.id.etSignupPhone);
 
         findViewById(R.id.btnSubmitSignup).setOnClickListener(v -> {
-            String username = etUsername.getText().toString().trim();
+            String firstName = etFirstName.getText().toString().trim();
+            String lastName = etLastName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
-            String phone = etPhone.getText().toString().trim();
 
-            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (firstName.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            RegistrationRequest request = new RegistrationRequest(username, email, password, phone);
-            ApiService api = RetrofitClient.getClient().create(ApiService.class);
+            RegistrationRequest request = new RegistrationRequest(email, firstName, lastName, password);
+            ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
             
-            api.register(request).enqueue(new Callback<Void>() {
+            api.register(request).enqueue(new Callback<RegistrationResponse>() {
                 @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    if (response.isSuccessful()) {
-                        Toast.makeText(SignupActivity.this, "Signup successful! Please login.", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(SignupActivity.this, LoginActivity.class));
+                public void onResponse(Call<RegistrationResponse> call, Response<RegistrationResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Toast.makeText(SignupActivity.this, "Signup successful! Please verify your email.", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(SignupActivity.this, VerifyOtpActivity.class);
+                        intent.putExtra("email", response.body().getEmail());
+                        startActivity(intent);
                         finish();
                     } else {
                         Toast.makeText(SignupActivity.this, "Signup failed: " + response.code(), Toast.LENGTH_SHORT).show();
@@ -55,7 +57,7 @@ public class SignupActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onFailure(Call<Void> call, Throwable t) {
+                public void onFailure(Call<RegistrationResponse> call, Throwable t) {
                     Toast.makeText(SignupActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });

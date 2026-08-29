@@ -47,6 +47,7 @@ xmlns:tools="http://schemas.android.com/tools">
     </activity>
     <activity android:name=".auth.LoginActivity" />
     <activity android:name=".auth.SignupActivity" />
+    <activity android:name=".auth.VerifyOtpActivity" />
 
     <activity
         android:name=".MainActivity"

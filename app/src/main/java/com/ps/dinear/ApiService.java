@@ -2,10 +2,14 @@ package com.ps.dinear;
 
 import com.ps.dinear.auth.LoginRequest;
 import com.ps.dinear.auth.RegistrationRequest;
+import com.ps.dinear.auth.RegistrationResponse;
+import com.ps.dinear.auth.ResendOtpRequest;
 import com.ps.dinear.auth.TokenResponse;
+import com.ps.dinear.auth.VerifyOtpRequest;
 import com.ps.dinear.data.model.FavoriteIdsResponse;
 import com.ps.dinear.data.model.FavoriteRequest;
 import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.data.model.RestaurantMenuResponse;
 import com.ps.dinear.data.model.SearchResponse;
 
 import java.util.List;
@@ -26,11 +30,11 @@ public interface ApiService {
         @Query("category") String category
     );
 
-    @GET("api/restaurants/{id}/")
-    Call<Restaurant> getRestaurantDetails(@Path("id") int id);
+    @GET("api/restaurants/{slug}/")
+    Call<Restaurant> getRestaurantDetails(@Path("slug") String slug);
 
-    @GET("api/menu-items/")
-    Call<List<MenuItem>> getMenu(@Query("restaurant") Integer restaurantId);
+    @GET("api/menu/restaurant/{slug}/")
+    Call<RestaurantMenuResponse> getMenu(@Path("slug") String slug);
 
     @GET("api/search/")
     Call<SearchResponse> search(
@@ -40,6 +44,9 @@ public interface ApiService {
 
     @GET("api/favorites/ids/")
     Call<FavoriteIdsResponse> getFavoriteIds(@Header("Authorization") String token);
+
+    @GET("api/favorites/details/")
+    Call<SearchResponse> getFavoriteDetails(@Header("Authorization") String token);
 
     @POST("api/favorites/")
     Call<Void> addFavorite(@Header("Authorization") String token, @Body FavoriteRequest request);
@@ -51,9 +58,15 @@ public interface ApiService {
         @Path("id") int id
     );
 
-    @POST("api/register/")
-    Call<Void> register(@Body RegistrationRequest request);
+    @POST("api/auth/register/")
+    Call<RegistrationResponse> register(@Body RegistrationRequest request);
 
-    @POST("api/token/")
+    @POST("api/auth/verify-email-otp/")
+    Call<Void> verifyEmailOtp(@Body VerifyOtpRequest request);
+
+    @POST("api/auth/resend-email-otp/")
+    Call<Void> resendEmailOtp(@Body ResendOtpRequest request);
+
+    @POST("api/auth/login/")
     Call<TokenResponse> login(@Body LoginRequest request);
 }

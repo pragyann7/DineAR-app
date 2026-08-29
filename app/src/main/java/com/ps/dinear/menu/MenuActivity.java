@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -13,6 +14,7 @@ import com.ps.dinear.FilterAdapter;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.R;
 import com.ps.dinear.RetrofitClient;
+import com.ps.dinear.data.model.RestaurantMenuResponse;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -24,11 +26,12 @@ public class MenuActivity extends AppCompatActivity {
     private MenuFoodAdapter foodAdapter;
     private FilterAdapter tabAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private String currentSearchQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_menu);
+        super.setContentView(R.layout.activity_menu);
 
         String restaurantName = getIntent().getStringExtra("restaurantName");
         ((TextView) findViewById(R.id.tvRestaurantTitle)).setText(restaurantName);
@@ -38,8 +41,26 @@ public class MenuActivity extends AppCompatActivity {
         swipeRefreshLayout = findViewById(R.id.swipeRefreshMenu);
         swipeRefreshLayout.setOnRefreshListener(() -> setupMenu());
 
+        setupSearchView();
         setupTabs();
         setupMenu();
+    }
+
+    private void setupSearchView() {
+        SearchView searchView = findViewById(R.id.searchViewMenu);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                currentSearchQuery = newText;
+                filterMenu();
+                return true;
+            }
+        });
     }
 
     @Override
@@ -55,32 +76,45 @@ public class MenuActivity extends AppCompatActivity {
         RecyclerView rvTabs = findViewById(R.id.rvMenuTabs);
         List<String> tabs = new ArrayList<>();
         tabs.add("All");
-        tabs.add("Popular");
-        tabs.add("Italian");
-        tabs.add("Burgers");
-        tabs.add("Desserts");
+        tabs.add("Main Course");
+        tabs.add("Starter");
+        tabs.add("Momo");
+        tabs.add("Burger");
+        tabs.add("Pizza");
         tabs.add("Drinks");
+        tabs.add("Dessert");
 
         tabAdapter = new FilterAdapter(this, tabs, category -> filterMenuByCategory(category));
         rvTabs.setAdapter(tabAdapter);
     }
 
     private List<MenuItem> fullMenuList = new ArrayList<>();
+    private String currentCategory = "All";
 
     private void setupMenu() {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
         rvMenu.setLayoutManager(new LinearLayoutManager(this));
 
-        int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+        String restaurantSlug = getIntent().getStringExtra("restaurantSlug");
         swipeRefreshLayout.setRefreshing(true);
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getMenu(restaurantId).enqueue(new Callback<List<MenuItem>>() {
+        apiService.getMenu(restaurantSlug).enqueue(new Callback<RestaurantMenuResponse>() {
             @Override
-            public void onResponse(Call<List<MenuItem>> call, Response<List<MenuItem>> response) {
+            public void onResponse(Call<RestaurantMenuResponse> call, Response<RestaurantMenuResponse> response) {
                 swipeRefreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    fullMenuList = response.body();
+                    List<MenuItem> flattenedList = new ArrayList<>();
+                    RestaurantMenuResponse body = response.body();
+                    if (body.getCategories() != null) {
+                        for (RestaurantMenuResponse.CategoryGroup group : body.getCategories()) {
+                            if (group.getMenuItems() != null) {
+                                flattenedList.addAll(group.getMenuItems());
+                            }
+                        }
+                    }
+                    
+                    fullMenuList = flattenedList;
                     if (fullMenuList.isEmpty()) {
                         Toast.makeText(MenuActivity.this, "This restaurant has no menu items yet.", Toast.LENGTH_LONG).show();
                     }
@@ -91,7 +125,7 @@ public class MenuActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<List<MenuItem>> call, Throwable t) {
+            public void onFailure(Call<RestaurantMenuResponse> call, Throwable t) {
                 swipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(MenuActivity.this, "API Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -99,28 +133,43 @@ public class MenuActivity extends AppCompatActivity {
     }
 
     private void filterMenuByCategory(String category) {
-        if (category.equals("All")) {
-            displayMenuItems(fullMenuList);
-        } else {
-            List<MenuItem> filtered = new ArrayList<>();
-            for (MenuItem item : fullMenuList) {
-                if (item.getCategory() != null && item.getCategory().equalsIgnoreCase(category)) {
-                    filtered.add(item);
-                }
+        currentCategory = category;
+        filterMenu();
+    }
+
+    private void filterMenu() {
+        List<MenuItem> filtered = new ArrayList<>();
+        String query = currentSearchQuery.toLowerCase().trim();
+
+        for (MenuItem item : fullMenuList) {
+            boolean matchesCategory = currentCategory.equals("All") || 
+                    (item.getCategory() != null && item.getCategory().equalsIgnoreCase(currentCategory));
+            
+            boolean matchesSearch = query.isEmpty() || 
+                    item.getName().toLowerCase().contains(query) || 
+                    (item.getDescription() != null && item.getDescription().toLowerCase().contains(query));
+
+            if (matchesCategory && matchesSearch) {
+                filtered.add(item);
             }
-            displayMenuItems(filtered);
         }
+        displayMenuItems(filtered);
     }
 
     private void displayMenuItems(List<MenuItem> items) {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
-        foodAdapter = new MenuFoodAdapter(this, items, item -> openFoodDetails(item));
-        rvMenu.setAdapter(foodAdapter);
+        if (foodAdapter == null) {
+            foodAdapter = new MenuFoodAdapter(this, new ArrayList<>(items), item -> openFoodDetails(item));
+            rvMenu.setAdapter(foodAdapter);
+        } else {
+            foodAdapter.updateList(items);
+        }
     }
 
     private void openFoodDetails(MenuItem item) {
         Intent intent = new Intent(this, FoodDetailsActivity.class);
         intent.putExtra("selectedItem", item);
+        intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
         // No longer passing fullMenuList to avoid Intent size limits
         startActivity(intent);
     }
