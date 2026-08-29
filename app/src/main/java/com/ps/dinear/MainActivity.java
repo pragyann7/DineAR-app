@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -86,8 +87,7 @@ public class MainActivity extends AppCompatActivity {
         super.setContentView(R.layout.activity_main);
 
         tvWelcome = findViewById(R.id.tvWelcome);
-        String userName = SharedPrefManager.getUserName(this).toUpperCase();
-        tvWelcome.setText("HELLO, " + userName + "!");
+        updateWelcomeText();
 
         tvCurrentLocation = findViewById(R.id.tvCurrentLocation);
         String locationText = SharedPrefManager.getCity(this) + ", " + SharedPrefManager.getDistrict(this);
@@ -130,6 +130,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, ProfileActivity.class));
         });
 
+        findViewById(R.id.cvHomeProfile).setOnClickListener(v -> {
+            startActivity(new Intent(this, ProfileActivity.class));
+        });
+
         findViewById(R.id.navFavorites).setOnClickListener(v -> {
             startActivity(new Intent(this, FavoritesActivity.class));
         });
@@ -154,6 +158,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         updateCartBadge();
+        updateWelcomeText();
+        
+        ImageView ivProfile = findViewById(R.id.ivHomeProfile);
+        if (ivProfile != null) {
+            ivProfile.setImageResource(SharedPrefManager.getUserAvatar(this));
+        }
+
         // Refresh adapters to show updated favorite status when returning from detail screens
         if (restaurantAdapter != null) {
             restaurantAdapter.notifyDataSetChanged();
@@ -167,6 +178,26 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         CartManager.getInstance().removeListener(cartListener);
+    }
+
+    private void updateWelcomeText() {
+        if (tvWelcome == null) return;
+        String name = SharedPrefManager.getUserName(this);
+        String email = SharedPrefManager.getUserEmail(this);
+
+        if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
+            // Fallback: If name is missing, use email prefix
+            if (email != null && !email.trim().isEmpty() && email.contains("@")) {
+                name = email.split("@")[0];
+            } else {
+                name = "User";
+            }
+        }
+        
+        // Ensure name is not null before uppercase
+        if (name != null) {
+            tvWelcome.setText("HELLO, " + name.toUpperCase() + "!");
+        }
     }
 
     private void updateCartBadge() {

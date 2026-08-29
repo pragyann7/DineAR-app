@@ -24,6 +24,7 @@
             app:cardElevation="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:cardBackgroundColor="@color/white"
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
