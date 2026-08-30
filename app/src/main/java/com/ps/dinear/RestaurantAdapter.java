@@ -18,12 +18,14 @@ import com.google.android.material.card.MaterialCardView;
 import com.ps.dinear.data.model.Restaurant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.ViewHolder> {
     private Context context;
     private List<Restaurant> list;
     private OnRestaurantClickListener listener;
     private int layoutResId;
+    private boolean locationPermissionDenied = false;
 
     public interface OnRestaurantClickListener {
         void onRestaurantClick(Restaurant restaurant);
@@ -43,6 +45,11 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
 
     public void updateList(List<Restaurant> newList) {
         this.list = newList;
+        notifyDataSetChanged();
+    }
+
+    public void setLocationPermissionDenied(boolean denied) {
+        this.locationPermissionDenied = denied;
         notifyDataSetChanged();
     }
 
@@ -69,8 +76,15 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         holder.tvTime.setText(restaurant.getDeliveryTime());
         
         if (holder.tvDistance != null) {
-            holder.tvDistance.setVisibility(View.VISIBLE);
-            holder.tvDistance.setText(restaurant.getDistance() + " km");
+            if (restaurant.getDistance() > 0) {
+                holder.tvDistance.setVisibility(View.VISIBLE);
+                holder.tvDistance.setText(String.format(Locale.US, "%.1f km", restaurant.getDistance()));
+            } else if (locationPermissionDenied) {
+                holder.tvDistance.setVisibility(View.VISIBLE);
+                holder.tvDistance.setText("No GPS");
+            } else {
+                holder.tvDistance.setVisibility(View.GONE);
+            }
         }
 
         String fullImageUrl = RetrofitClient.getFullUrl(context, restaurant.getImageUrl());

@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.material)
     implementation(libs.maplibre)
+    implementation(libs.play.services.location)
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))

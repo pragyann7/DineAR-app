@@ -1,6 +1,8 @@
 package com.ps.dinear;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,8 +15,10 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +28,8 @@ import com.ps.dinear.data.model.Restaurant;
 import com.ps.dinear.data.model.SearchResponse;
 import com.ps.dinear.location.LocationActivity;
 import com.ps.dinear.menu.MenuActivity;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
@@ -59,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Restaurant> lastResResults = new ArrayList<>();
     private List<MenuItem> lastFoodResults = new ArrayList<>();
     private List<Restaurant> allRestaurantsInCity = new ArrayList<>();
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location userLocation;
 
     private Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
@@ -142,6 +150,9 @@ public class MainActivity extends AppCompatActivity {
         setupFeaturedFoods();
         FavoritesManager.getInstance().loadFavorites(this);
         CartManager.getInstance().addListener(cartListener);
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        requestLocationPermission();
 
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
             if (featuredDish != null) {
@@ -454,6 +465,10 @@ public class MainActivity extends AppCompatActivity {
         if (selectedTab == 0) { // Restaurants
             List<Restaurant> filtered = new ArrayList<>(lastResResults);
             
+            if (userLocation != null) {
+                calculateDistances(filtered);
+            }
+
             if (currentMinRating > 0) {
                 List<Restaurant> temp = new ArrayList<>();
                 for (Restaurant r : filtered) {
@@ -615,6 +630,9 @@ public class MainActivity extends AppCompatActivity {
                         ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("Kitchen is quiet!");
                         ((TextView) findViewById(R.id.tvNoResultsDescription)).setText("We don't have any restaurants in " + catName + " yet. We're working on bringing them to you!");
                     } else {
+                        if (userLocation != null) {
+                            calculateDistances(restaurants);
+                        }
                         findViewById(R.id.llNoResults).setVisibility(View.GONE);
                         recyclerView.setVisibility(View.VISIBLE);
                         findViewById(R.id.nestedScrollView).setVisibility(View.VISIBLE);
@@ -654,4 +672,59 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void requestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+        } else {
+            if (restaurantAdapter != null) {
+                restaurantAdapter.setLocationPermissionDenied(false);
+            }
+            getCurrentLocation();
+        }
+    }
+
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null) {
+                    userLocation = location;
+                    if (!lastResResults.isEmpty()) {
+                        calculateDistances(lastResResults);
+                        updateSearchResultsView();
+                    } else {
+                        setupRestaurants();
+                    }
+                }
+            });
+        }
+    }
+
+    private void calculateDistances(List<Restaurant> restaurants) {
+        if (userLocation == null) return;
+        for (Restaurant r : restaurants) {
+            if (r.getLatitude() != 0 && r.getLongitude() != 0) {
+                float[] results = new float[1];
+                Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
+                        r.getLatitude(), r.getLongitude(), results);
+                r.setDistance(results[0] / 1000.0); // Convert to km
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1001) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (restaurantAdapter != null) {
+                    restaurantAdapter.setLocationPermissionDenied(false);
+                }
+                getCurrentLocation();
+            } else {
+                if (restaurantAdapter != null) {
+                    restaurantAdapter.setLocationPermissionDenied(true);
+                }
+            }
+        }
+    }
 }
