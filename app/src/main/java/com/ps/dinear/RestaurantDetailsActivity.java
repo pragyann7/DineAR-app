@@ -1,14 +1,20 @@
 package com.ps.dinear;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import com.bumptech.glide.Glide;
 import com.ps.dinear.menu.MenuActivity;
+
+import java.util.Locale;
 
 public class RestaurantDetailsActivity extends AppCompatActivity {
 
@@ -48,8 +54,15 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(deliveryTime);
         }
         
+        View distanceTag = (View) findViewById(R.id.tvRestDistanceDetails).getParent();
         if (distance > 0) {
-            ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText(distance + " km");
+            distanceTag.setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText(String.format(Locale.US, "%.1f km", distance));
+        } else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            distanceTag.setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText("No GPS");
+        } else {
+            distanceTag.setVisibility(View.GONE);
         }
 
         String fullImageUrl = RetrofitClient.getFullUrl(this, imageUrl);

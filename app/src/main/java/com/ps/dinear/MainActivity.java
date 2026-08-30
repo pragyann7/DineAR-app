@@ -1,6 +1,8 @@
 package com.ps.dinear;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,18 +15,27 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.data.model.SearchResponse;
 import com.ps.dinear.location.LocationActivity;
 import com.ps.dinear.menu.MenuActivity;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,18 +46,27 @@ public class MainActivity extends AppCompatActivity {
     private RestaurantAdapter restaurantAdapter;
     private MenuAdapter menuAdapter;
     private FilterAdapter filterAdapter;
+    private FeaturedFoodAdapter featuredFoodAdapter;
     private ProgressBar progressBar;
     private TextView tvCurrentLocation;
     private TextView tvWelcome;
     private TabLayout tabLayoutSearch;
     private TextView tvCartBadge;
     
+    private MenuItem featuredDish;
+    private String featuredRestaurantSlug;
+    private int featuredRestaurantId = -1;
+    
     private String currentSearchQuery = "";
     private String currentCategory = "Home";
     private String currentSort = "";
     private float currentMinRating = 0f;
+    private String previousCategory = "Home";
     private List<Restaurant> lastResResults = new ArrayList<>();
     private List<MenuItem> lastFoodResults = new ArrayList<>();
+    private List<Restaurant> allRestaurantsInCity = new ArrayList<>();
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location userLocation;
 
     private Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
@@ -60,8 +80,17 @@ public class MainActivity extends AppCompatActivity {
                     String selected = result.getData().getStringExtra("selected_category");
                     if (selected != null) {
                         currentCategory = selected;
+                        previousCategory = selected;
+                        if (filterAdapter != null) {
+                            filterAdapter.setSelectedCategory(selected);
+                        }
                         setupRestaurants();
                         Toast.makeText(this, "Filtered by: " + selected, Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    // Reset selection if cancelled
+                    if (filterAdapter != null) {
+                        filterAdapter.setSelectedCategory(previousCategory);
                     }
                 }
             }
@@ -118,11 +147,32 @@ public class MainActivity extends AppCompatActivity {
         setupFilters();
         setupRestaurants();
         setupTabs();
+        setupFeaturedFoods();
         FavoritesManager.getInstance().loadFavorites(this);
         CartManager.getInstance().addListener(cartListener);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        requestLocationPermission();
+
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
-            Toast.makeText(this, "AR Scan coming soon!", Toast.LENGTH_SHORT).show();
+            if (featuredDish != null) {
+                Intent intent = new Intent(this, ARActivity.class);
+                intent.putExtra("selectedItem", featuredDish);
+                // Not passing slug here to enable "Global" mode for the floating button
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Finding a featured dish for you...", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        findViewById(R.id.cvPromoBanner).setOnClickListener(v -> {
+            if (featuredDish != null) {
+                Intent intent = new Intent(this, ARActivity.class);
+                intent.putExtra("selectedItem", featuredDish);
+                intent.putExtra("restaurantSlug", featuredRestaurantSlug);
+                intent.putExtra("restaurantId", featuredRestaurantId);
+                startActivity(intent);
+            }
         });
 
         findViewById(R.id.navProfile).setOnClickListener(v -> {
@@ -254,16 +304,25 @@ public class MainActivity extends AppCompatActivity {
     private void toggleHomeContent(boolean show) {
         int visibility = show ? View.VISIBLE : View.GONE;
         View promoBanner = findViewById(R.id.cvPromoBanner);
+        View catHeader = findViewById(R.id.rlCategoriesHeader);
         View filters = findViewById(R.id.rvFilters);
-        View header = findViewById(R.id.rlExploreHeader);
+        View exploreHeader = findViewById(R.id.rlExploreHeader);
+        View featuredHeader = findViewById(R.id.rlFeaturedFoodsHeader);
+        View featuredList = findViewById(R.id.rvFeaturedFoods);
+        View registerCard = findViewById(R.id.cardRegisterInfo);
         
         if (promoBanner != null) promoBanner.setVisibility(visibility);
+        if (catHeader != null) catHeader.setVisibility(visibility);
         if (filters != null) filters.setVisibility(visibility);
-        if (header != null) header.setVisibility(visibility);
+        if (exploreHeader != null) exploreHeader.setVisibility(visibility);
+        if (featuredHeader != null) featuredHeader.setVisibility(visibility);
+        if (featuredList != null) featuredList.setVisibility(visibility);
+        if (registerCard != null) registerCard.setVisibility(visibility);
 
         if (show) {
             findViewById(R.id.llNoResults).setVisibility(View.GONE);
             findViewById(R.id.llNetworkError).setVisibility(View.GONE);
+            findViewById(R.id.nestedScrollView).setVisibility(View.VISIBLE);
         }
     }
 
@@ -287,6 +346,7 @@ public class MainActivity extends AppCompatActivity {
                         categoryLauncher.launch(new Intent(MainActivity.this, CategoryActivity.class));
                     } else {
                         currentCategory = category;
+                        previousCategory = category;
                         setupRestaurants(); // Fetch with category filter
                     }
                 });
@@ -304,12 +364,79 @@ public class MainActivity extends AppCompatActivity {
                         categoryLauncher.launch(new Intent(MainActivity.this, CategoryActivity.class));
                     } else {
                         currentCategory = category;
+                        previousCategory = category;
                         setupRestaurants();
                     }
                 });
                 rvFilters.setAdapter(filterAdapter);
             }
         });
+    }
+
+    private void setupFeaturedFoods() {
+        RecyclerView rvFeatured = findViewById(R.id.rvFeaturedFoods);
+        rvFeatured.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        featuredFoodAdapter = new FeaturedFoodAdapter(this);
+        rvFeatured.setAdapter(featuredFoodAdapter);
+
+        String city = SharedPrefManager.getCity(this);
+        ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
+        
+        // Fetching all foods by using an empty query now allowed by backend
+        android.util.Log.d("MainActivity", "Fetching all foods for trending dishes in city: " + city);
+        api.search("", city).enqueue(new Callback<SearchResponse>() {
+            @Override
+            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<MenuItem> foods = response.body().getFoodItems();
+                    if (foods != null && !foods.isEmpty()) {
+                        // Jumble the sequence
+                        java.util.Collections.shuffle(foods);
+                        
+                        featuredFoodAdapter.setData(foods);
+                        featuredDish = foods.get(0);
+                        
+                        // Handle slug/id for the first item for banner
+                        List<Restaurant> restaurants = response.body().getRestaurants();
+                        if (featuredDish.getRestaurantIds() != null && !featuredDish.getRestaurantIds().isEmpty() && restaurants != null) {
+                            for (Restaurant r : restaurants) {
+                                if (featuredDish.getRestaurantIds().contains(r.getId())) {
+                                    featuredRestaurantSlug = r.getSlug();
+                                    featuredRestaurantId = r.getId();
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        updatePromoBanner();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SearchResponse> call, Throwable t) {
+                android.util.Log.e("MainActivity", "Failed to load trending dishes: " + t.getMessage());
+            }
+        });
+    }
+
+    private void updatePromoBanner() {
+        if (featuredDish == null) return;
+        
+        ImageView ivBanner = findViewById(R.id.ivPromoBannerImage);
+        TextView tvBannerTitle = findViewById(R.id.tvPromoBannerTitle);
+        
+        if (tvBannerTitle != null) {
+            tvBannerTitle.setText("Special Offer:\n" + featuredDish.getName());
+        }
+        
+        if (ivBanner != null) {
+            String fullImageUrl = RetrofitClient.getFullUrl(this, featuredDish.getImageUrl());
+            Glide.with(this)
+                    .load(fullImageUrl)
+                    .placeholder(R.drawable.burger)
+                    .into(ivBanner);
+        }
     }
 
     private void setupTabs() {
@@ -338,6 +465,10 @@ public class MainActivity extends AppCompatActivity {
         if (selectedTab == 0) { // Restaurants
             List<Restaurant> filtered = new ArrayList<>(lastResResults);
             
+            if (userLocation != null) {
+                calculateDistances(filtered);
+            }
+
             if (currentMinRating > 0) {
                 List<Restaurant> temp = new ArrayList<>();
                 for (Restaurant r : filtered) {
@@ -377,13 +508,15 @@ public class MainActivity extends AppCompatActivity {
         boolean globallyEmpty = lastResResults.isEmpty() && lastFoodResults.isEmpty();
         if (globallyEmpty) {
             findViewById(R.id.llNoResults).setVisibility(View.VISIBLE);
-            findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
-            ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No results for \"" + currentSearchQuery + "\"");
+            recyclerView.setVisibility(View.GONE);
+            ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No treats found here!");
+            ((TextView) findViewById(R.id.tvNoResultsDescription)).setText("We couldn't find any results for \"" + currentSearchQuery + "\". Try a different keyword or explore our categories.");
         } else {
             findViewById(R.id.llNoResults).setVisibility(hasResults ? View.GONE : View.VISIBLE);
-            findViewById(R.id.nestedScrollView).setVisibility(hasResults ? View.VISIBLE : View.GONE);
+            recyclerView.setVisibility(hasResults ? View.VISIBLE : View.GONE);
             if (!hasResults) {
-                ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No results match your filters");
+                ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("No matching treats!");
+                ((TextView) findViewById(R.id.tvNoResultsDescription)).setText("None of our items match your current filters. Try relaxing them to see more options!");
             }
         }
     }
@@ -392,7 +525,8 @@ public class MainActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         findViewById(R.id.llNoResults).setVisibility(View.GONE);
         findViewById(R.id.llNetworkError).setVisibility(View.GONE);
-        findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
+        // Do not hide nestedScrollView, just hide content within it if needed
+        findViewById(R.id.recyclerView).setVisibility(View.GONE);
 
         String city = SharedPrefManager.getCity(this);
         ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
@@ -401,8 +535,36 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<com.ps.dinear.data.model.SearchResponse> call, Response<com.ps.dinear.data.model.SearchResponse> response) {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
-                    lastResResults = response.body().getRestaurants();
+                    lastResResults = new ArrayList<>(response.body().getRestaurants());
                     lastFoodResults = response.body().getFoodItems();
+
+                    // Enrich restaurants list with those selling matching food items
+                    if (lastFoodResults != null && !lastFoodResults.isEmpty()) {
+                        Set<Integer> resIdsFromFood = new HashSet<>();
+                        for (MenuItem item : lastFoodResults) {
+                            if (item.getRestaurantIds() != null) {
+                                resIdsFromFood.addAll(item.getRestaurantIds());
+                            }
+                        }
+
+                        for (Integer resId : resIdsFromFood) {
+                            boolean exists = false;
+                            for (Restaurant r : lastResResults) {
+                                if (r.getId() == resId) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (!exists) {
+                                for (Restaurant r : allRestaurantsInCity) {
+                                    if (r.getId() == resId) {
+                                        lastResResults.add(r);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     
                     updateSearchResultsView();
                     
@@ -430,7 +592,18 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.llNoResults).setVisibility(View.GONE);
         findViewById(R.id.llNetworkError).setVisibility(View.GONE);
-        findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
+
+        // Prevent flickering: hide extra sections immediately if not in Home category
+        boolean isHome = currentCategory.equals("Home");
+        View promoBanner = findViewById(R.id.cvPromoBanner);
+        View featuredHeader = findViewById(R.id.rlFeaturedFoodsHeader);
+        View featuredList = findViewById(R.id.rvFeaturedFoods);
+        View registerCard = findViewById(R.id.cardRegisterInfo);
+
+        if (promoBanner != null) promoBanner.setVisibility(isHome ? View.VISIBLE : View.GONE);
+        if (featuredHeader != null) featuredHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
+        if (featuredList != null) featuredList.setVisibility(isHome ? View.VISIBLE : View.GONE);
+        if (registerCard != null) registerCard.setVisibility(isHome ? View.VISIBLE : View.GONE);
 
         progressBar.setVisibility(View.VISIBLE);
         String selectedCity = SharedPrefManager.getCity(this);
@@ -443,28 +616,50 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
                     List<Restaurant> restaurants = response.body();
-                    if (restaurantAdapter == null) {
-                        restaurantAdapter = new RestaurantAdapter(MainActivity.this, new ArrayList<>(restaurants), restaurant -> {
-                            Intent intent = new Intent(MainActivity.this, RestaurantDetailsActivity.class);
-                            intent.putExtra("restaurantId", restaurant.getId());
-                            intent.putExtra("restaurantSlug", restaurant.getSlug());
-                            intent.putExtra("restaurantName", restaurant.getName());
-                            intent.putExtra("cuisine", restaurant.getCuisine());
-                            intent.putExtra("rating", restaurant.getRating());
-                            intent.putExtra("description", restaurant.getDescription());
-                            intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
-                            intent.putExtra("distance", restaurant.getDistance());
-                            intent.putExtra("imageUrl", restaurant.getImageUrl());
-                            intent.putExtra("bannerImage", restaurant.getBannerImage());
-                            startActivity(intent);
-                        });
-                    } else {
-                        restaurantAdapter.updateList(restaurants);
+
+                    // Cache full list for search enrichment
+                    if (apiCategory == null) {
+                        allRestaurantsInCity = new ArrayList<>(restaurants);
                     }
-                    recyclerView.setAdapter(restaurantAdapter);
-                    findViewById(R.id.nestedScrollView).setVisibility(View.VISIBLE);
+
+                    if (restaurants.isEmpty()) {
+                        findViewById(R.id.llNoResults).setVisibility(View.VISIBLE);
+                        recyclerView.setVisibility(View.GONE);
+                        
+                        String catName = currentCategory.equals("Home") ? "this area" : "the " + currentCategory + " category";
+                        ((TextView) findViewById(R.id.tvNoResultsMessage)).setText("Kitchen is quiet!");
+                        ((TextView) findViewById(R.id.tvNoResultsDescription)).setText("We don't have any restaurants in " + catName + " yet. We're working on bringing them to you!");
+                    } else {
+                        if (userLocation != null) {
+                            calculateDistances(restaurants);
+                        }
+                        findViewById(R.id.llNoResults).setVisibility(View.GONE);
+                        recyclerView.setVisibility(View.VISIBLE);
+                        findViewById(R.id.nestedScrollView).setVisibility(View.VISIBLE);
+                        
+                        if (restaurantAdapter == null) {
+                            restaurantAdapter = new RestaurantAdapter(MainActivity.this, new ArrayList<>(restaurants), restaurant -> {
+                                Intent intent = new Intent(MainActivity.this, RestaurantDetailsActivity.class);
+                                intent.putExtra("restaurantId", restaurant.getId());
+                                intent.putExtra("restaurantSlug", restaurant.getSlug());
+                                intent.putExtra("restaurantName", restaurant.getName());
+                                intent.putExtra("cuisine", restaurant.getCuisine());
+                                intent.putExtra("rating", restaurant.getRating());
+                                intent.putExtra("description", restaurant.getDescription());
+                                intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
+                                intent.putExtra("distance", restaurant.getDistance());
+                                intent.putExtra("imageUrl", restaurant.getImageUrl());
+                                intent.putExtra("bannerImage", restaurant.getBannerImage());
+                                startActivity(intent);
+                            });
+                        } else {
+                            restaurantAdapter.updateList(restaurants);
+                        }
+                        recyclerView.setAdapter(restaurantAdapter);
+                    }
                 } else {
                     findViewById(R.id.llNetworkError).setVisibility(View.VISIBLE);
+                    findViewById(R.id.nestedScrollView).setVisibility(View.GONE);
                 }
             }
 
@@ -477,4 +672,59 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void requestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+        } else {
+            if (restaurantAdapter != null) {
+                restaurantAdapter.setLocationPermissionDenied(false);
+            }
+            getCurrentLocation();
+        }
+    }
+
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null) {
+                    userLocation = location;
+                    if (!lastResResults.isEmpty()) {
+                        calculateDistances(lastResResults);
+                        updateSearchResultsView();
+                    } else {
+                        setupRestaurants();
+                    }
+                }
+            });
+        }
+    }
+
+    private void calculateDistances(List<Restaurant> restaurants) {
+        if (userLocation == null) return;
+        for (Restaurant r : restaurants) {
+            if (r.getLatitude() != 0 && r.getLongitude() != 0) {
+                float[] results = new float[1];
+                Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
+                        r.getLatitude(), r.getLongitude(), results);
+                r.setDistance(results[0] / 1000.0); // Convert to km
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1001) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (restaurantAdapter != null) {
+                    restaurantAdapter.setLocationPermissionDenied(false);
+                }
+                getCurrentLocation();
+            } else {
+                if (restaurantAdapter != null) {
+                    restaurantAdapter.setLocationPermissionDenied(true);
+                }
+            }
+        }
+    }
 }
