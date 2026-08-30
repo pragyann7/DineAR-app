@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
 import com.ps.dinear.data.model.CartItem
 import com.ps.dinear.data.model.Order
 import com.ps.dinear.data.model.OrderRequest
@@ -889,8 +890,9 @@ private fun MenuOverlay(
                     Box {
                         IconButton(onClick = { activeTab = "CART" }) {
                             Icon(
-                                imageVector = if (activeTab == "CART") Icons.Filled.ShoppingCart else Icons.Outlined.ShoppingCart,
+                                painter = painterResource(id = R.drawable.ic_cart_premium),
                                 contentDescription = null,
+                                modifier = Modifier.size(28.dp),
                                 tint = if (activeTab == "CART") DINEAR_ORANGE else Color.Black
                             )
                         }

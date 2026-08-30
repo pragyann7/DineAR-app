@@ -98,7 +98,8 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_centerInParent="true"
-                android:src="@drawable/icon_foodcart" />
+                android:src="@drawable/ic_cart_premium"
+                app:tint="@color/black" />
 
             <TextView
                 android:id="@+id/tvCartBadge"
@@ -296,60 +297,74 @@
                 android:paddingHorizontal="24.dp"
                 tools:listitem="@layout/item_restaurant" />
 
-            <!-- Register Restaurant Promo -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/btnRegisterRestaurant"
+            <!-- Section Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginHorizontal="24.dp"
+                android:layout_marginTop="24.dp"
+                android:background="@color/divider" />
+
+            <!-- Register Restaurant Info -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardRegisterInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp"
+                android:layout_marginTop="24.dp"
                 android:layout_marginBottom="16.dp"
                 app:cardCornerRadius="16.dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFF8E1">
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/divider"
+                app:cardBackgroundColor="@color/white">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:padding="16.dp"
+                    android:padding="20.dp"
                     android:gravity="center_vertical">
+
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@android:drawable/ic_menu_add"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_dialog_info"
                         app:tint="@color/orange_primary" />
+
                     <LinearLayout
                         android:layout_width="0.dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="16.dp"
                         android:orientation="vertical">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Own a Restaurant?"
+                            android:text="@string/own_a_restaurant"
                             android:textColor="@color/black"
                             android:textStyle="bold"
-                            android:textSize="16sp" />
+                            android:textSize="15sp" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Register and showcase in AR"
-                            android:textColor="@color/gray_text"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_media_play"
-                        app:tint="@color/orange_primary" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                            android:layout_marginTop="2.dp"
+                            android:text="@string/register_info"
+                            android:textColor="@color/gray_dark"
+                            android:textSize="12sp"
+                            android:lineSpacingExtra="2dp" />
 
-            <!-- Add some bottom spacing -->
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Footer Spacer for FAB -->
             <View
                 android:layout_width="match_parent"
-                android:layout_height="100.dp" />
+                android:layout_height="80.dp" />
 
         </LinearLayout>
 
@@ -481,7 +496,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_today"
+                android:src="@drawable/icon_home"
                 app:tint="@color/orange_primary" />
             <TextView
                 android:layout_width="wrap_content"
