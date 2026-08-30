@@ -1,7 +1,6 @@
 package com.ps.dinear;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -130,6 +129,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, ProfileActivity.class));
         });
 
+        findViewById(R.id.navNearby).setOnClickListener(v -> {
+            startActivity(new Intent(this, DiscoverActivity.class));
+        });
+
         findViewById(R.id.cvHomeProfile).setOnClickListener(v -> {
             startActivity(new Intent(this, ProfileActivity.class));
         });
@@ -138,12 +141,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, FavoritesActivity.class));
         });
 
-        findViewById(R.id.btnRegisterRestaurant).setOnClickListener(v -> {
-            String url = RetrofitClient.getBaseUrl() + "dashboard/register/";
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse(url));
-            startActivity(intent);
-        });
 
         findViewById(R.id.btnRetry).setOnClickListener(v -> {
             if (currentSearchQuery != null && !currentSearchQuery.isEmpty()) {
