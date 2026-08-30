@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,10 +20,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CartActivity extends AppCompatActivity {
-    private RecyclerView rvCartItems;
-    private CartAdapter adapter;
-    private TextView tvTotal;
-    private LinearLayout llEmpty;
+    private RecyclerView rvCartItems, rvOrders;
+    private CartAdapter cartAdapter;
+    private OrdersAdapter ordersAdapter;
+    private TextView tvTotal, tvNoOrders;
+    private LinearLayout llEmptyCart;
+    private ProgressBar pbOrders;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,51 +33,95 @@ public class CartActivity extends AppCompatActivity {
         setContentView(R.layout.activity_cart);
 
         rvCartItems = findViewById(R.id.rvCartItems);
+        rvOrders = findViewById(R.id.rvOrders);
         tvTotal = findViewById(R.id.tvCartTotal);
-        llEmpty = findViewById(R.id.llEmptyCart);
+        llEmptyCart = findViewById(R.id.llEmptyCart);
+        tvNoOrders = findViewById(R.id.tvNoOrders);
+        pbOrders = findViewById(R.id.pbOrders);
 
         rvCartItems.setLayoutManager(new LinearLayoutManager(this));
+        rvOrders.setLayoutManager(new LinearLayoutManager(this));
         
         findViewById(R.id.btnBackCart).setOnClickListener(v -> finish());
-        findViewById(R.id.btnStartShopping).setOnClickListener(v -> finish());
-        
         findViewById(R.id.btnCheckout).setOnClickListener(v -> checkout());
 
-        updateUI();
+        updateCartUI();
+        loadOrderHistory();
     }
 
-    private void updateUI() {
+    private void updateCartUI() {
         List<CartItem> items = CartManager.getInstance().getItems();
         if (items.isEmpty()) {
-            llEmpty.setVisibility(View.VISIBLE);
+            llEmptyCart.setVisibility(View.VISIBLE);
             rvCartItems.setVisibility(View.GONE);
             findViewById(R.id.cvCheckout).setVisibility(View.GONE);
         } else {
-            llEmpty.setVisibility(View.GONE);
+            llEmptyCart.setVisibility(View.GONE);
             rvCartItems.setVisibility(View.VISIBLE);
             findViewById(R.id.cvCheckout).setVisibility(View.VISIBLE);
 
-            if (adapter == null) {
-                adapter = new CartAdapter(this, items, new CartAdapter.CartUpdateListener() {
+            if (cartAdapter == null) {
+                cartAdapter = new CartAdapter(this, items, new CartAdapter.CartUpdateListener() {
                     @Override
                     public void onQuantityChanged(int foodItemId, int newQuantity) {
                         CartManager.getInstance().updateQuantity(foodItemId, newQuantity);
-                        updateUI();
+                        updateCartUI();
                     }
 
                     @Override
                     public void onItemRemoved(int foodItemId) {
                         CartManager.getInstance().removeItem(foodItemId);
-                        updateUI();
+                        updateCartUI();
                     }
                 });
-                rvCartItems.setAdapter(adapter);
+                rvCartItems.setAdapter(cartAdapter);
             } else {
-                adapter.notifyDataSetChanged();
+                cartAdapter.notifyDataSetChanged();
             }
 
             tvTotal.setText("Rs. " + (int)CartManager.getInstance().getTotalPrice());
         }
+    }
+
+    private void loadOrderHistory() {
+        if (!SharedPrefManager.isLoggedIn(this)) {
+            tvNoOrders.setText("Login to see order history");
+            tvNoOrders.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        pbOrders.setVisibility(View.VISIBLE);
+        rvOrders.setVisibility(View.GONE);
+        tvNoOrders.setVisibility(View.GONE);
+
+        String token = "Bearer " + SharedPrefManager.getAccessToken(this);
+        ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
+        api.getOrders(token).enqueue(new Callback<List<Order>>() {
+            @Override
+            public void onResponse(Call<List<Order>> call, Response<List<Order>> response) {
+                pbOrders.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Order> orders = response.body();
+                    if (orders.isEmpty()) {
+                        tvNoOrders.setVisibility(View.VISIBLE);
+                    } else {
+                        rvOrders.setVisibility(View.VISIBLE);
+                        ordersAdapter = new OrdersAdapter(CartActivity.this, orders);
+                        rvOrders.setAdapter(ordersAdapter);
+                    }
+                } else {
+                    tvNoOrders.setText("Failed to load orders");
+                    tvNoOrders.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Order>> call, Throwable t) {
+                pbOrders.setVisibility(View.GONE);
+                tvNoOrders.setText("Network error");
+                tvNoOrders.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     private void checkout() {
@@ -105,8 +152,8 @@ public class CartActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     CartManager.getInstance().clear();
                     Toast.makeText(CartActivity.this, "Order placed successfully!", Toast.LENGTH_LONG).show();
-                    startActivity(new Intent(CartActivity.this, OrdersActivity.class));
-                    finish();
+                    updateCartUI();
+                    loadOrderHistory();
                 } else {
                     Toast.makeText(CartActivity.this, "Failed to place order: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
