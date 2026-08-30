@@ -18,7 +18,10 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.data.model.SearchResponse;
 import com.ps.dinear.location.LocationActivity;
 import com.ps.dinear.menu.MenuActivity;
 import com.google.android.material.tabs.TabLayout;
@@ -35,11 +38,16 @@ public class MainActivity extends AppCompatActivity {
     private RestaurantAdapter restaurantAdapter;
     private MenuAdapter menuAdapter;
     private FilterAdapter filterAdapter;
+    private FeaturedFoodAdapter featuredFoodAdapter;
     private ProgressBar progressBar;
     private TextView tvCurrentLocation;
     private TextView tvWelcome;
     private TabLayout tabLayoutSearch;
     private TextView tvCartBadge;
+    
+    private MenuItem featuredDish;
+    private String featuredRestaurantSlug;
+    private int featuredRestaurantId = -1;
     
     private String currentSearchQuery = "";
     private String currentCategory = "Home";
@@ -118,11 +126,29 @@ public class MainActivity extends AppCompatActivity {
         setupFilters();
         setupRestaurants();
         setupTabs();
+        setupFeaturedFoods();
         FavoritesManager.getInstance().loadFavorites(this);
         CartManager.getInstance().addListener(cartListener);
 
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
-            Toast.makeText(this, "AR Scan coming soon!", Toast.LENGTH_SHORT).show();
+            if (featuredDish != null) {
+                Intent intent = new Intent(this, ARActivity.class);
+                intent.putExtra("selectedItem", featuredDish);
+                // Not passing slug here to enable "Global" mode for the floating button
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Finding a featured dish for you...", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        findViewById(R.id.cvPromoBanner).setOnClickListener(v -> {
+            if (featuredDish != null) {
+                Intent intent = new Intent(this, ARActivity.class);
+                intent.putExtra("selectedItem", featuredDish);
+                intent.putExtra("restaurantSlug", featuredRestaurantSlug);
+                intent.putExtra("restaurantId", featuredRestaurantId);
+                startActivity(intent);
+            }
         });
 
         findViewById(R.id.navProfile).setOnClickListener(v -> {
@@ -310,6 +336,72 @@ public class MainActivity extends AppCompatActivity {
                 rvFilters.setAdapter(filterAdapter);
             }
         });
+    }
+
+    private void setupFeaturedFoods() {
+        RecyclerView rvFeatured = findViewById(R.id.rvFeaturedFoods);
+        rvFeatured.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        featuredFoodAdapter = new FeaturedFoodAdapter(this);
+        rvFeatured.setAdapter(featuredFoodAdapter);
+
+        String city = SharedPrefManager.getCity(this);
+        ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
+        
+        // Fetching all foods by using an empty query now allowed by backend
+        android.util.Log.d("MainActivity", "Fetching all foods for trending dishes in city: " + city);
+        api.search("", city).enqueue(new Callback<SearchResponse>() {
+            @Override
+            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<MenuItem> foods = response.body().getFoodItems();
+                    if (foods != null && !foods.isEmpty()) {
+                        // Jumble the sequence
+                        java.util.Collections.shuffle(foods);
+                        
+                        featuredFoodAdapter.setData(foods);
+                        featuredDish = foods.get(0);
+                        
+                        // Handle slug/id for the first item for banner
+                        List<Restaurant> restaurants = response.body().getRestaurants();
+                        if (featuredDish.getRestaurantIds() != null && !featuredDish.getRestaurantIds().isEmpty() && restaurants != null) {
+                            for (Restaurant r : restaurants) {
+                                if (featuredDish.getRestaurantIds().contains(r.getId())) {
+                                    featuredRestaurantSlug = r.getSlug();
+                                    featuredRestaurantId = r.getId();
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        updatePromoBanner();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SearchResponse> call, Throwable t) {
+                android.util.Log.e("MainActivity", "Failed to load trending dishes: " + t.getMessage());
+            }
+        });
+    }
+
+    private void updatePromoBanner() {
+        if (featuredDish == null) return;
+        
+        ImageView ivBanner = findViewById(R.id.ivPromoBannerImage);
+        TextView tvBannerTitle = findViewById(R.id.tvPromoBannerTitle);
+        
+        if (tvBannerTitle != null) {
+            tvBannerTitle.setText("Special Offer:\n" + featuredDish.getName());
+        }
+        
+        if (ivBanner != null) {
+            String fullImageUrl = RetrofitClient.getFullUrl(this, featuredDish.getImageUrl());
+            Glide.with(this)
+                    .load(fullImageUrl)
+                    .placeholder(R.drawable.burger)
+                    .into(ivBanner);
+        }
     }
 
     private void setupTabs() {

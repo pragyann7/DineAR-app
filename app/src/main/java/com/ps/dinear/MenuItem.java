@@ -27,6 +27,9 @@ public class MenuItem implements Serializable {
 
     private String description;
     
+    @SerializedName("primary_image")
+    private String primaryImage;
+    
     @SerializedName("images")
     private List<FoodImage> images;
     
@@ -41,6 +44,9 @@ public class MenuItem implements Serializable {
     
     private String status;
 
+    @SerializedName("approval_status")
+    private String approvalStatus;
+
     @SerializedName("is_featured")
     private boolean isFeatured;
 
@@ -50,7 +56,7 @@ public class MenuItem implements Serializable {
         this.id = id;
         this.name = name;
         this.price = price;
-        // Legacy constructor, might not set images properly but keeps compatibility
+        this.primaryImage = imageUrl;
     }
 
     public int getId() { return id; }
@@ -76,6 +82,7 @@ public class MenuItem implements Serializable {
         return (description != null && !description.isEmpty()) ? description : "No description available.";
     }
     public String getImageUrl() {
+        if (primaryImage != null && !primaryImage.isEmpty()) return primaryImage;
         if (images != null && !images.isEmpty()) {
             for (FoodImage img : images) {
                 if (img.isPrimary) return img.image;
@@ -86,22 +93,25 @@ public class MenuItem implements Serializable {
     }
     
     public String getModelUrl() {
-        if (arMapping != null && arMapping.arAsset != null) {
-            return arMapping.arAsset.modelFile;
+        if (arMapping != null) {
+            if (arMapping.arAsset != null) return arMapping.arAsset.modelFile;
+            if (arMapping.pendingArAsset != null) return arMapping.pendingArAsset.modelFile;
         }
         return null;
     }
     
     public String getModelName() {
-        if (arMapping != null && arMapping.arAsset != null) {
-            return arMapping.arAsset.name;
+        if (arMapping != null) {
+            if (arMapping.arAsset != null) return arMapping.arAsset.name;
+            if (arMapping.pendingArAsset != null) return arMapping.pendingArAsset.name;
         }
         return null;
     }
     
     public String getModelVersion() {
-        if (arMapping != null && arMapping.arAsset != null) {
-            return String.valueOf(arMapping.arAsset.version);
+        if (arMapping != null) {
+            if (arMapping.arAsset != null) return String.valueOf(arMapping.arAsset.version);
+            if (arMapping.pendingArAsset != null) return String.valueOf(arMapping.pendingArAsset.version);
         }
         return "1";
     }
@@ -111,6 +121,7 @@ public class MenuItem implements Serializable {
     public void setCategory(String category) { this.category = category; }
     public boolean has3d() { return getModelUrl() != null; }
     public String getStatus() { return status; }
+    public String getApprovalStatus() { return approvalStatus; }
     public boolean isFeatured() { return isFeatured; }
 
     public String getTag1() { return "DineAR"; }
@@ -119,6 +130,10 @@ public class MenuItem implements Serializable {
     public static class ARMapping implements Serializable {
         @SerializedName("ar_asset")
         public ARAsset arAsset;
+        @SerializedName("pending_ar_asset")
+        public ARAsset pendingArAsset;
+        @SerializedName("assigned_at")
+        public String assignedAt;
     }
 
     public static class ARAsset implements Serializable {
@@ -127,7 +142,15 @@ public class MenuItem implements Serializable {
         @SerializedName("model_file")
         public String modelFile;
         public String format;
+        public String thumbnail;
         public int version;
+        @SerializedName("is_active")
+        public boolean isActive;
+        public String source;
+        @SerializedName("approval_status")
+        public String approvalStatus;
+        @SerializedName("file_size")
+        public long fileSize;
     }
 
     public static class FoodImage implements Serializable {
