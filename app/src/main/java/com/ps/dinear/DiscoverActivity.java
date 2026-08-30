@@ -1,6 +1,7 @@
 package com.ps.dinear;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -88,11 +89,30 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
 
     private void setupRecyclerView() {
         rvRestaurants.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        adapter = new RestaurantAdapter(this, restaurantList, restaurant -> {
-            // When a card is clicked, move the map to it
-            if (restaurant.getLatitude() != 0) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                    new LatLng(restaurant.getLatitude(), restaurant.getLongitude()), 16));
+        adapter = new RestaurantAdapter(this, restaurantList, R.layout.item_restaurant_discover, new RestaurantAdapter.OnRestaurantClickListener() {
+            @Override
+            public void onRestaurantClick(Restaurant restaurant) {
+                // When a card is clicked, move the map to it
+                if (restaurant.getLatitude() != 0) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(restaurant.getLatitude(), restaurant.getLongitude()), 16));
+                }
+            }
+
+            @Override
+            public void onDetailClick(Restaurant restaurant) {
+                Intent intent = new Intent(DiscoverActivity.this, RestaurantDetailsActivity.class);
+                intent.putExtra("restaurantId", restaurant.getId());
+                intent.putExtra("restaurantSlug", restaurant.getSlug());
+                intent.putExtra("restaurantName", restaurant.getName());
+                intent.putExtra("cuisine", restaurant.getCuisine());
+                intent.putExtra("rating", restaurant.getRating());
+                intent.putExtra("description", restaurant.getDescription());
+                intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
+                intent.putExtra("distance", restaurant.getDistance());
+                intent.putExtra("imageUrl", restaurant.getImageUrl());
+                intent.putExtra("bannerImage", restaurant.getBannerImage());
+                startActivity(intent);
             }
         });
         rvRestaurants.setAdapter(adapter);
