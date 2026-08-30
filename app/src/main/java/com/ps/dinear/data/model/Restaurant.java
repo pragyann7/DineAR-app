@@ -35,6 +35,9 @@ public class Restaurant {
     @SerializedName("address")
     private String address;
 
+    private double latitude;
+    private double longitude;
+
     @SerializedName("menu_items")
     private List<MenuItem> menuItems;
 
@@ -65,6 +68,8 @@ public class Restaurant {
     public String getBannerImage() { return bannerImage; }
     public String getDeliveryTime() { return deliveryTime != null ? deliveryTime : "20-30 MIN"; }
     public String getAddress() { return address; }
+    public double getLatitude() { return latitude; }
+    public double getLongitude() { return longitude; }
     public List<MenuItem> getMenuItems() { return menuItems; }
 
     public static class Category {
