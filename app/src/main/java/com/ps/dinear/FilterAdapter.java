@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
+import com.google.android.material.card.MaterialCardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
@@ -16,6 +16,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.ViewHolder
     private List<String> list;
     private OnFilterClickListener listener;
     private int selectedPosition = 0;
+    private int layoutResId = R.layout.item_filter;
 
     public interface OnFilterClickListener {
         void onFilterClick(String category);
@@ -32,10 +33,37 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.ViewHolder
         this.listener = listener;
     }
 
+    public FilterAdapter(Context context, List<String> list, int layoutResId, OnFilterClickListener listener) {
+        this.context = context;
+        this.list = list;
+        this.layoutResId = layoutResId;
+        this.listener = listener;
+    }
+
+    public void setSelectedPosition(int position) {
+        int oldPos = selectedPosition;
+        selectedPosition = position;
+        notifyItemChanged(oldPos);
+        notifyItemChanged(selectedPosition);
+    }
+
+    public int getSelectedPosition() {
+        return selectedPosition;
+    }
+
+    public void setSelectedCategory(String category) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).equals(category)) {
+                setSelectedPosition(i);
+                break;
+            }
+        }
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_filter, parent, false);
+        View view = LayoutInflater.from(context).inflate(layoutResId, parent, false);
         return new ViewHolder(view);
     }
 
@@ -46,10 +74,13 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.ViewHolder
 
         if (selectedPosition == position) {
             holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.orange_primary));
+            holder.cardView.setStrokeWidth(0);
             holder.tvFilterName.setTextColor(ContextCompat.getColor(context, R.color.white));
         } else {
             holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white));
-            holder.tvFilterName.setTextColor(ContextCompat.getColor(context, R.color.black));
+            holder.cardView.setStrokeWidth(1);
+            holder.cardView.setStrokeColor(ContextCompat.getColorStateList(context, R.color.divider));
+            holder.tvFilterName.setTextColor(ContextCompat.getColor(context, R.color.gray_text)); // Changed to gray_text for unselected
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -74,12 +105,12 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.ViewHolder
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvFilterName;
-        CardView cardView;
+        MaterialCardView cardView;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvFilterName = itemView.findViewById(R.id.tvFilterName);
-            cardView = (CardView) itemView;
+            cardView = (MaterialCardView) itemView;
         }
     }
 }

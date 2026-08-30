@@ -59,6 +59,9 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FoodDetailsActivity.class);
             intent.putExtra("selectedItem", item);
+            if (item.getRestaurantId() != null) {
+                intent.putExtra("restaurantId", item.getRestaurantId());
+            }
             context.startActivity(intent);
         });
     }

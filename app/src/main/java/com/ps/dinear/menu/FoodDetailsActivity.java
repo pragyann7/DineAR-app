@@ -107,6 +107,10 @@ public class FoodDetailsActivity extends AppCompatActivity {
 
         findViewById(R.id.btnAddToCart).setOnClickListener(v -> {
             int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+            if (restaurantId == -1 && item.getRestaurantId() != null) {
+                restaurantId = item.getRestaurantId();
+            }
+
             if (restaurantId != -1) {
                 CartManager.getInstance().addItem(item, restaurantId);
                 Toast.makeText(this, "Added to cart!", Toast.LENGTH_SHORT).show();

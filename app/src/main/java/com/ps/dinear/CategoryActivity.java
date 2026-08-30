@@ -17,6 +17,13 @@ public class CategoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set status bar color and light status bar
+        getWindow().setStatusBarColor(getResources().getColor(R.color.white));
+        androidx.core.view.WindowInsetsControllerCompat windowInsetsController =
+                androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        windowInsetsController.setAppearanceLightStatusBars(true);
+
         super.setContentView(R.layout.activity_category);
 
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
@@ -32,7 +39,7 @@ public class CategoryActivity extends AppCompatActivity {
                         categoryNames.add(cat.getName());
                     }
                     
-                    FilterAdapter adapter = new FilterAdapter(CategoryActivity.this, categoryNames, categoryName -> {
+                    FilterAdapter adapter = new FilterAdapter(CategoryActivity.this, categoryNames, R.layout.item_filter_grid, categoryName -> {
                         Intent data = new Intent();
                         data.putExtra("selected_category", categoryName);
                         setResult(RESULT_OK, data);
