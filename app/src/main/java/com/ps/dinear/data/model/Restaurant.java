@@ -75,6 +75,7 @@ public class Restaurant {
     
     public String getPriceRange() { return priceRange != null ? priceRange : "$$"; }
     public double getDistance() { return distance; }
+    public void setDistance(double distance) { this.distance = distance; }
     public double getRating() { return rating; }
     public String getImageUrl() { return imageUrl; }
     public String getBannerImage() { return bannerImage; }

@@ -3,6 +3,7 @@ package com.ps.dinear;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,6 +17,8 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import com.ps.dinear.data.model.Restaurant;
 import java.util.List;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.annotations.Marker;
@@ -45,6 +48,8 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     private View fabToggleList;
     private boolean isListVisible = true;
     private List<Restaurant> restaurantList = new java.util.ArrayList<>();
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location userLocation;
     private static final String MAPTILER_API_KEY = "CqA49jSeY7aVGUdjsSmL";
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
 
@@ -60,6 +65,9 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         fabToggleList = findViewById(R.id.fabToggleList);
         
         setupRecyclerView();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        requestLocationPermission();
 
         fabToggleList.setOnClickListener(v -> toggleRestaurantList());
 
@@ -200,6 +208,10 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                     List<Restaurant> list = response.body();
                     Log.d("DiscoverActivity", "Successfully fetched " + list.size() + " restaurants");
                     
+                    if (userLocation != null) {
+                        calculateDistances(list);
+                    }
+                    
                     restaurantList.clear();
                     restaurantList.addAll(list);
                     adapter.notifyDataSetChanged();
@@ -218,6 +230,43 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                 Toast.makeText(DiscoverActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void requestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+        } else {
+            if (adapter != null) {
+                adapter.setLocationPermissionDenied(false);
+            }
+            getCurrentLocation();
+        }
+    }
+
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null) {
+                    userLocation = location;
+                    if (!restaurantList.isEmpty()) {
+                        calculateDistances(restaurantList);
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+    }
+
+    private void calculateDistances(List<Restaurant> restaurants) {
+        if (userLocation == null) return;
+        for (Restaurant r : restaurants) {
+            if (r.getLatitude() != 0 && r.getLongitude() != 0) {
+                float[] results = new float[1];
+                Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
+                        r.getLatitude(), r.getLongitude(), results);
+                r.setDistance(results[0] / 1000.0); // Convert to km
+            }
+        }
     }
 
     private void displayRestaurantsOnMap(List<Restaurant> restaurants) {
@@ -274,8 +323,16 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (adapter != null) {
+                    adapter.setLocationPermissionDenied(false);
+                }
+                getCurrentLocation();
                 if (map != null && map.getStyle() != null) {
                     enableLocationComponent(map.getStyle());
+                }
+            } else {
+                if (adapter != null) {
+                    adapter.setLocationPermissionDenied(true);
                 }
             }
         }
