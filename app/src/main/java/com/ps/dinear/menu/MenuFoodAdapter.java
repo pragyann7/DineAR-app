@@ -57,12 +57,18 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         MenuItem item = list.get(position);
         holder.tvName.setText(item.getName());
-        holder.tvPrice.setText("Rs. " + (int)item.getPrice());
+        
+        if (item.getDiscountPrice() != null && item.getDiscountPrice() > 0) {
+            holder.tvPrice.setText(item.getCurrency() + " " + (int)item.getDiscountPrice().doubleValue());
+        } else {
+            holder.tvPrice.setText(item.getCurrency() + " " + (int)item.getPrice());
+        }
+
         holder.tvDescription.setText(item.getDescription() != null ? item.getDescription() : "");
         holder.tvTag1.setText(item.getTag1() != null ? item.getTag1() : "");
         holder.tvTag2.setText(item.getTag2() != null ? item.getTag2() : "");
 
-        String fullImageUrl = RetrofitClient.getFullUrl(item.getImageUrl());
+        String fullImageUrl = RetrofitClient.getFullUrl(context, item.getImageUrl());
         Glide.with(context).load(fullImageUrl).into(holder.ivFood);
 
         // Favorite Logic (Premium Glow Effect)

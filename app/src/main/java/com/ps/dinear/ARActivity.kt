@@ -124,14 +124,15 @@ class ARViewModel : ViewModel() {
     }
 
     fun fetchMenu(context: android.content.Context, restaurantSlug: String) {
-        if (_menuItems.isNotEmpty()) return
-
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
+        Log.d("ARActivity", "Fetching menu for slug: $restaurantSlug")
         api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<RestaurantMenuResponse> {
             override fun onResponse(call: retrofit2.Call<RestaurantMenuResponse>, response: retrofit2.Response<RestaurantMenuResponse>) {
                 if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
                     val flattenedList = mutableListOf<MenuItem>()
-                    response.body()?.categories?.forEach { group ->
+                    Log.d("ARActivity", "Menu fetch success. Categories: ${body.categories?.size ?: 0}")
+                    body.categories?.forEach { group ->
                         group.menuItems?.forEach { item ->
                             item.category = group.name
                             flattenedList.add(item)
@@ -142,6 +143,32 @@ class ARViewModel : ViewModel() {
                 }
             }
             override fun onFailure(call: retrofit2.Call<RestaurantMenuResponse>, t: Throwable) {
+                Log.e("ARActivity", "Menu fetch error: ${t.message}")
+            }
+        })
+    }
+
+    fun fetchGlobalFeaturedFoods(context: android.content.Context, city: String?) {
+        val api = RetrofitClient.getClient(context).create(ApiService::class.java)
+        Log.d("ARActivity", "Fetching global featured foods for city: $city")
+        // Using empty query to fetch ALL items as allowed by backend update
+        api.search("", city).enqueue(object : retrofit2.Callback<SearchResponse> {
+            override fun onResponse(call: retrofit2.Call<SearchResponse>, response: retrofit2.Response<SearchResponse>) {
+                if (response.isSuccessful && response.body() != null) {
+                    val foods = response.body()!!.foodItems
+                    if (foods != null) {
+                        // Jumble the sequence for variety
+                        val mutableFoods = foods.toMutableList()
+                        mutableFoods.shuffle()
+                        
+                        _menuItems.clear()
+                        _menuItems.addAll(mutableFoods)
+                        Log.d("ARActivity", "Global foods loaded and shuffled: ${foods.size}")
+                    }
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<SearchResponse>, t: Throwable) {
+                Log.e("ARActivity", "Global fetch error: ${t.message}")
             }
         })
     }
@@ -185,6 +212,12 @@ class ARViewModel : ViewModel() {
         _downloadStates[url] = DownloadState.Downloading
     }
 
+    fun addMenuItemIfMissing(item: MenuItem) {
+        if (_menuItems.none { it.id == item.id }) {
+            _menuItems.add(item)
+        }
+    }
+
     fun setError(url: String, msg: String) {
         _downloadStates[url] = DownloadState.Error(msg)
     }
@@ -213,13 +246,19 @@ class ARActivity : ComponentActivity() {
             return
         }
         
+        viewModel.addMenuItemIfMissing(selectedItem)
+        
         // Fallback: Try to get restaurant ID from the selected item if not in intent
         if (restaurantId == -1) {
             restaurantId = selectedItem.restaurantId ?: -1
         }
 
-        restaurantSlug?.let { slug ->
-            viewModel.fetchMenu(this, slug)
+        if (restaurantSlug != null) {
+            viewModel.fetchMenu(this, restaurantSlug)
+        } else {
+            // Global mode: fetch all featured foods
+            val city = SharedPrefManager.getCity(this)
+            viewModel.fetchGlobalFeaturedFoods(this, city)
         }
 
         setContent {
@@ -970,15 +1009,18 @@ private fun MenuTabContent(
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
+    
+    // Pagination state
+    var visibleItemCount by remember { mutableIntStateOf(7) }
 
-    val categories = remember(menuList) {
+    val categories = remember(menuList.size) {
         val cats = mutableListOf("All")
         val uniqueCats = menuList.mapNotNull { it.category }.distinct().sorted()
         cats.addAll(uniqueCats)
         cats
     }
 
-    val filteredList = remember(menuList, searchQuery, selectedCategory) {
+    val filteredList = remember(menuList.size, searchQuery, selectedCategory) {
         menuList.filter { item ->
             val matchesSearch = item.name.contains(searchQuery, ignoreCase = true) ||
                     (item.getDescription() != null && item.getDescription().contains(searchQuery, ignoreCase = true))
@@ -986,6 +1028,8 @@ private fun MenuTabContent(
             matchesSearch && matchesCategory
         }
     }
+
+    val pagedList = filteredList.take(visibleItemCount)
 
     Column {
         OutlinedTextField(
@@ -1048,13 +1092,30 @@ private fun MenuTabContent(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                items(filteredList, key = { it.id }) { item ->
+                items(pagedList, key = { it.id }) { item ->
                     VerticalMenuItemRow(
                         item = item,
                         restaurantId = restaurantId,
                         downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
                         onClick = { onItemSelected(item) }
                     )
+                }
+                
+                if (visibleItemCount < filteredList.size) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Button(
+                                onClick = { visibleItemCount += 7 },
+                                colors = ButtonDefaults.buttonColors(containerColor = DINEAR_ORANGE),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text("Load More (+7)", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1110,7 +1171,12 @@ fun VerticalMenuItemRow(
                     lineHeight = 16.sp
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(text = "₹${item.price}.00", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFB8860B))
+                val priceText = if (item.discountPrice != null && item.discountPrice > 0) {
+                    "${item.currency} ${item.discountPrice.toInt()}"
+                } else {
+                    "${item.currency} ${item.price.toInt()}"
+                }
+                Text(text = priceText, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFB8860B))
             }
 
             IconButton(

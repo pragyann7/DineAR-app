@@ -213,6 +213,7 @@
                 android:backgroundTint="@color/white">
 
                 <ImageView
+                    android:id="@+id/ivPromoBannerImage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
@@ -227,6 +228,7 @@
                     android:padding="24.dp">
 
                     <TextView
+                        android:id="@+id/tvPromoBadge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@color/orange_primary"
@@ -238,6 +240,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvPromoBannerTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12.dp"
@@ -261,6 +264,43 @@
                 android:paddingHorizontal="24.dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:listitem="@layout/item_filter" />
+
+            <!-- Featured Foods Section -->
+            <RelativeLayout
+                android:id="@+id/rlFeaturedFoodsHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24.dp"
+                android:layout_marginTop="24.dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Trending Dishes"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="View All"
+                    android:textColor="@color/orange_primary"
+                    android:textStyle="bold" />
+
+            </RelativeLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvFeaturedFoods"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16.dp"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingHorizontal="24.dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_featured_food" />
 
             <!-- Explore Restaurants Header -->
             <RelativeLayout

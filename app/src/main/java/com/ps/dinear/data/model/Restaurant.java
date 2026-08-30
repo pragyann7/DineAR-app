@@ -17,6 +17,9 @@ public class Restaurant {
     @SerializedName("categories")
     private List<Category> categories;
     
+    @SerializedName("location")
+    private Location location;
+    
     @SerializedName("price_range")
     private String priceRange;
     
@@ -34,6 +37,15 @@ public class Restaurant {
 
     @SerializedName("address")
     private String address;
+
+    @SerializedName("opening_time")
+    private String openingTime;
+
+    @SerializedName("closing_time")
+    private String closingTime;
+
+    @SerializedName("is_featured")
+    private boolean isFeatured;
 
     private double latitude;
     private double longitude;
@@ -68,6 +80,10 @@ public class Restaurant {
     public String getBannerImage() { return bannerImage; }
     public String getDeliveryTime() { return deliveryTime != null ? deliveryTime : "20-30 MIN"; }
     public String getAddress() { return address; }
+    public Location getLocation() { return location; }
+    public String getOpeningTime() { return openingTime; }
+    public String getClosingTime() { return closingTime; }
+    public boolean isFeatured() { return isFeatured; }
     public double getLatitude() { return latitude; }
     public double getLongitude() { return longitude; }
     public List<MenuItem> getMenuItems() { return menuItems; }
@@ -80,5 +96,15 @@ public class Restaurant {
         public int getId() { return id; }
         public String getName() { return name; }
         public String getIcon() { return icon; }
+    }
+
+    public static class Location {
+        private int id;
+        private String district;
+        private String city;
+
+        public int getId() { return id; }
+        public String getDistrict() { return district; }
+        public String getCity() { return city; }
     }
 }

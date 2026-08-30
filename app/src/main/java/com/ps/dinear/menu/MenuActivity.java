@@ -110,12 +110,14 @@ public class MenuActivity extends AppCompatActivity {
         swipeRefreshLayout.setRefreshing(true);
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        android.util.Log.d("MenuActivity", "Fetching menu for slug: " + restaurantSlug);
         apiService.getMenu(restaurantSlug).enqueue(new Callback<RestaurantMenuResponse>() {
             @Override
             public void onResponse(Call<RestaurantMenuResponse> call, Response<RestaurantMenuResponse> response) {
                 swipeRefreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
                     RestaurantMenuResponse body = response.body();
+                    android.util.Log.d("MenuActivity", "Menu fetched successfully. Categories: " + (body.getCategories() != null ? body.getCategories().size() : 0));
                     
                     // 1. Setup Tabs
                     List<String> tabs = new ArrayList<>();
@@ -134,6 +136,7 @@ public class MenuActivity extends AppCompatActivity {
                     if (body.getCategories() != null) {
                         for (RestaurantMenuResponse.CategoryGroup group : body.getCategories()) {
                             if (group.getMenuItems() != null) {
+                                android.util.Log.d("MenuActivity", "Category: " + group.getName() + " has " + group.getMenuItems().size() + " foods.");
                                 for (MenuItem item : group.getMenuItems()) {
                                     item.setCategory(group.getName());
                                     flattenedList.add(item);
@@ -143,11 +146,13 @@ public class MenuActivity extends AppCompatActivity {
                     }
                     
                     fullMenuList = flattenedList;
+                    android.util.Log.d("MenuActivity", "Total flattened items: " + fullMenuList.size());
                     if (fullMenuList.isEmpty()) {
                         Toast.makeText(MenuActivity.this, "This restaurant has no menu items yet.", Toast.LENGTH_LONG).show();
                     }
                     displayMenuItems(fullMenuList);
                 } else {
+                    android.util.Log.e("MenuActivity", "Menu fetch failed with code: " + response.code());
                     Toast.makeText(MenuActivity.this, "Server error: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -155,6 +160,7 @@ public class MenuActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<RestaurantMenuResponse> call, Throwable t) {
                 swipeRefreshLayout.setRefreshing(false);
+                android.util.Log.e("MenuActivity", "Menu API error: " + t.getMessage());
                 Toast.makeText(MenuActivity.this, "API Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

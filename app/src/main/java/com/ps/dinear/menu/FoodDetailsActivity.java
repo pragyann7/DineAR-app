@@ -39,7 +39,12 @@ public class FoodDetailsActivity extends AppCompatActivity {
         }
 
         ((TextView) findViewById(R.id.tvFoodNameDetails)).setText(item.getName());
-        ((TextView) findViewById(R.id.tvFoodPriceDetails)).setText("Rs. " + (int)item.getPrice());
+
+        if (item.getDiscountPrice() != null && item.getDiscountPrice() > 0) {
+            ((TextView) findViewById(R.id.tvFoodPriceDetails)).setText(item.getCurrency() + " " + (int)item.getDiscountPrice().doubleValue());
+        } else {
+            ((TextView) findViewById(R.id.tvFoodPriceDetails)).setText(item.getCurrency() + " " + (int)item.getPrice());
+        }
         
         TextView tvResName = findViewById(R.id.tvRestaurantNameDetails);
         if (item.getRestaurantName() != null && !item.getRestaurantName().isEmpty()) {
