@@ -101,7 +101,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Set status bar color and light status bar
-        getWindow().setStatusBarColor(getResources().getColor(R.color.app_bg));
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         androidx.core.view.WindowInsetsControllerCompat windowInsetsController =
                 androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         windowInsetsController.setAppearanceLightStatusBars(true);
@@ -113,6 +114,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.setContentView(R.layout.activity_main);
+
+        // Dynamically adjust status bar spacer height
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            v.getLayoutParams().height = bars.top;
+            v.requestLayout();
+            return insets;
+        });
 
         tvWelcome = findViewById(R.id.tvWelcome);
         updateWelcomeText();

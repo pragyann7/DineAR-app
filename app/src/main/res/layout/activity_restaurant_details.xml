@@ -341,50 +341,96 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32.dp"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp">
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="6dp"
+                    app:cardUseCompatPadding="true"
+                    app:strokeWidth="0dp">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_ar_explore_card"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="24.dp">
+                        android:background="@drawable/bg_ar_professional">
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            app:cardBackgroundColor="#673AB7"
-                            app:cardCornerRadius="28dp"
-                            app:cardElevation="4dp">
-                            <ImageView
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/icon_3d"
-                                app:tint="@color/white" />
-                        </com.google.android.material.card.MaterialCardView>
+                        <!-- Decorative Background Mesh/Icon -->
+                        <ImageView
+                            android:layout_width="140dp"
+                            android:layout_height="140dp"
+                            android:layout_gravity="end|bottom"
+                            android:layout_marginEnd="-30dp"
+                            android:layout_marginBottom="-30dp"
+                            android:alpha="0.09"
+                            android:rotation="-15"
+                            android:src="@drawable/icon_fastfood"
+                            app:tint="@color/orange_primary" />
+                        <ImageView
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:layout_gravity="start|top"
+                            android:layout_marginStart="-10dp"
+                            android:layout_marginTop="-10dp"
+                            android:alpha="0.09"
+                            android:rotation="-15"
+                            android:src="@drawable/icon_burger"
+                            app:tint="@color/orange_primary" />
+                        <ImageView
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:layout_gravity="start|top"
+                            android:layout_marginStart="200dp"
+                            android:layout_marginTop="-20dp"
+                            android:alpha="0.09"
+                            android:rotation="25"
+                            android:src="@drawable/icon_pizza"
+                            app:tint="@color/orange_primary" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16.dp"
-                            android:text="Explore Menu in AR"
-                            android:textColor="#311B92"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8.dp"
                             android:gravity="center"
-                            android:text="See our dishes in 3D right on your table before you order."
-                            android:textColor="#5E35B1"
-                            android:textSize="14sp" />
+                            android:orientation="vertical"
+                            android:paddingVertical="32.dp"
+                            android:paddingHorizontal="24.dp">
 
-                    </LinearLayout>
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cvARIcon"
+                                android:layout_width="86dp"
+                                android:layout_height="86dp"
+                                app:cardCornerRadius="24dp"
+                                app:cardElevation="4dp"
+                                app:cardUseCompatPadding="true"
+                                app:cardBackgroundColor="@color/white"
+                                app:strokeWidth="1.5dp"
+                                app:strokeColor="#FFF0E0">
+
+                                <ImageView
+                                    android:layout_width="44dp"
+                                    android:layout_height="44dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/icon_3d" />
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16.dp"
+                                android:text="Explore Menu in AR"
+                                android:textColor="@color/black"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="-0.02" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8.dp"
+                                android:gravity="center"
+                                android:text="Experience our signature dishes in 3D right on your table before you order."
+                                android:textColor="#8A000000"
+                                android:textSize="15sp"
+                                android:lineSpacingExtra="2dp" />
+
+                        </LinearLayout>
+                    </FrameLayout>
 
                 </com.google.android.material.card.MaterialCardView>
 
