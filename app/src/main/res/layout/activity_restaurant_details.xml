@@ -7,9 +7,10 @@
     android:background="@color/white">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="0.dp"
-        app:layout_constraintBottom_toTopOf="@id/btnViewMenu"
+        app:layout_constraintBottom_toTopOf="@id/llBottomAction"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
@@ -17,9 +18,10 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- Hero Image Section -->
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="350dp">
+                android:layout_height="300dp">
 
                 <ImageView
                     android:id="@+id/ivRestaurantHeader"
@@ -28,11 +30,17 @@
                     android:scaleType="centerCrop"
                     android:src="@android:drawable/ic_menu_gallery" />
 
+                <!-- Overlay gradient for top buttons legibility -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:background="@drawable/bg_gradient_top_shadow" />
+
                 <ImageView
                     android:id="@+id/btnBackRestDetails"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
-                    android:layout_marginStart="16.dp"
+                    android:layout_marginStart="20.dp"
                     android:layout_marginTop="50.dp"
                     android:background="@drawable/bg_glass_circle"
                     android:elevation="4dp"
@@ -46,23 +54,43 @@
                     android:layout_height="44dp"
                     android:layout_alignParentEnd="true"
                     android:layout_marginTop="50.dp"
-                    android:layout_marginEnd="16.dp"
+                    android:layout_marginEnd="20.dp"
                     android:background="@drawable/bg_glass_circle"
                     android:elevation="4dp"
-                    android:padding="10.dp"
+                    android:padding="12.dp"
                     android:src="@drawable/icon_favorite"
                     app:tint="@color/black" />
 
+                <TextView
+                    android:id="@+id/tvPromoBadgeDetails"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginStart="24.dp"
+                    android:layout_marginBottom="55.dp"
+                    android:background="@drawable/bg_michelin_badge"
+                    android:elevation="6dp"
+                    android:paddingHorizontal="12.dp"
+                    android:paddingVertical="4.dp"
+                    android:text="Michelin Guide"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="visible" />
+
             </RelativeLayout>
 
+            <!-- Main Content Area -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-30dp"
                 android:background="@drawable/bg_top_rounded"
-                android:elevation="8dp"
+                android:elevation="4dp"
                 android:orientation="vertical"
-                android:padding="24.dp">
+                android:paddingHorizontal="24.dp"
+                android:paddingTop="32.dp"
+                android:paddingBottom="40.dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -71,12 +99,12 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        app:cardCornerRadius="12dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        app:cardCornerRadius="14dp"
                         app:cardElevation="2dp"
                         app:strokeWidth="1dp"
-                        app:strokeColor="@color/divider"
+                        app:strokeColor="#F1F3F4"
                         app:cardBackgroundColor="@color/white"
                         android:layout_marginEnd="16.dp">
 
@@ -96,14 +124,27 @@
                         android:layout_weight="1"
                         android:textColor="@color/black"
                         android:textSize="28sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        tools:text="Lumière Bistro" />
 
                 </LinearLayout>
 
-                <LinearLayout
+                <!-- Category Chips -->
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/cgCuisines"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12.dp"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="0dp">
+                    <!-- Chips added programmatically -->
+                </com.google.android.material.chip.ChipGroup>
+
+                <!-- Quick Info Line -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16.dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -111,122 +152,287 @@
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:src="@android:drawable/btn_star_big_on"
-                        app:tint="@color/orange_primary" />
+                        app:tint="#D44A01" />
 
                     <TextView
                         android:id="@+id/tvRestRatingDetails"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4.dp"
-                        android:textColor="@color/black"
+                        android:textColor="#D44A01"
                         android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4.dp"
-                        android:text="•"
-                        android:textColor="@color/gray_text" />
-
-                    <TextView
-                        android:id="@+id/tvRestCuisineDetails"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4.dp"
-                        android:textColor="@color/gray_text"
-                        android:textSize="15sp" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16.dp"
-                    android:orientation="horizontal">
+                        android:textStyle="bold"
+                        tools:text="4.8" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_category_tag"
-                        android:paddingHorizontal="12.dp"
-                        android:paddingVertical="8.dp"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="4dp"
+                            android:layout_marginHorizontal="12.dp"
+                            android:background="@drawable/bg_dot"
+                            android:alpha="0.3"
+                            app:tint="@color/gray_text" />
+
                         <ImageView
                             android:layout_width="14dp"
                             android:layout_height="14dp"
                             android:src="@android:drawable/ic_menu_recent_history"
-                            app:tint="@color/black"/>
+                            app:tint="@color/gray_text" />
+
                         <TextView
                             android:id="@+id/tvRestTimeDetails"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6.dp"
-                            android:text="25-30 min"
-                            android:textColor="@color/black"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="4.dp"
+                            android:textColor="@color/gray_text"
+                            android:textSize="15sp"
+                            tools:text="20-30 min" />
+
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/llDistanceDetails"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12.dp"
-                        android:background="@drawable/bg_category_tag"
-                        android:paddingHorizontal="12.dp"
-                        android:paddingVertical="8.dp"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="4dp"
+                            android:layout_marginHorizontal="12.dp"
+                            android:background="@drawable/bg_dot"
+                            android:alpha="0.3"
+                            app:tint="@color/gray_text" />
+
                         <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/icon_location"/>
+                            android:id="@+id/ivDistanceIcon"
+                            android:layout_width="17dp"
+                            android:layout_height="17dp"
+                            android:src="@drawable/icon_walk"/>
                         <TextView
                             android:id="@+id/tvRestDistanceDetails"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6.dp"
-                            android:text="2.4 km"
-                            android:textColor="@color/black"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="4.dp"
+                            android:textColor="@color/gray_text"
+                            android:textSize="15sp"
+                            tools:text="0.8 km" />
+
                     </LinearLayout>
 
                 </LinearLayout>
 
-                <TextView
+                <!-- Address Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cvAddressCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24.dp"
+                    app:cardBackgroundColor="#F8F9FA"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F1F3F4">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16.dp">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cvMapIcon"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="#EEEEEE">
+                            <ImageView
+                                android:id="@+id/ivMapIcon"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/icon_location"/>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_toEndOf="@id/cvMapIcon"
+                            android:layout_toStartOf="@id/ivArrow"
+                            android:layout_marginStart="12.dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvRestAddressDetails"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/black"
+                                android:textSize="15sp"
+                                tools:text="123 Gourmet Ave, Paris, FR" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2.dp"
+                                android:text="View on map"
+                                android:textColor="#1976D2"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/ivArrow"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/gray_text" />
+
+                    </RelativeLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- About Section -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32.dp"
-                    android:text="About Restaurant"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/icon_about"
+                        app:tint="@color/black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="About"
+                        android:textColor="@color/black"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvRestDescriptionDetails"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8.dp"
+                    android:layout_marginTop="12.dp"
                     android:lineSpacingExtra="4dp"
                     android:textColor="@color/gray_text"
-                    android:textSize="14sp" />
+                    android:textSize="15sp"
+                    tools:text="Experience a fusion of traditional French techniques with modern flair..." />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24.dp"
-                    android:text="Location"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvRestAddressDetails"
+                <!-- AR Explore Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cvARExplore"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8.dp"
-                    android:textColor="@color/gray_text"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="32.dp"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="6dp"
+                    app:cardUseCompatPadding="true"
+                    app:strokeWidth="0dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_ar_professional">
+
+                        <!-- Decorative Background Mesh/Icon -->
+                        <ImageView
+                            android:layout_width="140dp"
+                            android:layout_height="140dp"
+                            android:layout_gravity="end|bottom"
+                            android:layout_marginEnd="-30dp"
+                            android:layout_marginBottom="-30dp"
+                            android:alpha="0.09"
+                            android:rotation="-15"
+                            android:src="@drawable/icon_fastfood"
+                            app:tint="@color/orange_primary" />
+                        <ImageView
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:layout_gravity="start|top"
+                            android:layout_marginStart="-10dp"
+                            android:layout_marginTop="-10dp"
+                            android:alpha="0.09"
+                            android:rotation="-15"
+                            android:src="@drawable/icon_burger"
+                            app:tint="@color/orange_primary" />
+                        <ImageView
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:layout_gravity="start|top"
+                            android:layout_marginStart="200dp"
+                            android:layout_marginTop="-20dp"
+                            android:alpha="0.09"
+                            android:rotation="25"
+                            android:src="@drawable/icon_pizza"
+                            app:tint="@color/orange_primary" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingVertical="32.dp"
+                            android:paddingHorizontal="24.dp">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cvARIcon"
+                                android:layout_width="86dp"
+                                android:layout_height="86dp"
+                                app:cardCornerRadius="24dp"
+                                app:cardElevation="4dp"
+                                app:cardUseCompatPadding="true"
+                                app:cardBackgroundColor="@color/white"
+                                app:strokeWidth="1.5dp"
+                                app:strokeColor="#FFF0E0">
+
+                                <ImageView
+                                    android:layout_width="44dp"
+                                    android:layout_height="44dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/icon_3d" />
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16.dp"
+                                android:text="Explore Menu in AR"
+                                android:textColor="@color/black"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="-0.02" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8.dp"
+                                android:gravity="center"
+                                android:text="Experience our signature dishes in 3D right on your table before you order."
+                                android:textColor="#8A000000"
+                                android:textSize="15sp"
+                                android:lineSpacingExtra="2dp" />
+
+                        </LinearLayout>
+                    </FrameLayout>
+
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
@@ -234,17 +440,25 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnViewMenu"
+    <LinearLayout
+        android:id="@+id/llBottomAction"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="24.dp"
-        android:background="@drawable/bg_button_orange"
-        android:text="VIEW MENU"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:padding="24.dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnViewMenu"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/bg_button_orange"
+            android:text="View Menu"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
