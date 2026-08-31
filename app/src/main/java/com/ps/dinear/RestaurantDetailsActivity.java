@@ -45,13 +45,38 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         double distance = getIntent().getDoubleExtra("distance", 0.0);
         String imageUrl = getIntent().getStringExtra("imageUrl");
         String bannerImage = getIntent().getStringExtra("bannerImage");
+        String address = getIntent().getStringExtra("address");
+        String city = getIntent().getStringExtra("city");
+        String district = getIntent().getStringExtra("district");
 
         // Set all data from intent immediately (INSTANT LOAD)
         ((TextView) findViewById(R.id.tvRestNameDetails)).setText(name);
         ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.valueOf(rating));
         ((TextView) findViewById(R.id.tvRestCuisineDetails)).setText(cuisine);
         ((TextView) findViewById(R.id.tvRestDescriptionDetails)).setText(description);
-        ((TextView) findViewById(R.id.tvRestAddressDetails)).setText("Bharatpur, Chitwan, Nepal");
+        
+        StringBuilder fullAddress = new StringBuilder();
+        if (address != null && !address.isEmpty()) {
+            fullAddress.append(address);
+        }
+
+        StringBuilder areaInfo = new StringBuilder();
+        if (city != null && !city.isEmpty()) areaInfo.append(city);
+        if (district != null && !district.isEmpty()) {
+            if (areaInfo.length() > 0) areaInfo.append(", ");
+            areaInfo.append(district);
+        }
+
+        if (areaInfo.length() > 0) {
+            if (fullAddress.length() > 0) fullAddress.append("\n");
+            fullAddress.append(areaInfo);
+        }
+
+        if (fullAddress.length() > 0) {
+            ((TextView) findViewById(R.id.tvRestAddressDetails)).setText(fullAddress.toString());
+        } else {
+            ((TextView) findViewById(R.id.tvRestAddressDetails)).setText("Location details unavailable");
+        }
         
         if (deliveryTime != null) {
             ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(deliveryTime);

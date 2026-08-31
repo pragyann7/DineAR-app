@@ -120,6 +120,11 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                 intent.putExtra("distance", restaurant.getDistance());
                 intent.putExtra("imageUrl", restaurant.getImageUrl());
                 intent.putExtra("bannerImage", restaurant.getBannerImage());
+                intent.putExtra("address", restaurant.getAddress());
+                if (restaurant.getLocation() != null) {
+                    intent.putExtra("city", restaurant.getLocation().getCity());
+                    intent.putExtra("district", restaurant.getLocation().getDistrict());
+                }
                 startActivity(intent);
             }
         });
@@ -198,9 +203,10 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         progressBar.setVisibility(View.VISIBLE);
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
         
-        Log.d("DiscoverActivity", "Fetching restaurants from: " + RetrofitClient.getBaseUrl(this));
+        String selectedCity = SharedPrefManager.getCity(this);
+        Log.d("DiscoverActivity", "Fetching restaurants for city: " + selectedCity);
         
-        apiService.getRestaurants(null, null).enqueue(new Callback<List<Restaurant>>() {
+        apiService.getRestaurants(selectedCity, null).enqueue(new Callback<List<Restaurant>>() {
             @Override
             public void onResponse(Call<List<Restaurant>> call, Response<List<Restaurant>> response) {
                 progressBar.setVisibility(View.GONE);
@@ -296,6 +302,13 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
 
         if (pointsCount > 0) {
             Log.d("DiscoverActivity", "Zooming to " + pointsCount + " points");
+            LatLngBounds bounds = builder.build();
+            
+            // Restrict camera to this district/area to reduce tile usage
+            map.setLatLngBoundsForCameraTarget(bounds);
+            map.setMinZoomPreference(11); // Prevent zooming out to see the whole world
+            map.setMaxZoomPreference(18); // Limit high-res tile requests
+            
             if (pointsCount == 1) {
                 // If only one point, find it and zoom manually to avoid Builder.build() exception
                 for (Restaurant r : restaurants) {
@@ -306,7 +319,7 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                     }
                 }
             } else {
-                map.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 150));
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 150));
             }
         } else {
             Log.w("DiscoverActivity", "No valid restaurant points to zoom to. Defaulting to user location if available.");
