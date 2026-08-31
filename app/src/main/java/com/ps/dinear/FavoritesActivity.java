@@ -206,6 +206,9 @@ public class FavoritesActivity extends AppCompatActivity {
                     intent.putExtra("imageUrl", restaurant.getImageUrl());
                     intent.putExtra("bannerImage", restaurant.getBannerImage());
                     intent.putExtra("address", restaurant.getAddress());
+                    intent.putExtra("isFeatured", restaurant.isFeatured());
+                    intent.putExtra("latitude", restaurant.getLatitude());
+                    intent.putExtra("longitude", restaurant.getLongitude());
                     if (restaurant.getLocation() != null) {
                         intent.putExtra("city", restaurant.getLocation().getCity());
                         intent.putExtra("district", restaurant.getLocation().getDistrict());
