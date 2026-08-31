@@ -50,6 +50,7 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     private List<Restaurant> restaurantList = new java.util.ArrayList<>();
     private FusedLocationProviderClient fusedLocationClient;
     private Location userLocation;
+    private int focusRestaurantId = -1;
     private static final String MAPTILER_API_KEY = "CqA49jSeY7aVGUdjsSmL";
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
 
@@ -63,6 +64,10 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         progressBar = findViewById(R.id.progressBarDiscover);
         rvRestaurants = findViewById(R.id.rvDiscoverRestaurants);
         fabToggleList = findViewById(R.id.fabToggleList);
+
+        if (getIntent() != null) {
+            focusRestaurantId = getIntent().getIntExtra("focusRestaurantId", -1);
+        }
         
         setupRecyclerView();
 
@@ -75,6 +80,38 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         mapView.getMapAsync(this);
 
         findViewById(R.id.btnBackDiscover).setOnClickListener(v -> finish());
+    }
+
+    @Override
+    protected void onNewIntent(@NonNull Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        focusRestaurantId = intent.getIntExtra("focusRestaurantId", -1);
+        if (focusRestaurantId != -1 && !restaurantList.isEmpty()) {
+            handleFocusRestaurant();
+        }
+    }
+
+    private void handleFocusRestaurant() {
+        if (focusRestaurantId == -1 || restaurantList.isEmpty()) return;
+        
+        for (int i = 0; i < restaurantList.size(); i++) {
+            Restaurant r = restaurantList.get(i);
+            if (r.getId() == focusRestaurantId) {
+                // 1. Scroll to the restaurant in the horizontal list
+                rvRestaurants.smoothScrollToPosition(i);
+                
+                // 2. Center map on the restaurant
+                if (map != null && r.getLatitude() != 0) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(r.getLatitude(), r.getLongitude()), 16));
+                }
+                
+                // Reset to avoid re-focusing on configuration changes if not desired
+                // focusRestaurantId = -1; 
+                break;
+            }
+        }
     }
 
     private void toggleRestaurantList() {
@@ -121,6 +158,9 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                 intent.putExtra("imageUrl", restaurant.getImageUrl());
                 intent.putExtra("bannerImage", restaurant.getBannerImage());
                 intent.putExtra("address", restaurant.getAddress());
+                intent.putExtra("isFeatured", restaurant.isFeatured());
+                intent.putExtra("latitude", restaurant.getLatitude());
+                intent.putExtra("longitude", restaurant.getLongitude());
                 if (restaurant.getLocation() != null) {
                     intent.putExtra("city", restaurant.getLocation().getCity());
                     intent.putExtra("district", restaurant.getLocation().getDistrict());
@@ -223,6 +263,10 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                     adapter.notifyDataSetChanged();
                     
                     displayRestaurantsOnMap(list);
+
+                    if (focusRestaurantId != -1) {
+                        handleFocusRestaurant();
+                    }
                 } else {
                     Log.e("DiscoverActivity", "Failed to fetch restaurants. Code: " + response.code());
                     Toast.makeText(DiscoverActivity.this, "Failed to load restaurants", Toast.LENGTH_SHORT).show();

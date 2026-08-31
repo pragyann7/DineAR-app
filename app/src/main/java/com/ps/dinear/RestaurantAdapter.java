@@ -75,15 +75,17 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         
         holder.tvTime.setText(restaurant.getDeliveryTime());
         
-        if (holder.tvDistance != null) {
+        if (holder.llDistance != null) {
             if (restaurant.getDistance() > 0) {
-                holder.tvDistance.setVisibility(View.VISIBLE);
+                holder.llDistance.setVisibility(View.VISIBLE);
                 holder.tvDistance.setText(String.format(Locale.US, "%.1f km", restaurant.getDistance()));
+                if (holder.ivDistanceIcon != null) holder.ivDistanceIcon.setImageResource(R.drawable.icon_walk);
             } else if (locationPermissionDenied) {
-                holder.tvDistance.setVisibility(View.VISIBLE);
+                holder.llDistance.setVisibility(View.VISIBLE);
                 holder.tvDistance.setText("No GPS");
+                if (holder.ivDistanceIcon != null) holder.ivDistanceIcon.setImageResource(R.drawable.icon_nolocation);
             } else {
-                holder.tvDistance.setVisibility(View.GONE);
+                holder.llDistance.setVisibility(View.GONE);
             }
         }
 
@@ -119,8 +121,9 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
-        ImageView ivRestaurant, ivFavorite;
+        ImageView ivRestaurant, ivFavorite, ivDistanceIcon;
         TextView tvName, tvRating, tvCuisine, tvTime, tvDistance;
+        View llDistance;
         MaterialButton btnViewDetails;
 
         public ViewHolder(@NonNull View itemView) {
@@ -133,6 +136,8 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
             tvCuisine = itemView.findViewById(R.id.tvCuisine);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvDistance = itemView.findViewById(R.id.tvDistance);
+            ivDistanceIcon = itemView.findViewById(R.id.ivDistanceIcon);
+            llDistance = itemView.findViewById(R.id.llDistance);
             btnViewDetails = itemView.findViewById(R.id.btnViewDetails);
         }
     }

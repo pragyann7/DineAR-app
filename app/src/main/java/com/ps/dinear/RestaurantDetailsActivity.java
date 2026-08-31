@@ -21,6 +21,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
     private int restaurantId;
     private String restaurantSlug;
     private String name;
+    private double latitude, longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +49,37 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         String address = getIntent().getStringExtra("address");
         String city = getIntent().getStringExtra("city");
         String district = getIntent().getStringExtra("district");
+        boolean isFeatured = getIntent().getBooleanExtra("isFeatured", false);
+        latitude = getIntent().getDoubleExtra("latitude", 0.0);
+        longitude = getIntent().getDoubleExtra("longitude", 0.0);
 
         // Set all data from intent immediately (INSTANT LOAD)
         ((TextView) findViewById(R.id.tvRestNameDetails)).setText(name);
         ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.valueOf(rating));
-        ((TextView) findViewById(R.id.tvRestCuisineDetails)).setText(cuisine);
+        ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(deliveryTime != null ? deliveryTime : "20-30 min");
         ((TextView) findViewById(R.id.tvRestDescriptionDetails)).setText(description);
         
-        StringBuilder fullAddress = new StringBuilder();
-        if (address != null && !address.isEmpty()) {
-            fullAddress.append(address);
+        findViewById(R.id.tvPromoBadgeDetails).setVisibility(isFeatured ? View.VISIBLE : View.GONE);
+
+        // Setup Cuisines as Chips
+        com.google.android.material.chip.ChipGroup cgCuisines = findViewById(R.id.cgCuisines);
+        if (cuisine != null && !cuisine.isEmpty()) {
+            String[] parts = cuisine.split(", ");
+            for (String part : parts) {
+                com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
+                chip.setText(part);
+                chip.setChipBackgroundColorResource(R.color.gray_light);
+                chip.setChipStrokeWidth(0f);
+                chip.setTextColor(getResources().getColor(R.color.gray_text));
+                chip.setTextSize(13f);
+                cgCuisines.addView(chip);
+            }
         }
 
+        // Format Address
+        StringBuilder fullAddress = new StringBuilder();
+        if (address != null && !address.isEmpty()) fullAddress.append(address);
+        
         StringBuilder areaInfo = new StringBuilder();
         if (city != null && !city.isEmpty()) areaInfo.append(city);
         if (district != null && !district.isEmpty()) {
@@ -67,41 +87,52 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             areaInfo.append(district);
         }
 
-        if (areaInfo.length() > 0) {
-            if (fullAddress.length() > 0) fullAddress.append("\n");
+        if (fullAddress.length() > 0 && areaInfo.length() > 0) {
+            fullAddress.append(", ").append(areaInfo);
+        } else if (areaInfo.length() > 0) {
             fullAddress.append(areaInfo);
         }
 
+        TextView tvAddress = findViewById(R.id.tvRestAddressDetails);
         if (fullAddress.length() > 0) {
-            ((TextView) findViewById(R.id.tvRestAddressDetails)).setText(fullAddress.toString());
+            tvAddress.setText(fullAddress.toString());
         } else {
-            ((TextView) findViewById(R.id.tvRestAddressDetails)).setText("Location details unavailable");
+            tvAddress.setText("Location details unavailable");
+            ((ImageView) findViewById(R.id.ivMapIcon)).setImageResource(R.drawable.icon_nolocation);
         }
         
-        if (deliveryTime != null) {
-            ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(deliveryTime);
-        }
-        
-        View distanceTag = (View) findViewById(R.id.tvRestDistanceDetails).getParent();
         if (distance > 0) {
-            distanceTag.setVisibility(View.VISIBLE);
             ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText(String.format(Locale.US, "%.1f km", distance));
+            ((ImageView) findViewById(R.id.ivDistanceIcon)).setImageResource(R.drawable.icon_walk);
         } else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            distanceTag.setVisibility(View.VISIBLE);
             ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText("No GPS");
+            ((ImageView) findViewById(R.id.ivDistanceIcon)).setImageResource(R.drawable.icon_nolocation);
         } else {
-            distanceTag.setVisibility(View.GONE);
+            findViewById(R.id.llDistanceDetails).setVisibility(View.GONE);
         }
 
         String displayImageUrl = (bannerImage != null && !bannerImage.isEmpty()) ? bannerImage : imageUrl;
         String fullImageUrl = RetrofitClient.getFullUrl(this, displayImageUrl);
         Glide.with(this).load(fullImageUrl).into((ImageView) findViewById(R.id.ivRestaurantHeader));
 
-        // Load front icon (logo) next to name
+        // Load front logo next to name
         String fullLogoUrl = RetrofitClient.getFullUrl(this, imageUrl);
         Glide.with(this).load(fullLogoUrl).into((ImageView) findViewById(R.id.ivRestLogoDetails));
 
         findViewById(R.id.btnBackRestDetails).setOnClickListener(v -> finish());
+
+        findViewById(R.id.cvAddressCard).setOnClickListener(v -> {
+            if (latitude != 0 && longitude != 0) {
+                Intent discoverIntent = new Intent(this, DiscoverActivity.class);
+                discoverIntent.putExtra("focusRestaurantId", restaurantId);
+                // Flag to ensure it doesn't just keep opening new activities if already there, 
+                // though from details screen we usually want to jump back or start fresh.
+                discoverIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(discoverIntent);
+            } else {
+                Toast.makeText(this, "Coordinates not available for this restaurant", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         ImageView btnFavorite = findViewById(R.id.btnFavoriteRest);
         
@@ -138,5 +169,28 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             intent.putExtra("restaurantName", name);
             startActivity(intent);
         });
+
+        findViewById(R.id.cvARExplore).setOnClickListener(v -> {
+            Intent intent = new Intent(this, MenuActivity.class);
+            intent.putExtra("restaurantId", restaurantId);
+            intent.putExtra("restaurantSlug", restaurantSlug);
+            intent.putExtra("restaurantName", name);
+            startActivity(intent);
+        });
+
+        // Add "Read more" to description if it's long
+        TextView tvDescription = findViewById(R.id.tvRestDescriptionDetails);
+        if (description != null && description.length() > 150) {
+            String truncated = description.substring(0, 150) + "... ";
+            android.text.SpannableString ss = new android.text.SpannableString(truncated + "Read more");
+            android.text.style.ForegroundColorSpan fcs = new android.text.style.ForegroundColorSpan(getResources().getColor(R.color.orange_primary));
+            android.text.style.StyleSpan bold = new android.text.style.StyleSpan(android.graphics.Typeface.BOLD);
+            ss.setSpan(fcs, truncated.length(), ss.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ss.setSpan(bold, truncated.length(), ss.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tvDescription.setText(ss);
+            tvDescription.setOnClickListener(v -> tvDescription.setText(description));
+        } else {
+            tvDescription.setText(description);
+        }
     }
 }

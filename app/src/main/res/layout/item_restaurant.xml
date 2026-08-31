@@ -145,20 +145,37 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvDistance"
+        <LinearLayout
+            android:id="@+id/llDistance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8.dp"
             android:background="#E3F2FD"
-            android:paddingHorizontal="8.dp"
-            android:paddingVertical="2.dp"
-            android:textColor="#1976D2"
-            android:textSize="11sp"
-            android:textStyle="bold"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:visibility="gone"
             app:layout_constraintStart_toStartOf="@id/tvRestaurantName"
-            app:layout_constraintTop_toBottomOf="@id/llTags"
-            android:visibility="gone" />
+            app:layout_constraintTop_toBottomOf="@id/llTags">
+
+            <ImageView
+                android:id="@+id/ivDistanceIcon"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/icon_walk"
+                app:tint="#1976D2" />
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#1976D2"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
