@@ -650,6 +650,11 @@ public class MainActivity extends AppCompatActivity {
                                 intent.putExtra("distance", restaurant.getDistance());
                                 intent.putExtra("imageUrl", restaurant.getImageUrl());
                                 intent.putExtra("bannerImage", restaurant.getBannerImage());
+                                intent.putExtra("address", restaurant.getAddress());
+                                if (restaurant.getLocation() != null) {
+                                    intent.putExtra("city", restaurant.getLocation().getCity());
+                                    intent.putExtra("district", restaurant.getLocation().getDistrict());
+                                }
                                 startActivity(intent);
                             });
                         } else {
