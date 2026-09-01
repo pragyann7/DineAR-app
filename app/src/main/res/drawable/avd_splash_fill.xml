@@ -1,24 +1,39 @@
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_splash_icon">
+
+    <!-- Fork icon slides in from the top, then darkens -->
+    <target
+        android:name="fork_slide_group"
+        android:animation="@animator/slide_from_top_fork" />
     <target
         android:name="fork_handle"
         android:animation="@animator/fill_to_dark" />
+
+    <!-- "AR" slides in from the top, then turns orange -->
+    <target
+        android:name="ar_slide_group"
+        android:animation="@animator/slide_from_top" />
     <target
         android:name="ar_text_a"
-        android:animation="@animator/fill_to_orange" />
+        android:animation="@animator/fill_to_orange_ar" />
     <target
         android:name="ar_text_a"
-        android:animation="@animator/stroke_to_orange" />
+        android:animation="@animator/stroke_to_orange_ar" />
     <target
         android:name="ar_text_r"
-        android:animation="@animator/fill_to_orange" />
+        android:animation="@animator/fill_to_orange_ar" />
     <target
         android:name="ar_text_r"
-        android:animation="@animator/stroke_to_orange" />
+        android:animation="@animator/stroke_to_orange_ar" />
+
+    <!-- "Dine" slides in from the bottom, then turns orange -->
+    <target
+        android:name="dine_slide_group"
+        android:animation="@animator/slide_from_bottom" />
     <target
         android:name="dine_text"
-        android:animation="@animator/fill_to_orange" />
+        android:animation="@animator/fill_to_orange_dine" />
     <target
         android:name="dine_text"
-        android:animation="@animator/stroke_to_orange" />
+        android:animation="@animator/stroke_to_orange_dine" />
 </animated-vector>
