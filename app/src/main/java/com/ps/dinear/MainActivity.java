@@ -242,8 +242,10 @@ public class MainActivity extends AppCompatActivity {
         String name = SharedPrefManager.getUserName(this);
         String email = SharedPrefManager.getUserEmail(this);
 
-        if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
-            // Fallback: If name is missing, use email prefix
+        if (SharedPrefManager.isGuest(this)) {
+            name = "Guest";
+        } else if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
+            // Fallback for logged in users with missing name
             if (email != null && !email.trim().isEmpty() && email.contains("@")) {
                 name = email.split("@")[0];
             } else {

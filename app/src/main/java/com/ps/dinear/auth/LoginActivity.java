@@ -61,5 +61,19 @@ public class LoginActivity extends AppCompatActivity {
                 }
             });
         });
+
+        findViewById(R.id.btnGoogleLogin).setOnClickListener(v -> {
+            Toast.makeText(this, "Google Sign-In coming soon", Toast.LENGTH_SHORT).show();
+        });
+
+        findViewById(R.id.btnGoToSignup).setOnClickListener(v -> {
+            startActivity(new Intent(this, SignupActivity.class));
+            finish();
+        });
+
+        findViewById(R.id.btnForgotPassword).setOnClickListener(v -> {
+            // Toast.makeText(this, "Forgot Password coming soon", Toast.LENGTH_SHORT).show();
+            // Start ForgotPasswordActivity if created
+        });
     }
 }
