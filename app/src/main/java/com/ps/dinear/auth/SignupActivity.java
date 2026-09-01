@@ -62,5 +62,14 @@ public class SignupActivity extends AppCompatActivity {
                 }
             });
         });
+
+        findViewById(R.id.btnGoogleSignup).setOnClickListener(v -> {
+            Toast.makeText(this, "Google Sign-In coming soon", Toast.LENGTH_SHORT).show();
+        });
+
+        findViewById(R.id.btnGoToLogin).setOnClickListener(v -> {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
     }
 }

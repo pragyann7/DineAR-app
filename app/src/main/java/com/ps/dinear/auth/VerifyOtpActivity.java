@@ -2,6 +2,10 @@ package com.ps.dinear.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -12,12 +16,18 @@ import com.ps.dinear.ApiService;
 import com.ps.dinear.R;
 import com.ps.dinear.RetrofitClient;
 
+import java.util.Locale;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class VerifyOtpActivity extends AppCompatActivity {
     private String email;
+    private final EditText[] otpInputs = new EditText[6];
+    private TextView btnResendOtp;
+    private CountDownTimer countDownTimer;
+    private boolean isTimerRunning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +41,16 @@ public class VerifyOtpActivity extends AppCompatActivity {
             return;
         }
 
-        EditText etOtp = findViewById(R.id.etVerifyOtp);
         TextView tvInstructions = findViewById(R.id.tvVerifyOtpInstructions);
-        tvInstructions.setText("An OTP has been sent to " + email + ". Please enter it below to verify your account.");
+        tvInstructions.setText("We sent a 6-digit verification code to\n" + email);
+
+        btnResendOtp = findViewById(R.id.btnResendOtp);
+
+        setupOtpInputs();
+        otpInputs[0].requestFocus();
 
         findViewById(R.id.btnSubmitVerifyOtp).setOnClickListener(v -> {
-            String otp = etOtp.getText().toString().trim();
+            String otp = getOtpText();
             if (otp.length() != 6) {
                 Toast.makeText(this, "Please enter a 6-digit OTP", Toast.LENGTH_SHORT).show();
                 return;
@@ -45,7 +59,85 @@ public class VerifyOtpActivity extends AppCompatActivity {
             verifyOtp(otp);
         });
 
-        findViewById(R.id.btnResendOtp).setOnClickListener(v -> resendOtp());
+        btnResendOtp.setOnClickListener(v -> {
+            if (!isTimerRunning) {
+                resendOtp();
+            }
+        });
+
+        startResendTimer();
+    }
+
+    private void startResendTimer() {
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+
+        isTimerRunning = true;
+        btnResendOtp.setEnabled(false);
+        btnResendOtp.setAlpha(0.5f);
+
+        countDownTimer = new CountDownTimer(60000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                long seconds = millisUntilFinished / 1000;
+                btnResendOtp.setText(String.format(Locale.getDefault(), "Resend Code in 00:%02d", seconds));
+            }
+
+            @Override
+            public void onFinish() {
+                isTimerRunning = false;
+                btnResendOtp.setEnabled(true);
+                btnResendOtp.setAlpha(1.0f);
+                btnResendOtp.setText("Didn't receive code? Resend");
+            }
+        }.start();
+    }
+
+    private void setupOtpInputs() {
+        otpInputs[0] = findViewById(R.id.etOtp1);
+        otpInputs[1] = findViewById(R.id.etOtp2);
+        otpInputs[2] = findViewById(R.id.etOtp3);
+        otpInputs[3] = findViewById(R.id.etOtp4);
+        otpInputs[4] = findViewById(R.id.etOtp5);
+        otpInputs[5] = findViewById(R.id.etOtp6);
+
+        for (int i = 0; i < 6; i++) {
+            final int index = i;
+            otpInputs[i].addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    if (s.length() == 1 && index < 5) {
+                        otpInputs[index + 1].requestFocus();
+                    }
+                }
+            });
+
+            otpInputs[i].setOnKeyListener((v, keyCode, event) -> {
+                if (keyCode == KeyEvent.KEYCODE_DEL && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (otpInputs[index].getText().length() == 0 && index > 0) {
+                        otpInputs[index - 1].requestFocus();
+                        otpInputs[index - 1].setText("");
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+    }
+
+    private String getOtpText() {
+        StringBuilder sb = new StringBuilder();
+        for (EditText input : otpInputs) {
+            sb.append(input.getText().toString());
+        }
+        return sb.toString();
     }
 
     private void verifyOtp(String otp) {
@@ -80,6 +172,7 @@ public class VerifyOtpActivity extends AppCompatActivity {
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(VerifyOtpActivity.this, "OTP resent successfully", Toast.LENGTH_SHORT).show();
+                    startResendTimer();
                 } else {
                     Toast.makeText(VerifyOtpActivity.this, "Failed to resend OTP", Toast.LENGTH_SHORT).show();
                 }
@@ -90,5 +183,13 @@ public class VerifyOtpActivity extends AppCompatActivity {
                 Toast.makeText(VerifyOtpActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
     }
 }
