@@ -2,6 +2,7 @@ package com.ps.dinear.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.ps.dinear.MainActivity;

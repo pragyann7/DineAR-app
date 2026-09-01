@@ -33,7 +33,10 @@ public class ProfileActivity extends AppCompatActivity {
         String name = SharedPrefManager.getUserName(this);
         String email = SharedPrefManager.getUserEmail(this);
         
-        if (name == null || name.isEmpty() || name.equalsIgnoreCase("Guest")) {
+        if (SharedPrefManager.isGuest(this)) {
+            name = "Guest";
+            email = "Not logged in";
+        } else if (name == null || name.isEmpty() || name.equalsIgnoreCase("Guest")) {
             // Fallback: If name is missing, use email prefix
             if (email != null && !email.isEmpty() && email.contains("@")) {
                 name = email.split("@")[0];

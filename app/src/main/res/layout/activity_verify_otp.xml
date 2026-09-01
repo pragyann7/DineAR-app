@@ -1,59 +1,181 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
+    android:background="@color/auth_bg"
     android:padding="32dp">
 
+    <View
+        android:id="@+id/ivHeaderIconBg"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/bg_auth_input"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/ivHeaderIcon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_verified"
+        app:layout_constraintBottom_toBottomOf="@id/ivHeaderIconBg"
+        app:layout_constraintEnd_toEndOf="@id/ivHeaderIconBg"
+        app:layout_constraintStart_toStartOf="@id/ivHeaderIconBg"
+        app:layout_constraintTop_toTopOf="@id/ivHeaderIconBg"
+        app:tint="@color/auth_primary" />
+
     <TextView
+        android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Verify Email"
-        android:textColor="@color/black"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="24dp"
+        android:text="Verify your email"
+        android:textColor="@color/auth_text_header"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ivHeaderIconBg" />
 
     <TextView
         android:id="@+id/tvVerifyOtpInstructions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="An OTP has been sent to your email. Please enter it below to verify your account."
-        android:textAlignment="center"
-        android:textColor="@color/gray_text" />
-
-    <EditText
-        android:id="@+id/etVerifyOtp"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="32dp"
         android:gravity="center"
-        android:hint="Enter 6-digit OTP"
-        android:inputType="number"
-        android:maxLength="6"
-        android:textSize="18sp"
-        android:autofillHints="smsOTPCode" />
+        android:text="We sent a 6-digit verification code to\nj***@example.com"
+        android:textColor="@color/auth_text_body"
+        android:textSize="15sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+
+    <LinearLayout
+        android:id="@+id/llOtp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/tvVerifyOtpInstructions">
+
+        <EditText
+            android:id="@+id/etOtp1"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_auth_input"
+            android:gravity="center"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="20sp"
+            tools:text="8" />
+
+        <EditText
+            android:id="@+id/etOtp2"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_auth_input"
+            android:gravity="center"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="20sp"
+            tools:text="2" />
+
+        <EditText
+            android:id="@+id/etOtp3"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_auth_input"
+            android:gravity="center"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="20sp"
+            tools:text="0" />
+
+        <EditText
+            android:id="@+id/etOtp4"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_auth_input"
+            android:gravity="center"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="20sp"
+            tools:text="4" />
+
+        <EditText
+            android:id="@+id/etOtp5"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_auth_input"
+            android:gravity="center"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="20sp"
+            tools:text="9" />
+
+        <EditText
+            android:id="@+id/etOtp6"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/bg_auth_input"
+            android:gravity="center"
+            android:inputType="number"
+            android:maxLength="1"
+            android:textSize="20sp"
+            tools:text="_" />
+
+    </LinearLayout>
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSubmitVerifyOtp"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginTop="32.dp"
-        android:background="@drawable/bg_button_orange"
-        android:text="Verify"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/bg_auth_button"
+        android:text="Verify Email →"
         android:textAllCaps="false"
         android:textColor="@color/white"
-        android:textStyle="bold" />
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/llOtp" />
 
-    <TextView
-        android:id="@+id/btnResendOtp"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:padding="8dp"
-        android:text="Didn't receive code? Resend"
-        android:textColor="@color/orange_primary"
-        android:textStyle="bold" />
+        android:layout_marginBottom="32dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-</LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Didn't receive the code?"
+            android:textColor="@color/auth_text_body"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnResendOtp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Resend Code in 00:55"
+            android:textColor="@color/auth_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

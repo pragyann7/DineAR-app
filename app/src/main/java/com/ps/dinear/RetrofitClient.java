@@ -32,7 +32,7 @@ public class RetrofitClient {
         String port = SharedPrefManager.getPort(context);
         
         if (ip == null) {
-            ip = "192.168.1.66"; // Default fallback
+            ip = "192.168.1.64"; // Default fallback
         }
         
         String url = "http://" + ip + ":" + port + "/";
