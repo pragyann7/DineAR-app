@@ -51,6 +51,8 @@ xmlns:tools="http://schemas.android.com/tools">
     <activity android:name=".auth.LoginActivity" />
     <activity android:name=".auth.SignupActivity" />
     <activity android:name=".auth.VerifyOtpActivity" />
+    <activity android:name=".auth.ForgotPasswordActivity" />
+    <activity android:name=".auth.ResetPasswordActivity" />
 
     <activity
         android:name=".MainActivity"

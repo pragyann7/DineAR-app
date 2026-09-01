@@ -1,10 +1,12 @@
 package com.ps.dinear;
 
+import com.ps.dinear.auth.ForgotPasswordRequest;
 import com.ps.dinear.auth.LoginRequest;
 import com.ps.dinear.auth.RefreshRequest;
 import com.ps.dinear.auth.RegistrationRequest;
 import com.ps.dinear.auth.RegistrationResponse;
 import com.ps.dinear.auth.ResendOtpRequest;
+import com.ps.dinear.auth.ResetPasswordRequest;
 import com.ps.dinear.auth.TokenResponse;
 import com.ps.dinear.auth.VerifyOtpRequest;
 import com.ps.dinear.data.model.FavoriteIdsResponse;
@@ -81,6 +83,12 @@ public interface ApiService {
 
     @POST("api/auth/token/refresh/")
     Call<TokenResponse> refreshToken(@Body RefreshRequest request);
+
+    @POST("api/auth/forgot-password/")
+    Call<Void> forgotPassword(@Body ForgotPasswordRequest request);
+
+    @POST("api/auth/reset-password/")
+    Call<Void> resetPassword(@Body ResetPasswordRequest request);
 
     // Orders
     @POST("api/orders/")
