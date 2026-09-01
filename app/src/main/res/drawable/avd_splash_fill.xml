@@ -1,0 +1,24 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_splash_icon">
+    <target
+        android:name="fork_handle"
+        android:animation="@animator/fill_to_dark" />
+    <target
+        android:name="ar_text_a"
+        android:animation="@animator/fill_to_orange" />
+    <target
+        android:name="ar_text_a"
+        android:animation="@animator/stroke_to_orange" />
+    <target
+        android:name="ar_text_r"
+        android:animation="@animator/fill_to_orange" />
+    <target
+        android:name="ar_text_r"
+        android:animation="@animator/stroke_to_orange" />
+    <target
+        android:name="dine_text"
+        android:animation="@animator/fill_to_orange" />
+    <target
+        android:name="dine_text"
+        android:animation="@animator/stroke_to_orange" />
+</animated-vector>
