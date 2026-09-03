@@ -72,8 +72,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnForgotPassword).setOnClickListener(v -> {
-            // Toast.makeText(this, "Forgot Password coming soon", Toast.LENGTH_SHORT).show();
-            // Start ForgotPasswordActivity if created
+            startActivity(new Intent(this, ForgotPasswordActivity.class));
         });
     }
 }
