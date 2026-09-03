@@ -16,6 +16,8 @@ import com.ps.dinear.FavoritesManager;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.R;
 import com.ps.dinear.RetrofitClient;
+import com.ps.dinear.ReviewsListingActivity;
+import com.ps.dinear.WriteReviewActivity;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
@@ -163,6 +165,19 @@ public class FoodDetailsActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Error: Restaurant ID missing", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        // Reviews Section Logic
+        findViewById(R.id.btnWriteReviewDetails).setOnClickListener(v -> {
+            Intent intent = new Intent(this, WriteReviewActivity.class);
+            intent.putExtra("selectedItem", item);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnSeeAllReviewsDetails).setOnClickListener(v -> {
+            Intent intent = new Intent(this, ReviewsListingActivity.class);
+            intent.putExtra("selectedItem", item);
+            startActivity(intent);
         });
     }
 
