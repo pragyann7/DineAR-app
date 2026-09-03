@@ -285,6 +285,175 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Reviews & Ratings Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="32.dp"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reviews &amp; Ratings"
+                            android:textColor="@color/black"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:text="(42 dish reviews)"
+                            android:textColor="@color/gray_text"
+                            android:textSize="12sp" />
+                    </RelativeLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnWriteReviewDetails"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:cardBackgroundColor="#FFF3E0"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="8dp">
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/ic_menu_edit"
+                                app:tint="@color/orange_primary" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="Write Review"
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="4.9"
+                                android:textColor="@color/black"
+                                android:textSize="36sp"
+                                android:textStyle="bold" />
+                            <RatingBar
+                                style="@style/Widget.AppCompat.RatingBar.Small"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:numStars="5"
+                                android:progressTint="@color/orange_primary"
+                                android:rating="4.9" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="out of 5"
+                                android:textColor="@color/gray_text"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="24dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row5_details" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row4_details" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row3_details" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row2_details" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row1_details" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Feature Badges -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        app:chipSpacingHorizontal="8dp"
+                        app:chipSpacingVertical="4dp">
+
+                        <com.google.android.material.chip.Chip
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tender &amp; Fresh (98%)"
+                            app:chipBackgroundColor="#F5F5F5"
+                            app:chipIcon="@android:drawable/ic_menu_myplaces"
+                            app:chipIconTint="@color/orange_primary"
+                            app:chipStrokeWidth="0dp"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Stellar Presentation (95%)"
+                            app:chipBackgroundColor="#F5F5F5"
+                            app:chipIcon="@android:drawable/ic_menu_compass"
+                            app:chipIconTint="@color/orange_primary"
+                            app:chipStrokeWidth="0dp"
+                            android:textSize="12sp" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- Top Reviews -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:text="Top Reviews"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <include
+                        android:id="@+id/includeTopReview"
+                        layout="@layout/item_review"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnSeeAllReviewsDetails"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_see_all_button"
+                        android:text="See All 42 Reviews →"
+                        android:textAllCaps="false"
+                        android:textColor="@color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
         </LinearLayout>
