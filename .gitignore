@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+.artifacts
+.kotlin
+.idea/planningMode.xml
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+*.jks
