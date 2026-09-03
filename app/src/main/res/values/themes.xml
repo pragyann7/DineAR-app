@@ -11,6 +11,13 @@
 
     <style name="Theme.DineAR" parent="Base.Theme.DineAR" />
 
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash_fill</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="windowSplashScreenBackground">@color/auth_bg</item>
+        <item name="postSplashScreenTheme">@style/Theme.DineAR</item>
+    </style>
+
     <style name="SearchViewTheme" parent="ThemeOverlay.AppCompat.Light">
         <item name="android:textSize">15sp</item>
         <item name="android:textColorHint">@color/gray_dark</item>

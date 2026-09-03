@@ -19,14 +19,13 @@
 
     <ImageView
         android:id="@+id/ivHeaderIcon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:src="@drawable/ic_verified"
+        android:layout_width="91dp"
+        android:layout_height="91dp"
+        android:src="@drawable/dinear"
         app:layout_constraintBottom_toBottomOf="@id/ivHeaderIconBg"
         app:layout_constraintEnd_toEndOf="@id/ivHeaderIconBg"
         app:layout_constraintStart_toStartOf="@id/ivHeaderIconBg"
-        app:layout_constraintTop_toTopOf="@id/ivHeaderIconBg"
-        app:tint="@color/auth_primary" />
+        app:layout_constraintTop_toTopOf="@id/ivHeaderIconBg" />
 
     <TextView
         android:id="@+id/tvTitle"

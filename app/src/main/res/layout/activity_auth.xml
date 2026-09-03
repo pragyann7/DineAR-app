@@ -11,7 +11,7 @@
         android:id="@+id/ivIllustration"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:src="@drawable/dinear_logo"
+        android:src="@drawable/dinear"
         app:layout_constraintHeight_percent="0.45"
         app:layout_constraintTop_toTopOf="parent" />
 
