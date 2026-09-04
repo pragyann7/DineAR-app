@@ -33,7 +33,13 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
         holder.tvReviewDate.setText(review.getDate());
         holder.ratingBar.setRating(review.getRating());
         holder.tvReviewContent.setText(review.getContent());
-        holder.tvARPortionMatch.setText(review.getArAccuracy());
+        
+        if (review.getArMatchPercent() != null) {
+            holder.tvARPortionMatch.setVisibility(View.VISIBLE);
+            holder.tvARPortionMatch.setText("AR Match: " + review.getArMatchPercent() + "% Correct");
+        } else {
+            holder.tvARPortionMatch.setVisibility(View.GONE);
+        }
         
         if (review.getManagementResponse() != null) {
             holder.llManagementResponse.setVisibility(View.VISIBLE);
@@ -42,7 +48,21 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
             holder.llManagementResponse.setVisibility(View.GONE);
         }
 
-        // Set avatar and other fields as needed
+        if (review.getUserAvatar() != null) {
+            com.bumptech.glide.Glide.with(holder.itemView.getContext())
+                .load(RetrofitClient.getFullUrl(holder.itemView.getContext(), review.getUserAvatar()))
+                .placeholder(R.drawable.avatar_0)
+                .into(holder.ivReviewerAvatar);
+        }
+        
+        if (review.getImages() != null && !review.getImages().isEmpty()) {
+            holder.cvReviewImage.setVisibility(View.VISIBLE);
+            com.bumptech.glide.Glide.with(holder.itemView.getContext())
+                .load(RetrofitClient.getFullUrl(holder.itemView.getContext(), review.getImages().get(0).getImage()))
+                .into(holder.ivReviewImage);
+        } else {
+            holder.cvReviewImage.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -53,7 +73,8 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
     static class ReviewViewHolder extends RecyclerView.ViewHolder {
         TextView tvReviewerName, tvReviewDate, tvReviewContent, tvARPortionMatch, tvManagementResponse;
         RatingBar ratingBar;
-        View llManagementResponse;
+        View llManagementResponse, cvReviewImage;
+        ImageView ivReviewerAvatar, ivReviewImage;
 
         public ReviewViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -64,6 +85,9 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
             tvManagementResponse = itemView.findViewById(R.id.tvManagementResponse);
             ratingBar = itemView.findViewById(R.id.ratingBarItem);
             llManagementResponse = itemView.findViewById(R.id.llManagementResponse);
+            cvReviewImage = itemView.findViewById(R.id.cvReviewImage);
+            ivReviewerAvatar = itemView.findViewById(R.id.ivReviewerAvatar);
+            ivReviewImage = itemView.findViewById(R.id.ivReviewImage);
         }
     }
 }

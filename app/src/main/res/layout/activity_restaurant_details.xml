@@ -148,21 +148,28 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:src="@android:drawable/btn_star_big_on"
-                        app:tint="#D44A01" />
-
-                    <TextView
-                        android:id="@+id/tvRestRatingDetails"
+                    <LinearLayout
+                        android:id="@+id/llRestRatingBadge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4.dp"
-                        android:textColor="#D44A01"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        tools:text="4.8" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@android:drawable/btn_star_big_on"
+                            app:tint="#D44A01" />
+
+                        <TextView
+                            android:id="@+id/tvRestRatingDetails"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4.dp"
+                            android:textColor="#D44A01"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            tools:text="N/A" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -334,6 +341,238 @@
                     android:textColor="@color/gray_text"
                     android:textSize="15sp"
                     tools:text="Experience a fusion of traditional French techniques with modern flair..." />
+
+                <!-- Reviews & Ratings Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="32.dp"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reviews &amp; Ratings"
+                            android:textColor="@color/black"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvReviewsCountRest"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:text="(0 reviews)"
+                            android:textColor="@color/gray_text"
+                            android:textSize="12sp" />
+                    </RelativeLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnWriteReviewRest"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:cardBackgroundColor="#FFF3E0"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="8dp">
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/ic_menu_edit"
+                                app:tint="@color/orange_primary" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="Write Review"
+                                android:textColor="@color/orange_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/llRestRatingSummary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+                            <TextView
+                                android:id="@+id/tvAvgRatingRest"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="N/A"
+                                android:textColor="@color/black"
+                                android:textSize="36sp"
+                                android:textStyle="bold" />
+                            <RatingBar
+                                android:id="@+id/rbRestDetails"
+                                style="@style/Widget.AppCompat.RatingBar.Small"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:numStars="5"
+                                android:progressTint="@color/orange_primary"
+                                android:rating="0.0" />
+                            <TextView
+                                android:id="@+id/tvAvgRatingRestSubtext"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="No Ratings"
+                                android:textColor="@color/gray_text"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="24dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row5_rest" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row4_rest" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row3_rest" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row2_rest" />
+                            <include layout="@layout/layout_rating_bar_row" android:id="@+id/row1_rest" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- AR Accuracy Card -->
+                    <LinearLayout
+                        android:id="@+id/llARAccuracyRest"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:background="@drawable/bg_ar_accuracy_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="@color/white">
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/icon_3d"
+                                app:tint="#7E57C2" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvARAccuracyRest"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="96% AR Match Accuracy"
+                                android:textColor="#7E57C2"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Users agree that the real dish matches the AR preview."
+                                android:textColor="@color/gray_text"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Top Review for Restaurant -->
+                    <TextView
+                        android:id="@+id/tvTopReviewHeaderRest"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:text="Top Review"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <include
+                        android:id="@+id/includeTopReviewRest"
+                        layout="@layout/item_review"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone" />
+
+                    <!-- Empty State for Restaurant Reviews -->
+                    <LinearLayout
+                        android:id="@+id/llEmptyReviewsRest"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="20dp"
+                        android:visibility="visible">
+                        <ImageView
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:alpha="0.2"
+                            android:src="@android:drawable/ic_menu_edit"
+                            app:tint="@color/gray_text" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="No reviews yet"
+                            android:textColor="@color/gray_text"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="Help others by sharing your dining experience!"
+                            android:textColor="@color/gray_text"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnSeeAllReviewsRest"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_see_all_button"
+                        android:text="See All Reviews →"
+                        android:textAllCaps="false"
+                        android:textColor="@color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
 
                 <!-- AR Explore Card -->
                 <com.google.android.material.card.MaterialCardView

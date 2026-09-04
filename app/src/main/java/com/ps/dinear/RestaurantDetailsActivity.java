@@ -13,8 +13,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import com.bumptech.glide.Glide;
 import com.ps.dinear.menu.MenuActivity;
+import com.ps.dinear.data.model.Review;
+import com.ps.dinear.data.model.ReviewListResponse;
+import com.ps.dinear.data.model.ReviewSummary;
 
 import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RestaurantDetailsActivity extends AppCompatActivity {
 
@@ -27,7 +35,6 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Set status bar color and light status bar
         getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         androidx.core.view.WindowInsetsControllerCompat windowInsetsController =
@@ -53,15 +60,25 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         latitude = getIntent().getDoubleExtra("latitude", 0.0);
         longitude = getIntent().getDoubleExtra("longitude", 0.0);
 
-        // Set all data from intent immediately (INSTANT LOAD)
         ((TextView) findViewById(R.id.tvRestNameDetails)).setText(name);
-        ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.valueOf(rating));
+        
+        if (rating > 0) {
+            ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.valueOf(rating));
+            ((TextView) findViewById(R.id.tvAvgRatingRest)).setText(String.valueOf(rating));
+            ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating((float) rating);
+            ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("out of 5");
+        } else {
+            ((TextView) findViewById(R.id.tvRestRatingDetails)).setText("N/A");
+            ((TextView) findViewById(R.id.tvAvgRatingRest)).setText("N/A");
+            ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating(0f);
+            ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("No Ratings");
+        }
+
         ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(deliveryTime != null ? deliveryTime : "20-30 min");
         ((TextView) findViewById(R.id.tvRestDescriptionDetails)).setText(description);
         
         findViewById(R.id.tvPromoBadgeDetails).setVisibility(isFeatured ? View.VISIBLE : View.GONE);
 
-        // Setup Cuisines as Chips
         com.google.android.material.chip.ChipGroup cgCuisines = findViewById(R.id.cgCuisines);
         if (cuisine != null && !cuisine.isEmpty()) {
             String[] parts = cuisine.split(", ");
@@ -76,7 +93,6 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             }
         }
 
-        // Format Address
         StringBuilder fullAddress = new StringBuilder();
         if (address != null && !address.isEmpty()) fullAddress.append(address);
         
@@ -115,7 +131,6 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         String fullImageUrl = RetrofitClient.getFullUrl(this, displayImageUrl);
         Glide.with(this).load(fullImageUrl).into((ImageView) findViewById(R.id.ivRestaurantHeader));
 
-        // Load front logo next to name
         String fullLogoUrl = RetrofitClient.getFullUrl(this, imageUrl);
         Glide.with(this).load(fullLogoUrl).into((ImageView) findViewById(R.id.ivRestLogoDetails));
 
@@ -125,8 +140,6 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             if (latitude != 0 && longitude != 0) {
                 Intent discoverIntent = new Intent(this, DiscoverActivity.class);
                 discoverIntent.putExtra("focusRestaurantId", restaurantId);
-                // Flag to ensure it doesn't just keep opening new activities if already there, 
-                // though from details screen we usually want to jump back or start fresh.
                 discoverIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(discoverIntent);
             } else {
@@ -136,7 +149,6 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
 
         ImageView btnFavorite = findViewById(R.id.btnFavoriteRest);
         
-        // Initial state
         if (FavoritesManager.getInstance().isRestaurantFavorite(restaurantId)) {
             btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
             btnFavorite.setColorFilter(getResources().getColor(R.color.red_600));
@@ -178,7 +190,24 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Add "Read more" to description if it's long
+        findViewById(R.id.btnWriteReviewRest).setOnClickListener(v -> {
+            Intent intent = new Intent(this, WriteReviewActivity.class);
+            intent.putExtra("restaurantId", restaurantId);
+            intent.putExtra("restaurantName", name);
+            intent.putExtra("restaurantImage", imageUrl);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnSeeAllReviewsRest).setOnClickListener(v -> {
+            Intent intent = new Intent(this, ReviewsListingActivity.class);
+            intent.putExtra("restaurantId", restaurantId);
+            intent.putExtra("restaurantName", name);
+            intent.putExtra("imageUrl", imageUrl);
+            startActivity(intent);
+        });
+
+        fetchReviews(restaurantId);
+
         TextView tvDescription = findViewById(R.id.tvRestDescriptionDetails);
         if (description != null && description.length() > 150) {
             String truncated = description.substring(0, 150) + "... ";
@@ -191,6 +220,98 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             tvDescription.setOnClickListener(v -> tvDescription.setText(description));
         } else {
             tvDescription.setText(description);
+        }
+    }
+
+    private void fetchReviews(int restaurantId) {
+        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        apiService.getReviews(restaurantId, null, true, 1, null, null).enqueue(new Callback<ReviewListResponse>() {
+            @Override
+            public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReviewListResponse listResponse = response.body();
+                    if (listResponse.getSummary() != null) {
+                        updateReviewSummary(listResponse.getSummary());
+                    }
+                    if (listResponse.getResults() != null && !listResponse.getResults().isEmpty()) {
+                        updateTopReview(listResponse.getResults().get(0));
+                        findViewById(R.id.llEmptyReviewsRest).setVisibility(View.GONE);
+                        findViewById(R.id.tvTopReviewHeaderRest).setVisibility(View.VISIBLE);
+                    } else {
+                        findViewById(R.id.includeTopReviewRest).setVisibility(View.GONE);
+                        findViewById(R.id.llEmptyReviewsRest).setVisibility(View.VISIBLE);
+                        findViewById(R.id.tvTopReviewHeaderRest).setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ReviewListResponse> call, Throwable t) {
+            }
+        });
+    }
+
+    private void updateReviewSummary(ReviewSummary summary) {
+        if (summary.getTotalReviews() > 0) {
+            ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.format(Locale.US, "%.1f", summary.getAverageRating()));
+            ((TextView) findViewById(R.id.tvAvgRatingRest)).setText(String.format(Locale.US, "%.1f", summary.getAverageRating()));
+            ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating(summary.getAverageRating());
+            ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("out of 5");
+            ((TextView) findViewById(R.id.tvReviewsCountRest)).setText("(" + summary.getTotalReviews() + " reviews)");
+            ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsRest)).setText("See All " + summary.getTotalReviews() + " Reviews →");
+
+            Map<String, Integer> dist = summary.getRatingDistribution();
+            if (dist != null) {
+                updateRatingRow(findViewById(R.id.row5_rest), 5, dist.getOrDefault("5", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row4_rest), 4, dist.getOrDefault("4", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row3_rest), 3, dist.getOrDefault("3", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row2_rest), 2, dist.getOrDefault("2", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row1_rest), 1, dist.getOrDefault("1", 0), summary.getTotalReviews());
+            }
+        } else {
+            ((TextView) findViewById(R.id.tvRestRatingDetails)).setText("N/A");
+            ((TextView) findViewById(R.id.tvAvgRatingRest)).setText("N/A");
+            ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating(0f);
+            ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("No Ratings");
+            ((TextView) findViewById(R.id.tvReviewsCountRest)).setText("(0 reviews)");
+            ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsRest)).setText("Write a Review →");
+        }
+
+        if (summary.getArAccuracy() > 0) {
+            findViewById(R.id.llARAccuracyRest).setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.tvARAccuracyRest)).setText(Math.round(summary.getArAccuracy()) + "% AR Match Accuracy");
+        } else {
+            findViewById(R.id.llARAccuracyRest).setVisibility(View.GONE);
+        }
+    }
+
+    private void updateRatingRow(View row, int value, int count, int total) {
+        ((TextView) row.findViewById(R.id.tvRatingValue)).setText(String.valueOf(value));
+        int percent = total > 0 ? (count * 100 / total) : 0;
+        ((android.widget.ProgressBar) row.findViewById(R.id.pbRating)).setProgress(percent);
+        ((TextView) row.findViewById(R.id.tvRatingCount)).setText(String.valueOf(count));
+    }
+
+    private void updateTopReview(Review review) {
+        View topReviewView = findViewById(R.id.includeTopReviewRest);
+        topReviewView.setVisibility(View.VISIBLE);
+        ((TextView) topReviewView.findViewById(R.id.tvReviewerName)).setText(review.getUserName());
+        ((TextView) topReviewView.findViewById(R.id.tvReviewDate)).setText(review.getDate());
+        ((TextView) topReviewView.findViewById(R.id.tvReviewContent)).setText(review.getContent());
+        ((android.widget.RatingBar) topReviewView.findViewById(R.id.ratingBarItem)).setRating(review.getRating());
+
+        if (review.getUserAvatar() != null) {
+            Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getUserAvatar()))
+                .placeholder(R.drawable.avatar_0)
+                .into((ImageView) topReviewView.findViewById(R.id.ivReviewerAvatar));
+        }
+
+        if (review.getImages() != null && !review.getImages().isEmpty()) {
+            topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.VISIBLE);
+            Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getImages().get(0).getImage()))
+                .into((ImageView) topReviewView.findViewById(R.id.ivReviewImage));
+        } else {
+            topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.GONE);
         }
     }
 }

@@ -34,6 +34,7 @@
                     app:tint="@color/black" />
 
                 <TextView
+                    android:id="@+id/tvReviewsTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -49,6 +50,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollViewReviews"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -125,6 +127,7 @@
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/llRatingBadgeListing"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_rating_tag"
@@ -137,10 +140,11 @@
                             android:src="@android:drawable/btn_star_big_on"
                             app:tint="@color/white" />
                         <TextView
+                            android:id="@+id/tvRatingBadgeListing"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="4dp"
-                            android:text="4.9"
+                            android:text="N/A"
                             android:textColor="@color/white"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -174,6 +178,7 @@
                             android:orientation="vertical">
 
                             <TextView
+                                android:id="@+id/tvAvgRatingListing"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="4.9 / 5"
@@ -182,6 +187,7 @@
                                 android:textStyle="bold" />
 
                             <RatingBar
+                                android:id="@+id/rbAvgRatingListing"
                                 style="@style/Widget.AppCompat.RatingBar.Small"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -191,6 +197,7 @@
                                 android:rating="4.9" />
 
                             <TextView
+                                android:id="@+id/tvTotalReviewsListing"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
@@ -249,6 +256,7 @@
                             android:orientation="vertical">
 
                             <TextView
+                                android:id="@+id/tvARAccuracyListing"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="96% AR Match Accuracy"
@@ -286,14 +294,18 @@
                         android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
+                        android:id="@+id/tvSortedBy"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        android:text="Sorted by: Most Relevant"
+                        android:text="Sorted by: Newest First"
                         android:textColor="@color/orange_primary"
                         android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground" />
                 </RelativeLayout>
 
                 <HorizontalScrollView
@@ -301,28 +313,38 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:scrollbars="none">
-                    <LinearLayout
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/cgFilters"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        app:singleLine="true"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
 
                         <com.google.android.material.chip.Chip
+                            android:id="@+id/chipFilterAll"
                             style="@style/Widget.Material3.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="All (42)"
+                            android:text="All"
+                            android:checkable="true"
                             android:checked="true"
+                            app:checkedIconVisible="false"
                             app:chipBackgroundColor="@color/orange_primary"
                             android:textColor="@color/white"
                             app:chipCornerRadius="16dp"
                             app:chipStrokeWidth="0dp" />
 
                         <com.google.android.material.chip.Chip
+                            android:id="@+id/chipFilterPhotos"
                             style="@style/Widget.Material3.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="With Photos (18)"
+                            android:text="With Photos"
+                            android:checkable="true"
+                            app:checkedIconVisible="false"
                             app:chipBackgroundColor="@color/white"
                             app:chipCornerRadius="16dp"
                             app:chipStrokeColor="@color/divider"
@@ -331,18 +353,22 @@
                             app:chipIconTint="@color/gray_text" />
 
                         <com.google.android.material.chip.Chip
+                            android:id="@+id/chipFilterAR"
                             style="@style/Widget.Material3.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="AR Match (24)"
+                            android:text="AR Match"
+                            android:checkable="true"
+                            app:checkedIconVisible="false"
                             app:chipBackgroundColor="@color/white"
                             app:chipCornerRadius="16dp"
                             app:chipStrokeColor="@color/divider"
                             app:chipIcon="@drawable/icon_3d"
                             app:chipIconSize="16dp"
                             app:chipIconTint="@color/gray_text" />
-                    </LinearLayout>
+
+                    </com.google.android.material.chip.ChipGroup>
                 </HorizontalScrollView>
             </LinearLayout>
 
@@ -354,6 +380,49 @@
                 android:layout_marginTop="16dp"
                 android:nestedScrollingEnabled="false"
                 tools:listitem="@layout/item_review" />
+
+            <!-- Load More Indicator -->
+            <ProgressBar
+                android:id="@+id/pbLoadMore"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
+
+            <!-- Empty State for Reviews List -->
+            <LinearLayout
+                android:id="@+id/llEmptyReviewsListing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32.dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:visibility="gone">
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:alpha="0.2"
+                    android:src="@android:drawable/ic_menu_edit"
+                    app:tint="@color/gray_text" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="No user reviews found"
+                    android:textColor="@color/gray_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Try adjusting your filters or be the first to review!"
+                    android:textColor="@color/gray_text"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <!-- Bottom Write Review Bar -->
             <com.google.android.material.card.MaterialCardView

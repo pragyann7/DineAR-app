@@ -14,6 +14,8 @@ import com.ps.dinear.data.model.FavoriteRequest;
 import com.ps.dinear.data.model.Order;
 import com.ps.dinear.data.model.OrderRequest;
 import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.data.model.Review;
+import com.ps.dinear.data.model.ReviewListResponse;
 import com.ps.dinear.data.model.RestaurantMenuResponse;
 import com.ps.dinear.data.model.SearchResponse;
 
@@ -90,7 +92,6 @@ public interface ApiService {
     @POST("api/auth/reset-password/")
     Call<Void> resetPassword(@Body ResetPasswordRequest request);
 
-    // Orders
     @POST("api/orders/")
     Call<Order> placeOrder(@Header("Authorization") String token, @Body OrderRequest request);
 
@@ -99,4 +100,20 @@ public interface ApiService {
 
     @GET("api/orders/{id}/")
     Call<Order> getOrderDetails(@Header("Authorization") String token, @Path("id") int id);
+
+    @GET("api/reviews/reviews/")
+    Call<ReviewListResponse> getReviews(
+        @Query("restaurant_id") Integer restaurantId,
+        @Query("food_item_id") Integer foodItemId,
+        @Query("include_summary") boolean includeSummary,
+        @Query("page") Integer page,
+        @Query("ordering") String ordering,
+        @Query("filter") String filter
+    );
+
+    @POST("api/reviews/reviews/")
+    Call<Review> postReview(
+        @Header("Authorization") String token,
+        @Body Review review
+    );
 }

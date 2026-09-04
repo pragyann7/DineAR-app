@@ -34,6 +34,7 @@
                     app:tint="@color/black" />
 
                 <TextView
+                    android:id="@+id/tvWriteReviewHeaderTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -100,7 +101,7 @@
                             android:textColor="@color/orange_primary"
                             android:textSize="12sp"
                             android:textStyle="bold"
-                            tools:text="LUMIÈRE BISTRO" />
+                            tools:text="RESTAURANT NAME" />
 
                         <TextView
                             android:id="@+id/tvFoodNameReview"
@@ -110,9 +111,10 @@
                             android:textColor="@color/black"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            tools:text="Coquilles Saint-Jacques" />
+                            tools:text="Food Item Name" />
 
                         <TextView
+                            android:id="@+id/tvWriteReviewQuestion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -143,13 +145,13 @@
 
                 <RatingBar
                     android:id="@+id/ratingBarReview"
-                    style="@style/Widget.AppCompat.RatingBar.Indicator"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:numStars="5"
                     android:progressTint="@color/orange_primary"
-                    android:rating="5"
+                    android:rating="0"
+                    android:stepSize="1"
                     android:scaleX="1.2"
                     android:scaleY="1.2" />
 
@@ -158,7 +160,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Outstanding!"
+                    android:text="Select Rating"
                     android:textColor="@color/orange_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -190,6 +192,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvARAccuracyQuestion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -211,11 +214,11 @@
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
                         android:layout_margin="4dp"
-                        android:backgroundTint="#7E57C2"
+                        android:backgroundTint="#F5F5F5"
                         android:paddingVertical="12dp"
                         android:text="Spot On (100%)\nScale &amp; plating"
                         android:textAllCaps="false"
-                        android:textColor="@color/white"
+                        android:textColor="@color/black"
                         android:textSize="12sp"
                         app:cornerRadius="12dp" />
 
@@ -266,93 +269,6 @@
                 </GridLayout>
             </LinearLayout>
 
-            <!-- Key Highlights -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_review_card"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Key Highlights"
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="Select all that apply"
-                        android:textColor="@color/gray_text"
-                        android:textSize="12sp" />
-                </RelativeLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="What stood out most during your tasting?"
-                    android:textColor="@color/gray_text"
-                    android:textSize="13sp" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/cgHighlights"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="4dp">
-
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Great Taste"
-                        android:checked="true"
-                        app:chipBackgroundColor="@color/orange_primary"
-                        android:textColor="@color/white"
-                        app:chipCornerRadius="12dp"
-                        app:chipStrokeWidth="0dp" />
-
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Good Portion"
-                        android:checked="true"
-                        app:chipBackgroundColor="@color/orange_primary"
-                        android:textColor="@color/white"
-                        app:chipCornerRadius="12dp"
-                        app:chipStrokeWidth="0dp" />
-
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Fast Service"
-                        app:chipBackgroundColor="#F5F5F5"
-                        app:chipCornerRadius="12dp"
-                        app:chipStrokeWidth="0dp" />
-
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Clean &amp; Hygienic"
-                        app:chipBackgroundColor="#F5F5F5"
-                        app:chipCornerRadius="12dp"
-                        app:chipStrokeWidth="0dp" />
-                    <!-- More chips... -->
-                </com.google.android.material.chip.ChipGroup>
-            </LinearLayout>
-
             <!-- Your Thoughts -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -366,6 +282,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
                     <TextView
+                        android:id="@+id/tvTellUsMoreHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Tell us more about the dish"
@@ -419,6 +336,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
                     <TextView
+                        android:id="@+id/tvAddPhotosHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Add Dish Photos"
