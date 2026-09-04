@@ -258,6 +258,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating(summary.getAverageRating());
             ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("out of 5");
             ((TextView) findViewById(R.id.tvReviewsCountRest)).setText("(" + summary.getTotalReviews() + " reviews)");
+            findViewById(R.id.btnSeeAllReviewsRest).setVisibility(View.VISIBLE);
             ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsRest)).setText("See All " + summary.getTotalReviews() + " Reviews →");
 
             Map<String, Integer> dist = summary.getRatingDistribution();
@@ -274,7 +275,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating(0f);
             ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("No Ratings");
             ((TextView) findViewById(R.id.tvReviewsCountRest)).setText("(0 reviews)");
-            ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsRest)).setText("Write a Review →");
+            findViewById(R.id.btnSeeAllReviewsRest).setVisibility(View.GONE);
         }
 
         if (summary.getArAccuracy() > 0) {

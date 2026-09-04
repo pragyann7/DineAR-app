@@ -303,46 +303,33 @@
                             android:textColor="@color/black"
                             android:textSize="20sp"
                             android:textStyle="bold" />
-                        <TextView
-                            android:id="@+id/tvReviewsCountDetails"
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnWriteReviewDetails"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="40dp"
                             android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:text="(0 dish reviews)"
-                            android:textColor="@color/gray_text"
-                            android:textSize="12sp" />
+                            android:text="Write Review"
+                            android:textAllCaps="false"
+                            android:textColor="@color/orange_primary"
+                            android:textSize="12sp"
+                            android:paddingHorizontal="12dp"
+                            app:strokeColor="@color/orange_primary"
+                            app:strokeWidth="1dp"
+                            app:cornerRadius="20dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"/>
                     </RelativeLayout>
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/btnWriteReviewDetails"
+                    <TextView
+                        android:id="@+id/tvReviewsCountDetails"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="#FFF3E0"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:paddingHorizontal="16dp"
-                            android:paddingVertical="8dp">
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@android:drawable/ic_menu_edit"
-                                app:tint="@color/orange_primary" />
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:text="Write Review"
-                                android:textColor="@color/orange_primary"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                        android:layout_marginTop="4dp"
+                        android:text="(0 dish reviews)"
+                        android:textColor="@color/gray_text"
+                        android:textSize="12sp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
