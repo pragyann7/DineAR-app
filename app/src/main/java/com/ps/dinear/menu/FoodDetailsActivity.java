@@ -14,14 +14,23 @@ import com.ps.dinear.ARActivity;
 import com.ps.dinear.CartManager;
 import com.ps.dinear.FavoritesManager;
 import com.ps.dinear.MenuItem;
+import com.ps.dinear.ApiService;
 import com.ps.dinear.R;
 import com.ps.dinear.RetrofitClient;
 import com.ps.dinear.ReviewsListingActivity;
 import com.ps.dinear.WriteReviewActivity;
+import com.ps.dinear.data.model.Review;
+import com.ps.dinear.data.model.ReviewListResponse;
+import com.ps.dinear.data.model.ReviewSummary;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
 import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FoodDetailsActivity extends AppCompatActivity {
 
@@ -31,7 +40,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Set status bar color and light status bar
         getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         androidx.core.view.WindowInsetsControllerCompat windowInsetsController =
@@ -47,11 +55,9 @@ public class FoodDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        // Header Section
         ((TextView) findViewById(R.id.tvFoodCategoryDetails)).setText(item.getCategory() != null ? item.getCategory() : "Food");
         ((TextView) findViewById(R.id.tvFoodNameDetails)).setText(item.getName());
 
-        // Price Section
         TextView tvPrice = findViewById(R.id.tvFoodPriceDetails);
         TextView tvOldPrice = findViewById(R.id.tvFoodOldPriceDetails);
 
@@ -65,7 +71,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
             tvOldPrice.setVisibility(View.GONE);
         }
 
-        // Description
         TextView tvDescription = findViewById(R.id.tvDescriptionDetails);
         String description = item.getDescription();
         if (description != null && description.length() > 140) {
@@ -84,17 +89,13 @@ public class FoodDetailsActivity extends AppCompatActivity {
             tvDescription.setText(description);
         }
 
-        // Chips/Tags
         ChipGroup cgCuisines = findViewById(R.id.cgCuisines);
         cgCuisines.removeAllViews();
-        // Use backend category as the primary tag
         if (item.getCategory() != null) addChip(cgCuisines, item.getCategory());
         if (item.isFeatured()) addChip(cgCuisines, "Popular");
         
-        // Handle Signature Tag Visibility
         findViewById(R.id.llSignatureTag).setVisibility(item.isFeatured() ? View.VISIBLE : View.GONE);
         
-        // Image
         String fullImageUrl = RetrofitClient.getFullUrl(this, item.getImageUrl());
         Glide.with(this).load(fullImageUrl)
                 .placeholder(R.drawable.burger)
@@ -102,7 +103,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
 
         findViewById(R.id.btnBackDetails).setOnClickListener(v -> finish());
 
-        // Favorite
         ImageView btnFavorite = findViewById(R.id.btnFavoriteFoodDetails);
         updateFavoriteIcon(btnFavorite, FavoritesManager.getInstance().isFoodFavorite(item.getId()));
 
@@ -120,7 +120,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
             });
         });
 
-        // AR Section
         View arCard = findViewById(R.id.cvARExploreFood);
         if (item.has3d()) {
             arCard.setVisibility(View.VISIBLE);
@@ -135,7 +134,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
             arCard.setVisibility(View.GONE);
         }
 
-        // Quantity Logic
         TextView tvQuantity = findViewById(R.id.tvQuantity);
         findViewById(R.id.btnMinus).setOnClickListener(v -> {
             if (quantity > 1) {
@@ -149,7 +147,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
             tvQuantity.setText(String.valueOf(quantity));
         });
 
-        // Add to Cart
         findViewById(R.id.btnAddToCart).setOnClickListener(v -> {
             int restaurantId = getIntent().getIntExtra("restaurantId", -1);
             if (restaurantId == -1 && item.getRestaurantId() != null) {
@@ -157,7 +154,6 @@ public class FoodDetailsActivity extends AppCompatActivity {
             }
 
             if (restaurantId != -1) {
-                // Add with quantity
                 for (int i = 0; i < quantity; i++) {
                     CartManager.getInstance().addItem(item, restaurantId);
                 }
@@ -167,18 +163,127 @@ public class FoodDetailsActivity extends AppCompatActivity {
             }
         });
 
-        // Reviews Section Logic
         findViewById(R.id.btnWriteReviewDetails).setOnClickListener(v -> {
             Intent intent = new Intent(this, WriteReviewActivity.class);
             intent.putExtra("selectedItem", item);
+            intent.putExtra("restaurantName", getIntent().getStringExtra("restaurantName"));
             startActivity(intent);
         });
 
         findViewById(R.id.btnSeeAllReviewsDetails).setOnClickListener(v -> {
             Intent intent = new Intent(this, ReviewsListingActivity.class);
             intent.putExtra("selectedItem", item);
+            intent.putExtra("restaurantId", getIntent().getIntExtra("restaurantId", -1));
+            intent.putExtra("restaurantName", getIntent().getStringExtra("restaurantName"));
+            intent.putExtra("imageUrl", item.getImageUrl());
             startActivity(intent);
         });
+
+        fetchReviews(item.getId());
+    }
+
+    private void fetchReviews(int foodItemId) {
+        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        apiService.getReviews(null, foodItemId, true, 1, null, null).enqueue(new Callback<ReviewListResponse>() {
+            @Override
+            public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReviewListResponse listResponse = response.body();
+                    if (listResponse.getSummary() != null) {
+                        updateReviewSummary(listResponse.getSummary());
+                    }
+                    if (listResponse.getResults() != null && !listResponse.getResults().isEmpty()) {
+                        updateTopReview(listResponse.getResults().get(0));
+                        findViewById(R.id.llEmptyReviewsDetails).setVisibility(View.GONE);
+                        findViewById(R.id.tvTopReviewsHeader).setVisibility(View.VISIBLE);
+                    } else {
+                        findViewById(R.id.includeTopReview).setVisibility(View.GONE);
+                        findViewById(R.id.llEmptyReviewsDetails).setVisibility(View.VISIBLE);
+                        findViewById(R.id.tvTopReviewsHeader).setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ReviewListResponse> call, Throwable t) {
+            }
+        });
+    }
+
+    private void updateReviewSummary(ReviewSummary summary) {
+        if (summary.getTotalReviews() > 0) {
+            ((TextView) findViewById(R.id.tvFoodRatingDetails)).setText(String.format(Locale.US, "%.1f", summary.getAverageRating()));
+            ((TextView) findViewById(R.id.tvAvgRatingDetailsLarge)).setText(String.format(Locale.US, "%.1f", summary.getAverageRating()));
+            ((android.widget.RatingBar) findViewById(R.id.rbAvgRatingDetails)).setRating(summary.getAverageRating());
+            ((TextView) findViewById(R.id.tvAvgRatingSubtext)).setText("out of 5");
+            ((TextView) findViewById(R.id.tvReviewsCountDetails)).setText("(" + summary.getTotalReviews() + " dish reviews)");
+            ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsDetails)).setText("See All " + summary.getTotalReviews() + " Reviews →");
+        } else {
+            ((TextView) findViewById(R.id.tvFoodRatingDetails)).setText("N/A");
+            ((TextView) findViewById(R.id.tvAvgRatingDetailsLarge)).setText("N/A");
+            ((android.widget.RatingBar) findViewById(R.id.rbAvgRatingDetails)).setRating(0f);
+            ((TextView) findViewById(R.id.tvAvgRatingSubtext)).setText("New Dish");
+            ((TextView) findViewById(R.id.tvReviewsCountDetails)).setText("(0 reviews)");
+            ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsDetails)).setText("Write a Review →");
+        }
+
+        if (summary.getTotalReviews() > 0) {
+            Map<String, Integer> dist = summary.getRatingDistribution();
+            if (dist != null) {
+                updateRatingRow(findViewById(R.id.row5_details), 5, dist.getOrDefault("5", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row4_details), 4, dist.getOrDefault("4", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row3_details), 3, dist.getOrDefault("3", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row2_details), 2, dist.getOrDefault("2", 0), summary.getTotalReviews());
+                updateRatingRow(findViewById(R.id.row1_details), 1, dist.getOrDefault("1", 0), summary.getTotalReviews());
+            }
+        } else {
+            updateRatingRow(findViewById(R.id.row5_details), 5, 0, 0);
+            updateRatingRow(findViewById(R.id.row4_details), 4, 0, 0);
+            updateRatingRow(findViewById(R.id.row3_details), 3, 0, 0);
+            updateRatingRow(findViewById(R.id.row2_details), 2, 0, 0);
+            updateRatingRow(findViewById(R.id.row1_details), 1, 0, 0);
+        }
+
+        if (summary.getArAccuracy() > 0) {
+            findViewById(R.id.llARAccuracyDetails).setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.tvARAccuracyDetails)).setText(Math.round(summary.getArAccuracy()) + "% AR Match Accuracy");
+        } else {
+            findViewById(R.id.llARAccuracyDetails).setVisibility(View.GONE);
+        }
+    }
+
+    private void updateRatingRow(View row, int value, int count, int total) {
+        ((TextView) row.findViewById(R.id.tvRatingValue)).setText(String.valueOf(value));
+        int percent = total > 0 ? (count * 100 / total) : 0;
+        ((android.widget.ProgressBar) row.findViewById(R.id.pbRating)).setProgress(percent);
+        ((TextView) row.findViewById(R.id.tvRatingCount)).setText(String.valueOf(count));
+    }
+
+    private void updateTopReview(Review review) {
+        View topReviewView = findViewById(R.id.includeTopReview);
+        topReviewView.setVisibility(View.VISIBLE);
+        ((TextView) topReviewView.findViewById(R.id.tvReviewerName)).setText(review.getUserName());
+        ((TextView) topReviewView.findViewById(R.id.tvReviewDate)).setText(review.getDate());
+        ((TextView) topReviewView.findViewById(R.id.tvReviewContent)).setText(review.getContent());
+        ((android.widget.RatingBar) topReviewView.findViewById(R.id.ratingBarItem)).setRating(review.getRating());
+        
+        if (review.getArMatchPercent() != null) {
+            ((TextView) topReviewView.findViewById(R.id.tvARPortionMatch)).setText("AR Match: " + review.getArMatchPercent() + "% Correct");
+        }
+        
+        if (review.getUserAvatar() != null) {
+            Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getUserAvatar()))
+                .placeholder(R.drawable.avatar_0)
+                .into((ImageView) topReviewView.findViewById(R.id.ivReviewerAvatar));
+        }
+        
+        if (review.getImages() != null && !review.getImages().isEmpty()) {
+            topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.VISIBLE);
+            Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getImages().get(0).getImage()))
+                .into((ImageView) topReviewView.findViewById(R.id.ivReviewImage));
+        } else {
+            topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.GONE);
+        }
     }
 
     private void addChip(ChipGroup group, String text) {

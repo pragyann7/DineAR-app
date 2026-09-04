@@ -47,10 +47,10 @@
                         android:id="@+id/tvReviewerName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Elena Rostova"
                         android:textColor="@color/black"
                         android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        tools:text="Customer Name" />
                     <ImageView
                         android:layout_width="14dp"
                         android:layout_height="14dp"
@@ -62,9 +62,9 @@
                     android:id="@+id/tvReviewDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Yesterday • Real Order"
                     android:textColor="@color/gray_text"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    tools:text="Date" />
             </LinearLayout>
 
             <RatingBar
@@ -98,10 +98,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:text="AR Match: 100% Correct"
                 android:textColor="#7E57C2"
                 android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="AR Match: 100%" />
         </LinearLayout>
 
         <TextView
@@ -110,9 +110,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:lineSpacingExtra="4dp"
-            android:text="The golden-seared crust on these jumbo sea scallops is sublime..."
             android:textColor="@color/gray_dark"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            tools:text="Review comment content goes here..." />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cvReviewImage"
@@ -156,7 +156,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:text="Helpful (14)"
+                    android:text="Helpful"
                     android:textColor="@color/gray_text"
                     android:textSize="13sp" />
             </LinearLayout>
