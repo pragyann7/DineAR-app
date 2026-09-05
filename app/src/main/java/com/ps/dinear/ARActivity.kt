@@ -60,6 +60,10 @@ import io.github.sceneview.rememberMainLightNode
 import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberOnGestureListener
+import com.ps.dinear.utils.ArCoreHelper
+import io.github.sceneview.SceneView
+import io.github.sceneview.node.CameraNode
+import io.github.sceneview.rememberCameraNode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -261,13 +265,17 @@ class ARActivity : ComponentActivity() {
             viewModel.fetchGlobalFeaturedFoods(this, city)
         }
 
+        val isArSupported = ArCoreHelper.isArCoreSupported(this)
+
+//        val isArSupported = false
         setContent {
             ARScreen(
                 initialMenuItem = selectedItem,
                 menuList = viewModel.menuItems,
                 restaurantId = restaurantId,
                 activity = this,
-                viewModel = viewModel
+                viewModel = viewModel,
+                isArSupported = isArSupported
             )
         }
     }
@@ -294,7 +302,8 @@ private fun ARScreen(
     menuList: List<MenuItem>,
     restaurantId: Int,
     activity: ARActivity,
-    viewModel: ARViewModel
+    viewModel: ARViewModel,
+    isArSupported: Boolean
 ) {
     val context = LocalContext.current
     val engine = rememberEngine()
@@ -440,60 +449,78 @@ private fun ARScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ArSceneContent(
-            engine = engine,
-            modelLoader = modelLoader,
-            materialLoader = materialLoader,
-            session = session,
-            onSessionCreated = { session = it },
-            isMarkerMode = isMarkerMode,
-            isMenuOpen = isMenuOpen,
-            markerAnchor = markerAnchor,
-            onMarkerAnchorFound = { markerAnchor = it },
-            placedDishes = placedDishes,
-            transform = transform,
-            selectedDishId = selectedDishId,
-            currentMenuItem = currentMenuItem,
-            loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
-            onNodeTapped = { node, dishId -> selectNode(node, dishId) },
-            onEmptyTap = { hit ->
-                if (isMenuOpen) {
-                    isMenuOpen = false
-                } else if (transform.selectedNodeId != null) {
-                    clearSelection()
-                } else if (!isMarkerMode) {
-                    val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
-                    if (model != null) {
-                        if (placedDishes.size < MAX_PLACED_OBJECTS) {
-                            val instance = modelLoader.assetLoader.createInstance(model)
-                            if (instance != null) {
-                                placedDishes.add(
-                                    PlacedDish(
-                                        anchor = hit.createAnchor(),
-                                        menuItem = currentMenuItem,
-                                        model = model,
-                                        modelInstance = instance
+        if (isArSupported) {
+            ArSceneContent(
+                engine = engine,
+                modelLoader = modelLoader,
+                materialLoader = materialLoader,
+                session = session,
+                onSessionCreated = { session = it },
+                isMarkerMode = isMarkerMode,
+                isMenuOpen = isMenuOpen,
+                markerAnchor = markerAnchor,
+                onMarkerAnchorFound = { markerAnchor = it },
+                placedDishes = placedDishes,
+                transform = transform,
+                selectedDishId = selectedDishId,
+                currentMenuItem = currentMenuItem,
+                loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                onNodeTapped = { node, dishId -> selectNode(node, dishId) },
+                onEmptyTap = { hit ->
+                    if (isMenuOpen) {
+                        isMenuOpen = false
+                    } else if (transform.selectedNodeId != null) {
+                        clearSelection()
+                    } else if (!isMarkerMode) {
+                        val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
+                        if (model != null) {
+                            if (placedDishes.size < MAX_PLACED_OBJECTS) {
+                                val instance = modelLoader.assetLoader.createInstance(model)
+                                if (instance != null) {
+                                    placedDishes.add(
+                                        PlacedDish(
+                                            anchor = hit.createAnchor(),
+                                            menuItem = currentMenuItem,
+                                            model = model,
+                                            modelInstance = instance
+                                        )
                                     )
-                                )
+                                }
+                            } else {
+                                Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
                         }
+                    }
+                },
+                onClearSelection = {
+                    if (isMenuOpen) {
+                        isMenuOpen = false
                     } else {
-                        Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
+                        clearSelection()
                     }
                 }
-            },
-            onClearSelection = {
-                if (isMenuOpen) {
-                    isMenuOpen = false
-                } else {
-                    clearSelection()
+            )
+        } else {
+            NonArSceneContent(
+                engine = engine,
+                modelLoader = modelLoader,
+                transform = transform,
+                currentMenuItem = currentMenuItem,
+                loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                onNodeTapped = { node: io.github.sceneview.node.ModelNode, dishId: String? -> selectNode(node, dishId) },
+                onClearSelection = {
+                    if (isMenuOpen) {
+                        isMenuOpen = false
+                    } else {
+                        clearSelection()
+                    }
                 }
-            }
-        )
+            )
+        }
 
-        if (!isMenuOpen && transform.selectedNodeId == null) {
+        if (isArSupported && !isMenuOpen && transform.selectedNodeId == null) {
             val guideText = if (isMarkerMode) {
                 if (markerAnchor == null) "Scan the AR marker to view dish" else ""
             } else {
@@ -523,107 +550,113 @@ private fun ARScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .statusBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Clear Table Button (Left Side)
-            if (placedDishes.isNotEmpty()) {
+        if (isArSupported) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .statusBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Clear Table Button (Left Side)
+                if (placedDishes.isNotEmpty()) {
+                    Surface(
+                        onClick = { clearAllDishes() },
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.9f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Box(modifier = Modifier.padding(10.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "Clear Table",
+                                tint = Color.Red,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Spacer(modifier = Modifier.size(44.dp))
+                }
+
                 Surface(
-                    onClick = { clearAllDishes() },
-                    shape = CircleShape,
+                    modifier = Modifier.wrapContentSize(),
+                    shape = RoundedCornerShape(24.dp),
                     color = Color.White.copy(alpha = 0.9f),
                     shadowElevation = 4.dp
                 ) {
-                    Box(modifier = Modifier.padding(10.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteSweep,
-                            contentDescription = "Clear Table",
-                            tint = Color.Red,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            } else {
-                Spacer(modifier = Modifier.size(44.dp))
-            }
-
-            Surface(
-                modifier = Modifier.wrapContentSize(),
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White.copy(alpha = 0.9f),
-                shadowElevation = 4.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (!isMarkerMode) DINEAR_ORANGE else Color.Transparent)
-                            .clickable {
-                                if (isMarkerMode) {
-                                    isMarkerMode = false
-                                    clearAllDishes()
-                                    transform.reset()
-                                    markerAnchor?.detach()
-                                    markerAnchor = null
-                                }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icon_3d),
-                            contentDescription = null,
-                            tint = if (!isMarkerMode) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Plane",
-                            color = if (!isMarkerMode) Color.White else Color.Gray,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isMarkerMode) DINEAR_ORANGE else Color.Transparent)
-                            .clickable {
-                                if (!isMarkerMode) {
-                                    isMarkerMode = true
-                                    clearAllDishes()
-                                    transform.reset()
-                                    markerAnchor = null
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (!isMarkerMode) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (isMarkerMode) {
+                                        isMarkerMode = false
+                                        clearAllDishes()
+                                        transform.reset()
+                                        markerAnchor?.detach()
+                                        markerAnchor = null
+                                    }
                                 }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icon_qr),
-                            contentDescription = null,
-                            tint = if (isMarkerMode) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Marker",
-                            color = if (isMarkerMode) Color.White else Color.Gray,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_3d),
+                                contentDescription = null,
+                                tint = if (!isMarkerMode) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "Plane",
+                                color = if (!isMarkerMode) Color.White else Color.Gray,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isMarkerMode) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (!isMarkerMode) {
+                                        isMarkerMode = true
+                                        clearAllDishes()
+                                        transform.reset()
+                                        markerAnchor = null
+                                    }
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_qr),
+                                contentDescription = null,
+                                tint = if (isMarkerMode) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "Marker",
+                                color = if (isMarkerMode) Color.White else Color.Gray,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
+        } else {
+             // Non-AR mode: Just show a back button if needed, or nothing for now as FAB is enough
+             // Let's add a simple top padding to avoid content clash with status bar
+             Spacer(modifier = Modifier.statusBarsPadding())
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(bottom = 32.dp), contentAlignment = Alignment.BottomCenter) {
@@ -648,14 +681,14 @@ private fun ARScreen(
                         // Keeps zero-latency feedback while a node reference is live (dragging).
                         transform.selectedModelNode?.rotation = Rotation(0f, newRotation, 0f)
                         // Writes to the State-backed value so it stays correct after deselecting too.
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.rotationY?.value = newRotation
                         }
                     },
                     onScaleChange = { newScale ->
                         transform.currentScale = newScale
                         transform.selectedModelNode?.scale = Scale(newScale, newScale, newScale)
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.scale?.value = newScale
                         }
                     },
@@ -667,14 +700,14 @@ private fun ARScreen(
                             it.rotation = Rotation(0f, 0f, 0f)
                             it.scale = Scale(1f, 1f, 1f)
                         }
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.let {
                                 it.rotationY.value = 0f
                                 it.scale.value = 1f
                             }
                         }
                     },
-                    onDelete = if (selectedDishId != "marker_dish") {
+                    onDelete = if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                         {
                             placedDishes.find { it.id == selectedDishId }?.let { dish ->
                                 dish.anchor.detach()
@@ -866,6 +899,66 @@ private fun ArSceneContent(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NonArSceneContent(
+    engine: com.google.android.filament.Engine,
+    modelLoader: io.github.sceneview.loaders.ModelLoader,
+    transform: ArTransformState,
+    currentMenuItem: MenuItem,
+    loadedModel: Model?,
+    onNodeTapped: (ModelNode, String?) -> Unit,
+    onClearSelection: () -> Unit
+) {
+    val cameraNode = rememberCameraNode(engine) {
+        position = Position(z = 2.0f, y = 0.5f)
+        lookAt(Position(y = 0.0f))
+    }
+
+    val gestureListener = rememberOnGestureListener(
+        onSingleTapConfirmed = { _, tappedNode ->
+            if (tappedNode is ModelNode) {
+                onNodeTapped(tappedNode, "3d_dish")
+            } else {
+                onClearSelection()
+            }
+        }
+    )
+
+    SceneView(
+        modifier = Modifier.fillMaxSize(),
+        engine = engine,
+        modelLoader = modelLoader,
+        cameraNode = cameraNode,
+        mainLightNode = rememberMainLightNode(engine) {
+            intensity = 2000f
+        },
+        fillLightNode = rememberFillLightNode(engine) {
+            intensity = 1000f
+        },
+        onGestureListener = gestureListener
+    ) {
+        loadedModel?.let { model ->
+            val instance = remember(model) {
+                modelLoader.assetLoader.createInstance(model)
+            }
+            instance?.let { inst ->
+                ModelNode(
+                    modelInstance = inst,
+                    scaleToUnits = 0.8f,
+                    rotation = Rotation(0f, transform.rotationDegrees, 0f),
+                    scale = Scale(transform.currentScale),
+                    apply = {
+                        name = "3d_dish"
+                        if (transform.selectedNodeId == "3d_dish") {
+                            transform.selectedModelNode = this
+                        }
+                    }
+                )
             }
         }
     }
