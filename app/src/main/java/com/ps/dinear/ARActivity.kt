@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,6 +78,9 @@ import io.github.sceneview.rememberScene
 import io.github.sceneview.rememberView
 import com.google.android.filament.View as FilamentView
 import com.google.android.filament.Skybox
+import com.google.android.filament.utils.Manipulator
+import io.github.sceneview.gesture.CameraGestureDetector
+import io.github.sceneview.gesture.FovZoomCameraManipulator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -250,6 +255,16 @@ class ARActivity : ComponentActivity() {
     private val viewModel: ARViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         super.onCreate(savedInstanceState)
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
@@ -520,21 +535,22 @@ private fun ARScreen(
                 }
             )
         } else {
-            NonArSceneContent(
-                engine = engine,
-                modelLoader = modelLoader,
-                transform = transform,
-                currentMenuItem = currentMenuItem,
-                loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
-                onNodeTapped = { node: io.github.sceneview.node.ModelNode, dishId: String? -> selectNode(node, dishId) },
-                onClearSelection = {
-                    if (isMenuOpen) {
-                        isMenuOpen = false
-                    } else {
-                        clearSelection()
+            key(currentMenuItem.id) {
+                NonArSceneContent(
+                    engine = engine,
+                    modelLoader = modelLoader,
+                    transform = transform,
+                    currentMenuItem = currentMenuItem,
+                    loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                    onClearSelection = {
+                        if (isMenuOpen) {
+                            isMenuOpen = false
+                        } else {
+                            clearSelection()
+                        }
                     }
-                }
-            )
+                )
+            }
         }
 
         if (isArSupported && !isMenuOpen && transform.selectedNodeId == null) {
@@ -944,7 +960,6 @@ private fun NonArSceneContent(
     transform: ArTransformState,
     currentMenuItem: MenuItem,
     loadedModel: Model?,
-    onNodeTapped: (ModelNode, String?) -> Unit,
     onClearSelection: () -> Unit
 ) {
     val cameraNode = rememberCameraNode(engine) {
@@ -952,13 +967,22 @@ private fun NonArSceneContent(
         lookAt(Position(y = 0.0f))
     }
 
+    val cameraManipulator = remember(cameraNode) {
+        FovZoomCameraManipulator(
+            inner = CameraGestureDetector.DefaultCameraManipulator(
+                manipulator = Manipulator.Builder()
+                    .targetPosition(0f, 0f, 0f)
+                    .orbitHomePosition(0f, 0.5f, 2f)
+                    .build(Manipulator.Mode.ORBIT)
+            ),
+            cameraNode = cameraNode,
+            fovRangeDegrees = 20f..80f
+        )
+    }
+
     val gestureListener = rememberOnGestureListener(
-        onSingleTapConfirmed = { _, tappedNode ->
-            if (tappedNode is ModelNode) {
-                onNodeTapped(tappedNode, "3d_dish")
-            } else {
-                onClearSelection()
-            }
+        onSingleTapConfirmed = { _, _ ->
+            onClearSelection()
         }
     )
 
@@ -980,6 +1004,7 @@ private fun NonArSceneContent(
         engine = engine,
         modelLoader = modelLoader,
         cameraNode = cameraNode,
+        cameraManipulator = cameraManipulator,
         scene = rememberScene(engine),
         renderQuality = RenderQuality.Default,
         environment = environment,
@@ -1013,9 +1038,6 @@ private fun NonArSceneContent(
                     scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
                     apply = {
                         name = "3d_dish"
-                        if (transform.selectedNodeId == "3d_dish") {
-                            transform.selectedModelNode = this
-                        }
                     }
                 )
             }
