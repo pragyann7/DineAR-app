@@ -23,20 +23,20 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         super.setContentView(R.layout.activity_login);
 
-        EditText etUsername = findViewById(R.id.etLoginUsername);
+        EditText etEmail = findViewById(R.id.etLoginEmail);
         EditText etPassword = findViewById(R.id.etLoginPassword);
 
         findViewById(R.id.btnSubmitLogin).setOnClickListener(v -> {
-            String username = etUsername.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            if (username.isEmpty() || password.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            LoginRequest request = new LoginRequest(username, password);
-            ApiService api = RetrofitClient.getClient().create(ApiService.class);
+            LoginRequest request = new LoginRequest(email, password);
+            ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
 
             api.login(request).enqueue(new Callback<TokenResponse>() {
                 @Override
@@ -44,7 +44,7 @@ public class LoginActivity extends AppCompatActivity {
                     if (response.isSuccessful() && response.body() != null) {
                         TokenResponse tokens = response.body();
                         SharedPrefManager.saveTokens(LoginActivity.this, tokens.getAccess(), tokens.getRefresh());
-                        SharedPrefManager.saveUserInfo(LoginActivity.this, username, username + "@example.com"); // Email as placeholder or if returned
+                        SharedPrefManager.saveUserInfo(LoginActivity.this, tokens.getFullName(), email);
                         SharedPrefManager.setIsLoggedIn(LoginActivity.this, true);
                         SharedPrefManager.setOnboardingFinished(LoginActivity.this, true);
                         
@@ -60,6 +60,19 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
+        });
+
+        findViewById(R.id.btnGoogleLogin).setOnClickListener(v -> {
+            Toast.makeText(this, "Google Sign-In coming soon", Toast.LENGTH_SHORT).show();
+        });
+
+        findViewById(R.id.btnGoToSignup).setOnClickListener(v -> {
+            startActivity(new Intent(this, SignupActivity.class));
+            finish();
+        });
+
+        findViewById(R.id.btnForgotPassword).setOnClickListener(v -> {
+            startActivity(new Intent(this, ForgotPasswordActivity.class));
         });
     }
 }

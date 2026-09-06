@@ -2,7 +2,9 @@ package com.ps.dinear.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.ps.dinear.MainActivity;
 import com.ps.dinear.R;
@@ -14,6 +16,7 @@ public class AuthActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
 
         // Check if user is already authenticated or guest

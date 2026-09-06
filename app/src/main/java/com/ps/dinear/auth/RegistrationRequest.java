@@ -1,15 +1,24 @@
 package com.ps.dinear.auth;
 
-public class RegistrationRequest {
-    private String username;
-    private String email;
-    private String password;
-    private String phone_number;
+import com.google.gson.annotations.SerializedName;
 
-    public RegistrationRequest(String username, String email, String password, String phone_number) {
-        this.username = username;
+public class RegistrationRequest {
+    @SerializedName("email")
+    private String email;
+
+    @SerializedName("first_name")
+    private String firstName;
+
+    @SerializedName("last_name")
+    private String lastName;
+
+    @SerializedName("password")
+    private String password;
+
+    public RegistrationRequest(String email, String firstName, String lastName, String password) {
         this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.password = password;
-        this.phone_number = phone_number;
     }
 }

@@ -1,6 +1,8 @@
 package com.ps.dinear;
 
 import android.content.Context;
+import com.ps.dinear.auth.TokenAuthenticator;
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -9,10 +11,16 @@ public class RetrofitClient {
     private static Retrofit retrofit;
     private static String baseUrl;
 
-    public static void initialize(String url) {
+    public static void initialize(String url, Context context) {
         baseUrl = url;
+        
+        OkHttpClient client = new OkHttpClient.Builder()
+                .authenticator(new TokenAuthenticator(context))
+                .build();
+
         retrofit = new Retrofit.Builder()
                 .baseUrl(url)
+                .client(client)
                 .addConverterFactory(
                         GsonConverterFactory.create()
                 )
@@ -24,11 +32,11 @@ public class RetrofitClient {
         String port = SharedPrefManager.getPort(context);
         
         if (ip == null) {
-            ip = "192.168.1.66"; // Default fallback
+            ip = "192.168.1.64"; // Default fallback
         }
         
         String url = "http://" + ip + ":" + port + "/";
-        initialize(url);
+        initialize(url, context);
     }
 
     public static String getBaseUrl() {

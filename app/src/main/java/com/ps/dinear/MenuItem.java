@@ -1,111 +1,162 @@
 package com.ps.dinear;
 
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import java.io.Serializable;
+import java.util.List;
 
 public class MenuItem implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private int id;
+    private String slug;
     
-    @SerializedName("restaurant_id")
-    private Integer restaurantId;
+    @SerializedName("restaurant_ids")
+    private List<Integer> restaurantIds;
 
-    @SerializedName(value = "restaurant_name", alternate = {"restaurant_title", "restaurantName"})
-    private String restaurantName;
-
-    @SerializedName("restaurant")
-    private JsonElement restaurant;
-    
+    @SerializedName("name")
     private String name;
+
+    @SerializedName("price")
     private double price;
+
+    @SerializedName("discount_price")
+    private Double discountPrice;
+
+    @SerializedName("currency")
+    private String currency;
+
     private String description;
     
-    @SerializedName("image_url")
-    private String imageUrl;
+    @SerializedName("primary_image")
+    private String primaryImage;
     
-    @SerializedName("model_url")
-    private String modelUrl;
+    @SerializedName("images")
+    private List<FoodImage> images;
     
-    @SerializedName("model_name")
-    private String modelName;
+    @SerializedName("ar_mapping")
+    private ARMapping arMapping;
     
-    @SerializedName("model_version")
-    private String modelVersion;
-    
-    @SerializedName("category_name")
-    private String categoryName;
-    
-    private String tag1;
-    private String tag2;
-    
-    @SerializedName("is_available")
-    private boolean isAvailable;
+    @SerializedName("category_id")
+    private Integer categoryId;
 
-    @SerializedName("has_3d")
-    private boolean has3d;
-
+    @SerializedName("category")
+    private String category;
+    
     private String status;
 
-    public MenuItem(int id, String name, double price, String imageUrl, String modelUrl, String modelName, String modelVersion) {
+    @SerializedName("approval_status")
+    private String approvalStatus;
+
+    @SerializedName("is_featured")
+    private boolean isFeatured;
+
+    public MenuItem() {}
+
+    public MenuItem(int id, String name, double price, String imageUrl) {
         this.id = id;
         this.name = name;
         this.price = price;
-        this.imageUrl = imageUrl;
-        this.modelUrl = modelUrl;
-        this.modelName = modelName;
-        this.modelVersion = modelVersion;
-        this.description = "No description available.";
-        this.categoryName = "General";
-        this.tag1 = "DineAR";
-        this.tag2 = "Food";
-        this.isAvailable = true;
+        this.primaryImage = imageUrl;
     }
 
     public int getId() { return id; }
+    public String getSlug() { return slug; }
+    public List<Integer> getRestaurantIds() { return restaurantIds; }
+
     public Integer getRestaurantId() {
-        if (restaurantId != null) return restaurantId;
-        if (restaurant != null && restaurant.isJsonPrimitive() && restaurant.getAsJsonPrimitive().isNumber()) {
-            return restaurant.getAsInt();
+        if (restaurantIds != null && !restaurantIds.isEmpty()) {
+            return restaurantIds.get(0);
         }
         return null;
     }
+
     public String getRestaurantName() {
-        if (restaurantName != null && !restaurantName.isEmpty()) {
-            return restaurantName;
-        }
-        if (restaurant != null) {
-            if (restaurant.isJsonPrimitive()) {
-                if (restaurant.getAsJsonPrimitive().isString()) {
-                    return restaurant.getAsString();
-                }
-            } else if (restaurant.isJsonObject()) {
-                JsonObject obj = restaurant.getAsJsonObject();
-                if (obj.has("name")) {
-                    return obj.get("name").getAsString();
-                } else if (obj.has("restaurant_name")) {
-                    return obj.get("restaurant_name").getAsString();
-                } else if (obj.has("restaurant")) {
-                    JsonElement nested = obj.get("restaurant");
-                    if (nested.isJsonPrimitive()) return nested.getAsString();
-                }
-            }
-        }
-        return null;
+        return null; // Fallback to lookup in Adapter
     }
+
     public String getName() { return name; }
     public double getPrice() { return price; }
-    public String getDescription() { return description; }
-    public String getImageUrl() { return imageUrl; }
-    public String getModelUrl() { return modelUrl; }
-    public String getModelName() { return modelName; }
-    public String getModelVersion() { return modelVersion; }
-    public String getCategory() { return categoryName; }
-    public String getTag1() { return tag1; }
-    public String getTag2() { return tag2; }
-    public boolean isAvailable() { return isAvailable; }
-    public boolean has3d() { return has3d; }
+    public Double getDiscountPrice() { return discountPrice; }
+    public String getCurrency() { return currency != null ? currency : "NPR"; }
+    public String getDescription() {
+        return (description != null && !description.isEmpty()) ? description : "No description available.";
+    }
+    public String getImageUrl() {
+        if (primaryImage != null && !primaryImage.isEmpty()) return primaryImage;
+        if (images != null && !images.isEmpty()) {
+            for (FoodImage img : images) {
+                if (img.isPrimary) return img.image;
+            }
+            return images.get(0).image;
+        }
+        return null;
+    }
+    
+    public String getModelUrl() {
+        if (arMapping != null) {
+            if (arMapping.arAsset != null) return arMapping.arAsset.modelFile;
+            if (arMapping.pendingArAsset != null) return arMapping.pendingArAsset.modelFile;
+        }
+        return null;
+    }
+    
+    public String getModelName() {
+        if (arMapping != null) {
+            if (arMapping.arAsset != null) return arMapping.arAsset.name;
+            if (arMapping.pendingArAsset != null) return arMapping.pendingArAsset.name;
+        }
+        return null;
+    }
+    
+    public String getModelVersion() {
+        if (arMapping != null) {
+            if (arMapping.arAsset != null) return String.valueOf(arMapping.arAsset.version);
+            if (arMapping.pendingArAsset != null) return String.valueOf(arMapping.pendingArAsset.version);
+        }
+        return "1";
+    }
+    
+    public Integer getCategoryId() { return categoryId; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public boolean has3d() { return getModelUrl() != null; }
     public String getStatus() { return status; }
+    public String getApprovalStatus() { return approvalStatus; }
+    public boolean isFeatured() { return isFeatured; }
+
+    public String getTag1() { return "DineAR"; }
+    public String getTag2() { return isFeatured ? "Featured" : "Food"; }
+
+    public static class ARMapping implements Serializable {
+        @SerializedName("ar_asset")
+        public ARAsset arAsset;
+        @SerializedName("pending_ar_asset")
+        public ARAsset pendingArAsset;
+        @SerializedName("assigned_at")
+        public String assignedAt;
+    }
+
+    public static class ARAsset implements Serializable {
+        public int id;
+        public String name;
+        @SerializedName("model_file")
+        public String modelFile;
+        public String format;
+        public String thumbnail;
+        public int version;
+        @SerializedName("is_active")
+        public boolean isActive;
+        public String source;
+        @SerializedName("approval_status")
+        public String approvalStatus;
+        @SerializedName("file_size")
+        public long fileSize;
+    }
+
+    public static class FoodImage implements Serializable {
+        public int id;
+        public String image;
+        @SerializedName("is_primary")
+        public boolean isPrimary;
+    }
 }

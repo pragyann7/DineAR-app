@@ -1,6 +1,8 @@
 package com.ps.dinear;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -8,10 +10,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.tabs.TabLayout;
 import com.ps.dinear.data.model.Restaurant;
 import com.ps.dinear.data.model.SearchResponse;
@@ -36,6 +42,8 @@ public class FavoritesActivity extends AppCompatActivity {
 
     private List<Restaurant> favRestaurants = new ArrayList<>();
     private List<MenuItem> favFoods = new ArrayList<>();
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location userLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +64,9 @@ public class FavoritesActivity extends AppCompatActivity {
 
         rvFavItems.setLayoutManager(new LinearLayoutManager(this));
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        requestLocationPermission();
+
         findViewById(R.id.btnBackFav).setOnClickListener(v -> finish());
 
         tabLayoutFav.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -71,7 +82,7 @@ public class FavoritesActivity extends AppCompatActivity {
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        loadFavorites();
+        // loadFavorites(); // Removed to avoid double call on startup (called in onResume)
     }
 
     @Override
@@ -101,6 +112,11 @@ public class FavoritesActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     favRestaurants = response.body().getRestaurants();
                     favFoods = response.body().getFoodItems();
+                    
+                    if (userLocation != null) {
+                        calculateDistances(favRestaurants);
+                    }
+                    
                     updateView();
                 } else {
                     Toast.makeText(FavoritesActivity.this, "Failed to load favorites", Toast.LENGTH_SHORT).show();
@@ -115,6 +131,62 @@ public class FavoritesActivity extends AppCompatActivity {
         });
     }
 
+    private void requestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+        } else {
+            if (restaurantAdapter != null) {
+                restaurantAdapter.setLocationPermissionDenied(false);
+            }
+            getCurrentLocation();
+        }
+    }
+
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null) {
+                    userLocation = location;
+                    if (!favRestaurants.isEmpty()) {
+                        calculateDistances(favRestaurants);
+                        if (restaurantAdapter != null) {
+                            restaurantAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private void calculateDistances(List<Restaurant> restaurants) {
+        if (userLocation == null) return;
+        for (Restaurant r : restaurants) {
+            if (r.getLatitude() != 0 && r.getLongitude() != 0) {
+                float[] results = new float[1];
+                Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
+                        r.getLatitude(), r.getLongitude(), results);
+                r.setDistance(results[0] / 1000.0); // Convert to km
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1001) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (restaurantAdapter != null) {
+                    restaurantAdapter.setLocationPermissionDenied(false);
+                }
+                getCurrentLocation();
+            } else {
+                if (restaurantAdapter != null) {
+                    restaurantAdapter.setLocationPermissionDenied(true);
+                }
+            }
+        }
+    }
+
     private void updateView() {
         int selectedTab = tabLayoutFav.getSelectedTabPosition();
         boolean hasItems = false;
@@ -124,6 +196,7 @@ public class FavoritesActivity extends AppCompatActivity {
                 restaurantAdapter = new RestaurantAdapter(this, new ArrayList<>(favRestaurants), restaurant -> {
                     Intent intent = new Intent(this, RestaurantDetailsActivity.class);
                     intent.putExtra("restaurantId", restaurant.getId());
+                    intent.putExtra("restaurantSlug", restaurant.getSlug());
                     intent.putExtra("restaurantName", restaurant.getName());
                     intent.putExtra("cuisine", restaurant.getCuisine());
                     intent.putExtra("rating", restaurant.getRating());
@@ -131,6 +204,15 @@ public class FavoritesActivity extends AppCompatActivity {
                     intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
                     intent.putExtra("distance", restaurant.getDistance());
                     intent.putExtra("imageUrl", restaurant.getImageUrl());
+                    intent.putExtra("bannerImage", restaurant.getBannerImage());
+                    intent.putExtra("address", restaurant.getAddress());
+                    intent.putExtra("isFeatured", restaurant.isFeatured());
+                    intent.putExtra("latitude", restaurant.getLatitude());
+                    intent.putExtra("longitude", restaurant.getLongitude());
+                    if (restaurant.getLocation() != null) {
+                        intent.putExtra("city", restaurant.getLocation().getCity());
+                        intent.putExtra("district", restaurant.getLocation().getDistrict());
+                    }
                     startActivity(intent);
                 });
             } else {

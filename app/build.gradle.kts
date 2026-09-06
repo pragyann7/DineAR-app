@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.constraintlayout)
     implementation(libs.material)
+    implementation(libs.maplibre)
+    implementation(libs.play.services.location)
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
@@ -75,6 +77,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    implementation("androidx.core:core-splashscreen:1.2.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)

@@ -79,6 +79,9 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         holder.btnViewAR.setOnClickListener(v -> {
             Intent intent = new Intent(context, ARActivity.class);
             intent.putExtra("selectedItem", item);
+            if (item.getRestaurantId() != null) {
+                intent.putExtra("restaurantId", item.getRestaurantId());
+            }
             context.startActivity(intent);
         });
 
@@ -97,6 +100,9 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FoodDetailsActivity.class);
             intent.putExtra("selectedItem", item);
+            if (item.getRestaurantId() != null) {
+                intent.putExtra("restaurantId", item.getRestaurantId());
+            }
             context.startActivity(intent);
         });
     }

@@ -1,0 +1,7 @@
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="400"
+    android:startOffset="200"
+    android:propertyName="fillColor"
+    android:valueFrom="#BDBDBD"
+    android:valueTo="#111212"
+    android:valueType="colorType" />

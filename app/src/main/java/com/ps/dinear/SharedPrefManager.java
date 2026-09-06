@@ -18,6 +18,7 @@ public class SharedPrefManager {
     private static final String KEY_REFRESH_TOKEN = "refresh_token";
     private static final String KEY_USER_NAME = "user_name";
     private static final String KEY_USER_EMAIL = "user_email";
+    private static final String KEY_USER_AVATAR = "user_avatar";
 
     public static void saveServer(
             Context context,
@@ -132,6 +133,11 @@ public class SharedPrefManager {
         return prefs.getString(KEY_ACCESS_TOKEN, null);
     }
 
+    public static String getRefreshToken(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
+    }
+
     public static void saveUserInfo(Context context, String name, String email) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit()
@@ -148,6 +154,17 @@ public class SharedPrefManager {
     public static String getUserEmail(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         return prefs.getString(KEY_USER_EMAIL, "");
+    }
+
+    public static void saveUserAvatar(Context context, int avatarResId) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putInt(KEY_USER_AVATAR, avatarResId).apply();
+    }
+
+    public static int getUserAvatar(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        // Default to a person icon if no avatar is set
+        return prefs.getInt(KEY_USER_AVATAR, R.drawable.ic_person);
     }
 
     public static void clearAuth(Context context) {

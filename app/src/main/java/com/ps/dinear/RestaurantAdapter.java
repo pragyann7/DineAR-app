@@ -8,27 +8,38 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.ps.dinear.data.model.Restaurant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.ViewHolder> {
     private Context context;
     private List<Restaurant> list;
     private OnRestaurantClickListener listener;
+    private int layoutResId;
+    private boolean locationPermissionDenied = false;
 
     public interface OnRestaurantClickListener {
         void onRestaurantClick(Restaurant restaurant);
+        default void onDetailClick(Restaurant restaurant) {}
     }
 
     public RestaurantAdapter(Context context, List<Restaurant> list, OnRestaurantClickListener listener) {
+        this(context, list, R.layout.item_restaurant, listener);
+    }
+
+    public RestaurantAdapter(Context context, List<Restaurant> list, @LayoutRes int layoutResId, OnRestaurantClickListener listener) {
         this.context = context;
         this.list = list;
+        this.layoutResId = layoutResId;
         this.listener = listener;
     }
 
@@ -37,10 +48,15 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         notifyDataSetChanged();
     }
 
+    public void setLocationPermissionDenied(boolean denied) {
+        this.locationPermissionDenied = denied;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_restaurant, parent, false);
+        View view = LayoutInflater.from(context).inflate(layoutResId, parent, false);
         return new ViewHolder(view);
     }
 
@@ -59,9 +75,18 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         
         holder.tvTime.setText(restaurant.getDeliveryTime());
         
-        if (holder.tvDistance != null) {
-            holder.tvDistance.setVisibility(View.VISIBLE);
-            holder.tvDistance.setText(restaurant.getDistance() + " km");
+        if (holder.llDistance != null) {
+            if (restaurant.getDistance() > 0) {
+                holder.llDistance.setVisibility(View.VISIBLE);
+                holder.tvDistance.setText(String.format(Locale.US, "%.1f km", restaurant.getDistance()));
+                if (holder.ivDistanceIcon != null) holder.ivDistanceIcon.setImageResource(R.drawable.icon_walk);
+            } else if (locationPermissionDenied) {
+                holder.llDistance.setVisibility(View.VISIBLE);
+                holder.tvDistance.setText("No GPS");
+                if (holder.ivDistanceIcon != null) holder.ivDistanceIcon.setImageResource(R.drawable.icon_nolocation);
+            } else {
+                holder.llDistance.setVisibility(View.GONE);
+            }
         }
 
         String fullImageUrl = RetrofitClient.getFullUrl(context, restaurant.getImageUrl());
@@ -83,6 +108,10 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         }
 
         holder.itemView.setOnClickListener(v -> listener.onRestaurantClick(restaurant));
+        
+        if (holder.btnViewDetails != null) {
+            holder.btnViewDetails.setOnClickListener(v -> listener.onDetailClick(restaurant));
+        }
     }
 
     @Override
@@ -92,8 +121,10 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
-        ImageView ivRestaurant, ivFavorite;
+        ImageView ivRestaurant, ivFavorite, ivDistanceIcon;
         TextView tvName, tvRating, tvCuisine, tvTime, tvDistance;
+        View llDistance;
+        MaterialButton btnViewDetails;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -105,6 +136,9 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
             tvCuisine = itemView.findViewById(R.id.tvCuisine);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvDistance = itemView.findViewById(R.id.tvDistance);
+            ivDistanceIcon = itemView.findViewById(R.id.ivDistanceIcon);
+            llDistance = itemView.findViewById(R.id.llDistance);
+            btnViewDetails = itemView.findViewById(R.id.btnViewDetails);
         }
     }
 }

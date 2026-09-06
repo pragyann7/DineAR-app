@@ -106,7 +106,10 @@ public class FavoritesManager {
                     if (!response.isSuccessful()) {
                         favoriteRestaurantIds.remove(id);
                         callback.onStateChanged(false);
-                        callback.onError("Failed to add favorite");
+                        String errorMsg = "Failed to add favorite";
+                        if (response.code() == 401) errorMsg = "Session expired. Please login again.";
+                        else if (response.code() == 400) errorMsg = "Item not available for favorites";
+                        callback.onError(errorMsg);
                     }
                 }
 
@@ -164,7 +167,10 @@ public class FavoritesManager {
                     if (!response.isSuccessful()) {
                         favoriteFoodIds.remove(id);
                         callback.onStateChanged(false);
-                        callback.onError("Failed to add favorite");
+                        String errorMsg = "Failed to add favorite";
+                        if (response.code() == 401) errorMsg = "Session expired. Please login again.";
+                        else if (response.code() == 400) errorMsg = "Item not available for favorites";
+                        callback.onError(errorMsg);
                     }
                 }
 
