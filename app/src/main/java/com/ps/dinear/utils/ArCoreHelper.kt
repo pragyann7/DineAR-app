@@ -11,6 +11,6 @@ object ArCoreHelper {
      */
     fun isArCoreSupported(context: Context): Boolean {
         val availability = ArCoreApk.getInstance().checkAvailability(context)
-        return availability.isSupported || availability == ArCoreApk.Availability.UNKNOWN_CHECKING
+        return availability == ArCoreApk.Availability.SUPPORTED_INSTALLED
     }
 }
