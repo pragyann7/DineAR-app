@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <RelativeLayout
+        android:id="@+id/rlProfileHeaderBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingHorizontal="24.dp"
+        android:paddingTop="24.dp"
+        android:paddingBottom="16.dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnBackProfile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="4dp"
+            app:strokeWidth="0dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:src="@drawable/icon_back"
+                app:tint="@color/black" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="My Profile"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+    <!-- Scrollable Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0.dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rlProfileHeaderBar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Profile Info Section -->
+            <LinearLayout
+                android:id="@+id/llProfileHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="24.dp"
+                android:paddingBottom="32.dp">
+
+                <RelativeLayout
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:background="@drawable/bg_circle_orange"
+                    android:backgroundTint="#1A000000"
+                    android:padding="8dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivProfileImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="2dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/avatar_0"
+                        app:shapeAppearanceOverlay="@style/CircleImageStyle"
+                        app:strokeColor="@color/white"
+                        app:strokeWidth="3dp" />
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginEnd="6dp"
+                        android:layout_marginBottom="6dp"
+                        android:src="@drawable/ic_verified" />
+                </RelativeLayout>
+
+                <TextView
+                    android:id="@+id/tvProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20.dp"
+                    android:text="Sophia Williams"
+                    android:textColor="@color/black"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvProfileEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6.dp"
+                    android:text="sophia@gmail.com"
+                    android:textColor="@color/gray_text"
+                    android:textSize="15sp"
+                    android:letterSpacing="0.02" />
+
+            </LinearLayout>
+
+            <!-- Menu Options -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="24.dp"
+                android:paddingBottom="40dp">
+
+                <!-- Personal Information -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnPersonalInfo"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_person" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="Personal Information" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- My Orders -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnProfileOrders"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_orders" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="My Orders" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Addresses -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnAddresses"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_addresses" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="Addresses" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Payment Methods -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnPaymentMethods"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_payment" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="Payment Methods" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Settings -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnSettings"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_settings" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="Settings" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Help & Support -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnHelpSupport"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_help" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="Help &amp; Support" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Logout -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnProfileLogout"
+                    style="@style/ProfileMenuItemCard">
+                    <LinearLayout style="@style/ProfileMenuItemLayout">
+                        <ImageView
+                            style="@style/ProfileMenuItemIcon"
+                            android:src="@drawable/ic_logout" />
+                        <TextView
+                            style="@style/ProfileMenuItemText"
+                            android:text="Logout" />
+                        <ImageView
+                            style="@style/ProfileMenuItemChevron"
+                            android:src="@drawable/ic_chevron_right" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

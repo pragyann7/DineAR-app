@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,6 +38,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
+import com.ps.dinear.data.model.CartItem
+import com.ps.dinear.data.model.Order
+import com.ps.dinear.data.model.OrderRequest
+import com.ps.dinear.data.model.RestaurantMenuResponse
+import com.ps.dinear.data.model.SearchResponse
 import com.google.ar.core.*
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.configure
@@ -53,6 +62,25 @@ import io.github.sceneview.rememberMainLightNode
 import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberOnGestureListener
+import com.ps.dinear.utils.ArCoreHelper
+import io.github.sceneview.RenderQuality
+import io.github.sceneview.SceneView
+import io.github.sceneview.SurfaceType
+import io.github.sceneview.applyRenderQuality
+import io.github.sceneview.ar.rememberAREnvironment
+import io.github.sceneview.environment.Environment
+import io.github.sceneview.node.CameraNode
+import io.github.sceneview.rememberARView
+import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.rememberEnvironment
+import io.github.sceneview.rememberEnvironmentLoader
+import io.github.sceneview.rememberScene
+import io.github.sceneview.rememberView
+import com.google.android.filament.View as FilamentView
+import com.google.android.filament.Skybox
+import com.google.android.filament.utils.Manipulator
+import io.github.sceneview.gesture.CameraGestureDetector
+import io.github.sceneview.gesture.FovZoomCameraManipulator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -88,18 +116,110 @@ class ARViewModel : ViewModel() {
     private val _menuItems = mutableStateListOf<MenuItem>()
     val menuItems: List<MenuItem> = _menuItems
 
-    fun fetchMenu(context: android.content.Context, restaurantId: Int) {
-        if (_menuItems.isNotEmpty()) return
+    private val _orders = mutableStateListOf<Order>()
+    val orders: List<Order> = _orders
 
+    private val _favoriteFoods = mutableStateListOf<MenuItem>()
+    val favoriteFoods: List<MenuItem> = _favoriteFoods
+    
+    var cartItemCount by mutableIntStateOf(CartManager.getInstance().itemCount)
+        private set
+        
+    private val _cartItems = mutableStateListOf<CartItem>()
+    val cartItems: List<CartItem> = _cartItems
+
+    private val cartListener = CartManager.CartListener {
+        cartItemCount = CartManager.getInstance().itemCount
+        _cartItems.clear()
+        _cartItems.addAll(CartManager.getInstance().items)
+    }
+
+    init {
+        CartManager.getInstance().addListener(cartListener)
+        _cartItems.addAll(CartManager.getInstance().items)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        CartManager.getInstance().removeListener(cartListener)
+    }
+
+    fun fetchMenu(context: android.content.Context, restaurantSlug: String) {
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
-        api.getMenu(restaurantId).enqueue(object : retrofit2.Callback<List<MenuItem>> {
-            override fun onResponse(call: retrofit2.Call<List<MenuItem>>, response: retrofit2.Response<List<MenuItem>>) {
+        Log.d("ARActivity", "Fetching menu for slug: $restaurantSlug")
+        api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<RestaurantMenuResponse> {
+            override fun onResponse(call: retrofit2.Call<RestaurantMenuResponse>, response: retrofit2.Response<RestaurantMenuResponse>) {
                 if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    val flattenedList = mutableListOf<MenuItem>()
+                    Log.d("ARActivity", "Menu fetch success. Categories: ${body.categories?.size ?: 0}")
+                    body.categories?.forEach { group ->
+                        group.menuItems?.forEach { item ->
+                            item.category = group.name
+                            flattenedList.add(item)
+                        }
+                    }
                     _menuItems.clear()
-                    _menuItems.addAll(response.body()!!)
+                    _menuItems.addAll(flattenedList)
                 }
             }
-            override fun onFailure(call: retrofit2.Call<List<MenuItem>>, t: Throwable) {
+            override fun onFailure(call: retrofit2.Call<RestaurantMenuResponse>, t: Throwable) {
+                Log.e("ARActivity", "Menu fetch error: ${t.message}")
+            }
+        })
+    }
+
+    fun fetchGlobalFeaturedFoods(context: android.content.Context, city: String?) {
+        val api = RetrofitClient.getClient(context).create(ApiService::class.java)
+        Log.d("ARActivity", "Fetching global featured foods for city: $city")
+        // Using empty query to fetch ALL items as allowed by backend update
+        api.search("", city).enqueue(object : retrofit2.Callback<SearchResponse> {
+            override fun onResponse(call: retrofit2.Call<SearchResponse>, response: retrofit2.Response<SearchResponse>) {
+                if (response.isSuccessful && response.body() != null) {
+                    val foods = response.body()!!.foodItems
+                    if (foods != null) {
+                        // Jumble the sequence for variety
+                        val mutableFoods = foods.toMutableList()
+                        mutableFoods.shuffle()
+                        
+                        _menuItems.clear()
+                        _menuItems.addAll(mutableFoods)
+                        Log.d("ARActivity", "Global foods loaded and shuffled: ${foods.size}")
+                    }
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<SearchResponse>, t: Throwable) {
+                Log.e("ARActivity", "Global fetch error: ${t.message}")
+            }
+        })
+    }
+
+    fun fetchOrders(context: android.content.Context) {
+        val token = SharedPrefManager.getAccessToken(context) ?: return
+        val api = RetrofitClient.getClient(context).create(ApiService::class.java)
+        api.getOrders("Bearer $token").enqueue(object : retrofit2.Callback<List<Order>> {
+            override fun onResponse(call: retrofit2.Call<List<Order>>, response: retrofit2.Response<List<Order>>) {
+                if (response.isSuccessful && response.body() != null) {
+                    _orders.clear()
+                    _orders.addAll(response.body()!!)
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<List<Order>>, t: Throwable) {
+            }
+        })
+    }
+
+    fun fetchFavorites(context: android.content.Context) {
+        val token = SharedPrefManager.getAccessToken(context) ?: return
+        val api = RetrofitClient.getClient(context).create(ApiService::class.java)
+        api.getFavoriteDetails("Bearer $token").enqueue(object : retrofit2.Callback<SearchResponse> {
+            override fun onResponse(call: retrofit2.Call<SearchResponse>, response: retrofit2.Response<SearchResponse>) {
+                if (response.isSuccessful && response.body() != null) {
+                    _favoriteFoods.clear()
+                    _favoriteFoods.addAll(response.body()!!.foodItems)
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<SearchResponse>, t: Throwable) {
             }
         })
     }
@@ -111,6 +231,12 @@ class ARViewModel : ViewModel() {
 
     fun setDownloading(url: String) {
         _downloadStates[url] = DownloadState.Downloading
+    }
+
+    fun addMenuItemIfMissing(item: MenuItem) {
+        if (_menuItems.none { it.id == item.id }) {
+            _menuItems.add(item)
+        }
     }
 
     fun setError(url: String, msg: String) {
@@ -129,26 +255,55 @@ class ARActivity : ComponentActivity() {
     private val viewModel: ARViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         super.onCreate(savedInstanceState)
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
+        val restaurantSlug = intent.getStringExtra("restaurantSlug")
+        var restaurantId = intent.getIntExtra("restaurantId", -1)
 
         if (selectedItem == null) {
             Toast.makeText(this, "Error: Food item not found", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
-
-        selectedItem.restaurantId?.let { id ->
-            viewModel.fetchMenu(this, id)
+        
+        viewModel.addMenuItemIfMissing(selectedItem)
+        
+        // Fallback: Try to get restaurant ID from the selected item if not in intent
+        if (restaurantId == -1) {
+            restaurantId = selectedItem.restaurantId ?: -1
         }
+
+        if (restaurantSlug != null) {
+            viewModel.fetchMenu(this, restaurantSlug)
+        } else {
+            // Global mode: fetch all featured foods
+            val city = SharedPrefManager.getCity(this)
+            viewModel.fetchGlobalFeaturedFoods(this, city)
+        }
+
+//        val isArSupported = ArCoreHelper.isArCoreSupported(this)
+
+        val isArSupported = false
 
         setContent {
             ARScreen(
                 initialMenuItem = selectedItem,
                 menuList = viewModel.menuItems,
+                restaurantId = restaurantId,
                 activity = this,
-                viewModel = viewModel
+                viewModel = viewModel,
+                isArSupported = isArSupported
             )
         }
     }
@@ -173,8 +328,10 @@ private class ArTransformState {
 private fun ARScreen(
     initialMenuItem: MenuItem,
     menuList: List<MenuItem>,
+    restaurantId: Int,
     activity: ARActivity,
-    viewModel: ARViewModel
+    viewModel: ARViewModel,
+    isArSupported: Boolean
 ) {
     val context = LocalContext.current
     val engine = rememberEngine()
@@ -193,6 +350,10 @@ private fun ARScreen(
 
     var currentMenuItem by remember { mutableStateOf(initialMenuItem) }
     var isMenuOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentMenuItem) {
+        transform.reset()
+    }
 
     fun downloadModel(item: MenuItem) {
         val rawUrl = item.modelUrl ?: ""
@@ -320,60 +481,79 @@ private fun ARScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ArSceneContent(
-            engine = engine,
-            modelLoader = modelLoader,
-            materialLoader = materialLoader,
-            session = session,
-            onSessionCreated = { session = it },
-            isMarkerMode = isMarkerMode,
-            isMenuOpen = isMenuOpen,
-            markerAnchor = markerAnchor,
-            onMarkerAnchorFound = { markerAnchor = it },
-            placedDishes = placedDishes,
-            transform = transform,
-            selectedDishId = selectedDishId,
-            currentMenuItem = currentMenuItem,
-            loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
-            onNodeTapped = { node, dishId -> selectNode(node, dishId) },
-            onEmptyTap = { hit ->
-                if (isMenuOpen) {
-                    isMenuOpen = false
-                } else if (transform.selectedNodeId != null) {
-                    clearSelection()
-                } else if (!isMarkerMode) {
-                    val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
-                    if (model != null) {
-                        if (placedDishes.size < MAX_PLACED_OBJECTS) {
-                            val instance = modelLoader.assetLoader.createInstance(model)
-                            if (instance != null) {
-                                placedDishes.add(
-                                    PlacedDish(
-                                        anchor = hit.createAnchor(),
-                                        menuItem = currentMenuItem,
-                                        model = model,
-                                        modelInstance = instance
+        if (isArSupported) {
+            ArSceneContent(
+                engine = engine,
+                modelLoader = modelLoader,
+                materialLoader = materialLoader,
+                session = session,
+                onSessionCreated = { session = it },
+                isMarkerMode = isMarkerMode,
+                isMenuOpen = isMenuOpen,
+                markerAnchor = markerAnchor,
+                onMarkerAnchorFound = { markerAnchor = it },
+                placedDishes = placedDishes,
+                transform = transform,
+                selectedDishId = selectedDishId,
+                currentMenuItem = currentMenuItem,
+                loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                onNodeTapped = { node, dishId -> selectNode(node, dishId) },
+                onEmptyTap = { hit ->
+                    if (isMenuOpen) {
+                        isMenuOpen = false
+                    } else if (transform.selectedNodeId != null) {
+                        clearSelection()
+                    } else if (!isMarkerMode) {
+                        val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
+                        if (model != null) {
+                            if (placedDishes.size < MAX_PLACED_OBJECTS) {
+                                val instance = modelLoader.assetLoader.createInstance(model)
+                                if (instance != null) {
+                                    placedDishes.add(
+                                        PlacedDish(
+                                            anchor = hit.createAnchor(),
+                                            menuItem = currentMenuItem,
+                                            model = model,
+                                            modelInstance = instance
+                                        )
                                     )
-                                )
+                                }
+                            } else {
+                                Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
                         }
+                    }
+                },
+                onClearSelection = {
+                    if (isMenuOpen) {
+                        isMenuOpen = false
                     } else {
-                        Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
+                        clearSelection()
                     }
                 }
-            },
-            onClearSelection = {
-                if (isMenuOpen) {
-                    isMenuOpen = false
-                } else {
-                    clearSelection()
-                }
+            )
+        } else {
+            key(currentMenuItem.id) {
+                NonArSceneContent(
+                    engine = engine,
+                    modelLoader = modelLoader,
+                    transform = transform,
+                    currentMenuItem = currentMenuItem,
+                    loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                    onClearSelection = {
+                        if (isMenuOpen) {
+                            isMenuOpen = false
+                        } else {
+                            clearSelection()
+                        }
+                    }
+                )
             }
-        )
+        }
 
-        if (!isMenuOpen && transform.selectedNodeId == null) {
+        if (isArSupported && !isMenuOpen && transform.selectedNodeId == null) {
             val guideText = if (isMarkerMode) {
                 if (markerAnchor == null) "Scan the AR marker to view dish" else ""
             } else {
@@ -403,85 +583,113 @@ private fun ARScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .statusBarsPadding(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Surface(
-                modifier = Modifier.wrapContentSize(),
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White.copy(alpha = 0.9f),
-                shadowElevation = 4.dp
+        if (isArSupported) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .statusBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Clear Table Button (Left Side)
+                if (placedDishes.isNotEmpty()) {
+                    Surface(
+                        onClick = { clearAllDishes() },
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.9f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Box(modifier = Modifier.padding(10.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "Clear Table",
+                                tint = Color.Red,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Spacer(modifier = Modifier.size(44.dp))
+                }
+
+                Surface(
+                    modifier = Modifier.wrapContentSize(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color.White.copy(alpha = 0.9f),
+                    shadowElevation = 4.dp
                 ) {
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (!isMarkerMode) DINEAR_ORANGE else Color.Transparent)
-                            .clickable {
-                                if (isMarkerMode) {
-                                    isMarkerMode = false
-                                    clearAllDishes()
-                                    transform.reset()
-                                    markerAnchor?.detach()
-                                    markerAnchor = null
-                                }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icon_3d),
-                            contentDescription = null,
-                            tint = if (!isMarkerMode) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Plane",
-                            color = if (!isMarkerMode) Color.White else Color.Gray,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (!isMarkerMode) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (isMarkerMode) {
+                                        isMarkerMode = false
+                                        clearAllDishes()
+                                        transform.reset()
+                                        markerAnchor?.detach()
+                                        markerAnchor = null
+                                    }
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_3d),
+                                contentDescription = null,
+                                tint = if (!isMarkerMode) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "Plane",
+                                color = if (!isMarkerMode) Color.White else Color.Gray,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isMarkerMode) DINEAR_ORANGE else Color.Transparent)
-                            .clickable {
-                                if (!isMarkerMode) {
-                                    isMarkerMode = true
-                                    clearAllDishes()
-                                    transform.reset()
-                                    markerAnchor = null
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isMarkerMode) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (!isMarkerMode) {
+                                        isMarkerMode = true
+                                        clearAllDishes()
+                                        transform.reset()
+                                        markerAnchor = null
+                                    }
                                 }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icon_qr),
-                            contentDescription = null,
-                            tint = if (isMarkerMode) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Marker",
-                            color = if (isMarkerMode) Color.White else Color.Gray,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_qr),
+                                contentDescription = null,
+                                tint = if (isMarkerMode) Color.White else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "Marker",
+                                color = if (isMarkerMode) Color.White else Color.Gray,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
+        } else {
+             // Non-AR mode: Just show a back button if needed, or nothing for now as FAB is enough
+             // Let's add a simple top padding to avoid content clash with status bar
+             Spacer(modifier = Modifier.statusBarsPadding())
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(bottom = 32.dp), contentAlignment = Alignment.BottomCenter) {
@@ -506,14 +714,14 @@ private fun ARScreen(
                         // Keeps zero-latency feedback while a node reference is live (dragging).
                         transform.selectedModelNode?.rotation = Rotation(0f, newRotation, 0f)
                         // Writes to the State-backed value so it stays correct after deselecting too.
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.rotationY?.value = newRotation
                         }
                     },
                     onScaleChange = { newScale ->
                         transform.currentScale = newScale
                         transform.selectedModelNode?.scale = Scale(newScale, newScale, newScale)
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.scale?.value = newScale
                         }
                     },
@@ -525,14 +733,14 @@ private fun ARScreen(
                             it.rotation = Rotation(0f, 0f, 0f)
                             it.scale = Scale(1f, 1f, 1f)
                         }
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.let {
                                 it.rotationY.value = 0f
                                 it.scale.value = 1f
                             }
                         }
                     },
-                    onDelete = if (selectedDishId != "marker_dish") {
+                    onDelete = if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                         {
                             placedDishes.find { it.id == selectedDishId }?.let { dish ->
                                 dish.anchor.detach()
@@ -548,7 +756,9 @@ private fun ARScreen(
         if (isMenuOpen) {
             MenuOverlay(
                 menuList = menuList,
+                restaurantId = restaurantId,
                 downloadStates = viewModel.downloadStates,
+                viewModel = viewModel,
                 onClose = { isMenuOpen = false },
                 onItemSelected = { item ->
                     currentMenuItem = item
@@ -642,8 +852,22 @@ private fun ArSceneContent(
             modelLoader = modelLoader,
             materialLoader = materialLoader,
             planeRenderer = false,
-            mainLightNode = rememberMainLightNode(engine) { intensity = 2000f },
-            fillLightNode = rememberFillLightNode(engine) { intensity = 800f },
+            environment = rememberAREnvironment(engine),
+            view = rememberARView(engine).apply {
+                applyRenderQuality(RenderQuality.Performance)
+                dynamicResolutionOptions = dynamicResolutionOptions.apply { enabled = false }
+                bloomOptions = bloomOptions.apply { enabled = false }
+                antiAliasing = FilamentView.AntiAliasing.FXAA
+                setShadowingEnabled(false)
+            },
+            mainLightNode = rememberMainLightNode(engine) { 
+                intensity = 30_000f 
+                isShadowCaster = false
+            },
+            fillLightNode = rememberFillLightNode(engine) { 
+                intensity = 10_000f 
+                isShadowCaster = false
+            },
             onSessionCreated = onSessionCreatedStable,
             onSessionUpdated = onSessionUpdatedStable,
             onGestureListener = gestureListener
@@ -666,6 +890,7 @@ private fun ArSceneContent(
                             ModelNode(
                                 modelInstance = dish.modelInstance,
                                 scaleToUnits = null,
+                                centerOrigin = Position(y = -1.0f),
                                 rotation = Rotation(0f, dish.rotationY.value, 0f),
                                 scale = Scale(MODEL_SCALE_INITIAL * dish.scale.value),
                                 apply = {
@@ -700,6 +925,7 @@ private fun ArSceneContent(
                                     ModelNode(
                                         modelInstance = inst,
                                         scaleToUnits = null,
+                                        centerOrigin = Position(y = -1.0f),
                                         rotation = Rotation(0f, transform.rotationDegrees, 0f),
                                         scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
                                         apply = {
@@ -728,13 +954,116 @@ private fun ArSceneContent(
 }
 
 @Composable
+private fun NonArSceneContent(
+    engine: com.google.android.filament.Engine,
+    modelLoader: io.github.sceneview.loaders.ModelLoader,
+    transform: ArTransformState,
+    currentMenuItem: MenuItem,
+    loadedModel: Model?,
+    onClearSelection: () -> Unit
+) {
+    val cameraNode = rememberCameraNode(engine) {
+        position = Position(z = 2.0f, y = 0.5f)
+        lookAt(Position(y = 0.0f))
+    }
+
+    val cameraManipulator = remember(cameraNode) {
+        FovZoomCameraManipulator(
+            inner = CameraGestureDetector.DefaultCameraManipulator(
+                manipulator = Manipulator.Builder()
+                    .targetPosition(0f, 0f, 0f)
+                    .orbitHomePosition(0f, 0.5f, 2f)
+                    .build(Manipulator.Mode.ORBIT)
+            ),
+            cameraNode = cameraNode,
+            fovRangeDegrees = 20f..80f
+        )
+    }
+
+    val gestureListener = rememberOnGestureListener(
+        onSingleTapConfirmed = { _, _ ->
+            onClearSelection()
+        }
+    )
+
+    val envLoader = rememberEnvironmentLoader(engine)
+    val skybox = remember(engine) {
+        Skybox.Builder().color(0.96f, 0.96f, 0.96f, 1.0f).build(engine)
+    }
+    val environment = rememberEnvironment(envLoader) {
+        envLoader.createEnvironment(
+            indirectLight = envLoader.createKTX1Environment(
+                iblAssetFile = "environments/neutral/neutral_ibl.ktx"
+            ).indirectLight,
+            skybox = skybox
+        )
+    }
+
+    SceneView(
+        modifier = Modifier.fillMaxSize(),
+        engine = engine,
+        modelLoader = modelLoader,
+        cameraNode = cameraNode,
+        cameraManipulator = cameraManipulator,
+        scene = rememberScene(engine),
+        renderQuality = RenderQuality.Default,
+        environment = environment,
+        view = rememberView(engine).apply {
+            applyRenderQuality(RenderQuality.Performance)
+            dynamicResolutionOptions = dynamicResolutionOptions.apply { enabled = false }
+            bloomOptions = bloomOptions.apply { enabled = false }
+            antiAliasing = FilamentView.AntiAliasing.FXAA
+            setShadowingEnabled(false)
+        },
+        mainLightNode = rememberMainLightNode(engine) {
+            intensity = 30_000f
+            isShadowCaster = false
+        },
+        fillLightNode = rememberFillLightNode(engine) {
+            intensity = 10_000f
+            isShadowCaster = false
+        },
+        onGestureListener = gestureListener
+    ) {
+        loadedModel?.let { model ->
+            val instance = remember(model) {
+                modelLoader.assetLoader.createInstance(model)
+            }
+            instance?.let { inst ->
+                ModelNode(
+                    modelInstance = inst,
+                    scaleToUnits = 0.8f,
+                    centerOrigin = Position(y = -1.0f), // Align model bottom to y=0
+                    rotation = Rotation(0f, transform.rotationDegrees, 0f),
+                    scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
+                    apply = {
+                        name = "3d_dish"
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun MenuOverlay(
     menuList: List<MenuItem>,
+    restaurantId: Int,
     downloadStates: Map<String, DownloadState>,
+    viewModel: ARViewModel,
     onClose: () -> Unit,
     onItemSelected: (MenuItem) -> Unit
 ) {
     var activeTab by remember { mutableStateOf("MENU") }
+    val context = LocalContext.current
+    
+    LaunchedEffect(activeTab) {
+        if (activeTab == "CART") {
+            viewModel.fetchOrders(context)
+        } else if (activeTab == "FAVORITES") {
+            viewModel.fetchFavorites(context)
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -762,8 +1091,8 @@ private fun MenuOverlay(
 
                     Text(
                         text = when (activeTab) {
-                            "ORDERS" -> "My Orders"
-                            "CART" -> "My Cart"
+                            "CART" -> "Cart & Orders"
+                            "FAVORITES" -> "My Favorites"
                             else -> "Menu"
                         },
                         style = MaterialTheme.typography.headlineSmall,
@@ -773,34 +1102,39 @@ private fun MenuOverlay(
 
                     Box {
                         IconButton(onClick = { activeTab = "CART" }) {
-                            Icon(Icons.Outlined.ShoppingCart, null, tint = Color.Black)
-                        }
-                        Surface(
-                            modifier = Modifier.size(18.dp).align(Alignment.TopEnd),
-                            color = Color(0xFF6B6B00),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                "4",
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 1.dp)
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_cart_premium),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = if (activeTab == "CART") DINEAR_ORANGE else Color.Black
                             )
+                        }
+                        
+                        val cartCount = viewModel.cartItemCount
+                        if (cartCount > 0) {
+                            Surface(
+                                modifier = Modifier.size(18.dp).align(Alignment.TopEnd),
+                                color = Color.Red,
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = cartCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 1.dp)
+                                )
+                            }
                         }
                     }
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
                     when (activeTab) {
-                        "MENU" -> MenuTabContent(menuList, downloadStates, onItemSelected)
-                        "ORDERS" -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Order History", color = Color.Gray)
-                        }
-                        "CART" -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Cart Items", color = Color.Gray)
-                        }
+                        "MENU" -> MenuTabContent(menuList, restaurantId, downloadStates, onItemSelected)
+                        "FAVORITES" -> FavoritesTabContent(viewModel.favoriteFoods, downloadStates, onItemSelected)
+                        "CART" -> CartOrdersTabContent(viewModel, viewModel.orders, onClose)
                     }
                 }
 
@@ -827,10 +1161,10 @@ private fun MenuOverlay(
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { activeTab = "ORDERS" }
+                            modifier = Modifier.clickable { activeTab = "FAVORITES" }
                         ) {
-                            Icon(Icons.Default.ReceiptLong, null, tint = if (activeTab == "ORDERS") DINEAR_ORANGE else Color.Gray)
-                            Text("ORDERS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "ORDERS") DINEAR_ORANGE else Color.Gray)
+                            Icon(Icons.Default.Star, null, tint = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
+                            Text("FAVORITE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
                         }
                     }
                 }
@@ -842,18 +1176,51 @@ private fun MenuOverlay(
 @Composable
 private fun MenuTabContent(
     menuList: List<MenuItem>,
+    restaurantId: Int,
     downloadStates: Map<String, DownloadState>,
     onItemSelected: (MenuItem) -> Unit
 ) {
     val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("All") }
+    
+    // Pagination state
+    var visibleItemCount by remember { mutableIntStateOf(7) }
+
+    val categories = remember(menuList.size) {
+        val cats = mutableListOf("All")
+        val uniqueCats = menuList.mapNotNull { it.category }.distinct().sorted()
+        cats.addAll(uniqueCats)
+        cats
+    }
+
+    val filteredList = remember(menuList.size, searchQuery, selectedCategory) {
+        menuList.filter { item ->
+            val matchesSearch = item.name.contains(searchQuery, ignoreCase = true) ||
+                    (item.getDescription() != null && item.getDescription().contains(searchQuery, ignoreCase = true))
+            val matchesCategory = selectedCategory == "All" || item.category == selectedCategory
+            matchesSearch && matchesCategory
+        }
+    }
+
+    val pagedList = filteredList.take(visibleItemCount)
+
     Column {
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             placeholder = { Text("Search culinary delights...") },
             leadingIcon = { Icon(Icons.Default.Search, null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(Icons.Default.Clear, null)
+                    }
+                }
+            },
             shape = RoundedCornerShape(16.dp),
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = Color(0xFFF5F5F5),
                 focusedContainerColor = Color(0xFFF5F5F5),
@@ -864,8 +1231,6 @@ private fun MenuTabContent(
 
         Spacer(Modifier.height(16.dp))
 
-        val categories = listOf("Popular", "Italian", "Burgers", "Desserts", "Drinks")
-        var selectedCategory by remember { mutableStateOf("Popular") }
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 24.dp),
@@ -892,16 +1257,40 @@ private fun MenuTabContent(
 
         Spacer(Modifier.height(16.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            items(menuList, key = { it.name }) { item ->
-                VerticalMenuItemRow(
-                    item = item,
-                    downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
-                    onClick = { onItemSelected(item) }
-                )
+        if (filteredList.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No items match your search", color = Color.Gray)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                items(pagedList, key = { it.id }) { item ->
+                    VerticalMenuItemRow(
+                        item = item,
+                        restaurantId = restaurantId,
+                        downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
+                        onClick = { onItemSelected(item) }
+                    )
+                }
+                
+                if (visibleItemCount < filteredList.size) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Button(
+                                onClick = { visibleItemCount += 7 },
+                                colors = ButtonDefaults.buttonColors(containerColor = DINEAR_ORANGE),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text("Load More (+7)", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -910,12 +1299,14 @@ private fun MenuTabContent(
 @Composable
 fun VerticalMenuItemRow(
     item: MenuItem,
+    restaurantId: Int,
     downloadState: DownloadState,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -954,15 +1345,159 @@ fun VerticalMenuItemRow(
                     lineHeight = 16.sp
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(text = "₹${item.price}.00", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFB8860B))
+                val priceText = if (item.discountPrice != null && item.discountPrice > 0) {
+                    "${item.currency} ${item.discountPrice.toInt()}"
+                } else {
+                    "${item.currency} ${item.price.toInt()}"
+                }
+                Text(text = priceText, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFB8860B))
             }
 
             IconButton(
-                onClick = onClick,
+                onClick = {
+                    val finalResId = if (restaurantId != -1) restaurantId else (item.restaurantId ?: -1)
+                    if (finalResId != -1) {
+                        CartManager.getInstance().addItem(item, finalResId)
+                        Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Error: Restaurant ID unknown", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 modifier = Modifier.size(40.dp).background(Color(0xFFD4AF37), CircleShape)
             ) {
                 Icon(Icons.Default.Add, null, tint = Color.White)
             }
+        }
+    }
+}
+
+@Composable
+private fun FavoritesTabContent(
+    favoriteList: List<MenuItem>,
+    downloadStates: Map<String, DownloadState>,
+    onItemSelected: (MenuItem) -> Unit
+) {
+    val context = LocalContext.current
+    if (favoriteList.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No favorite foods yet", color = Color.Gray)
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 24.dp)
+        ) {
+            items(favoriteList, key = { it.id }) { item ->
+                VerticalMenuItemRow(
+                    item = item,
+                    restaurantId = item.restaurantId ?: -1,
+                    downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
+                    onClick = { onItemSelected(item) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartOrdersTabContent(
+    viewModel: ARViewModel,
+    orders: List<Order>,
+    onClose: () -> Unit
+) {
+    val context = LocalContext.current
+    val cartItems = viewModel.cartItems
+
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        if (cartItems.isNotEmpty()) {
+            item {
+                Text(
+                    "Active Cart",
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            items(cartItems) { item ->
+                VerticalCartItemRow(item) {
+                    CartManager.getInstance().removeItem(item.menuItem.id)
+                }
+            }
+            item {
+                Button(
+                    onClick = {
+                        val intent = android.content.Intent(context, CartActivity::class.java)
+                        context.startActivity(intent)
+                        onClose()
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DINEAR_ORANGE)
+                ) {
+                    Text("Checkout (Rs. ${CartManager.getInstance().totalPrice.toInt()})", color = Color.White)
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
+            }
+        }
+
+        item {
+            Text(
+                "Order History",
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (orders.isEmpty()) {
+            item {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text("No past orders", color = Color.Gray)
+                }
+            }
+        } else {
+            items(orders) { order ->
+                OrderRow(order)
+            }
+        }
+        
+        item { Spacer(Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+private fun VerticalCartItemRow(item: CartItem, onRemove: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(item.menuItem.name, fontWeight = FontWeight.Bold)
+                Text("Qty: ${item.quantity}", fontSize = 12.sp, color = Color.Gray)
+            }
+            Text("Rs. ${(item.menuItem.price * item.quantity).toInt()}", fontWeight = FontWeight.Bold)
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Default.Delete, null, tint = Color.Red)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrderRow(order: Order) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Order #${order.id}", fontWeight = FontWeight.Bold)
+                Text(order.status, color = DINEAR_ORANGE, fontWeight = FontWeight.Bold)
+            }
+            Text("Date: ${order.createdAt.split("T")[0]}", fontSize = 12.sp, color = Color.Gray)
+            Text("Total: Rs. ${order.totalPrice.toInt()}", fontWeight = FontWeight.Bold)
         }
     }
 }

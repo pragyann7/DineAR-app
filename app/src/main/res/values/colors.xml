@@ -5,5 +5,17 @@
     <color name="orange_primary">#F45905</color>
     <color name="gray_light">#F5F5F5</color>
     <color name="gray_text">#757575</color>
+    <color name="gray_dark">#424242</color>
     <color name="divider">#EEEEEE</color>
+    <color name="red_600">#E53935</color>
+    <color name="app_bg">#F4F4F4</color>
+    <color name="orange_fav_bg">#FFF3E0</color>
+    <color name="orange_border">#FFB74D</color>
+    <color name="michelin_red">#A63A17</color>
+    <color name="status_bar">#FFD6AF</color>
+    <color name="auth_primary">#F45905</color>A03C08
+    <color name="auth_bg">#FDF9F6</color>
+    <color name="auth_input_bg">#F2F2F2</color>
+    <color name="auth_text_header">#1A1A1A</color>
+    <color name="auth_text_body">#666666</color>
 </resources>

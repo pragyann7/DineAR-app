@@ -2,15 +2,21 @@ package com.ps.dinear.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
+
 import com.ps.dinear.MainActivity;
 import com.ps.dinear.R;
+import com.ps.dinear.RetrofitClient;
+import com.ps.dinear.ServerConfigActivity;
 import com.ps.dinear.SharedPrefManager;
 
 public class AuthActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
 
         // Check if user is already authenticated or guest
@@ -20,7 +26,11 @@ public class AuthActivity extends AppCompatActivity {
             return;
         }
 
-        setContentView(R.layout.activity_auth);
+        super.setContentView(R.layout.activity_auth);
+
+        findViewById(R.id.btnServerSettings).setOnClickListener(v -> {
+            startActivity(new Intent(this, ServerConfigActivity.class));
+        });
 
         findViewById(R.id.btnSignup).setOnClickListener(v -> {
             startActivity(new Intent(this, SignupActivity.class));

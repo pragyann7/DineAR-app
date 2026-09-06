@@ -1,11 +1,119 @@
 package com.ps.dinear;
 
+import com.ps.dinear.auth.ForgotPasswordRequest;
+import com.ps.dinear.auth.LoginRequest;
+import com.ps.dinear.auth.RefreshRequest;
+import com.ps.dinear.auth.RegistrationRequest;
+import com.ps.dinear.auth.RegistrationResponse;
+import com.ps.dinear.auth.ResendOtpRequest;
+import com.ps.dinear.auth.ResetPasswordRequest;
+import com.ps.dinear.auth.TokenResponse;
+import com.ps.dinear.auth.VerifyOtpRequest;
+import com.ps.dinear.data.model.FavoriteIdsResponse;
+import com.ps.dinear.data.model.FavoriteRequest;
+import com.ps.dinear.data.model.Order;
+import com.ps.dinear.data.model.OrderRequest;
+import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.data.model.Review;
+import com.ps.dinear.data.model.ReviewListResponse;
+import com.ps.dinear.data.model.RestaurantMenuResponse;
+import com.ps.dinear.data.model.SearchResponse;
+
 import java.util.List;
 import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface ApiService {
 
-    @GET("/menu")
-    Call<List<MenuItem>> getMenu();
+    @GET("api/restaurants/")
+    Call<List<Restaurant>> getRestaurants(
+        @Query("city") String city,
+        @Query("category") String category
+    );
+
+    @GET("api/restaurants/featured/")
+    Call<List<Restaurant>> getFeaturedRestaurants();
+
+    @GET("api/restaurants/categories/")
+    Call<List<Restaurant.Category>> getCategories();
+
+    @GET("api/restaurants/{slug}/")
+    Call<Restaurant> getRestaurantDetails(@Path("slug") String slug);
+
+    @GET("api/menu/restaurant/{slug}/")
+    Call<RestaurantMenuResponse> getMenu(@Path("slug") String slug);
+
+    @GET("api/search/")
+    Call<SearchResponse> search(
+        @Query("q") String query,
+        @Query("city") String city
+    );
+
+    @GET("api/favorites/ids/")
+    Call<FavoriteIdsResponse> getFavoriteIds(@Header("Authorization") String token);
+
+    @GET("api/favorites/details/")
+    Call<SearchResponse> getFavoriteDetails(@Header("Authorization") String token);
+
+    @POST("api/favorites/")
+    Call<Void> addFavorite(@Header("Authorization") String token, @Body FavoriteRequest request);
+
+    @DELETE("api/favorites/{type}/{id}/")
+    Call<Void> removeFavorite(
+        @Header("Authorization") String token,
+        @Path("type") String type,
+        @Path("id") int id
+    );
+
+    @POST("api/auth/register/")
+    Call<RegistrationResponse> register(@Body RegistrationRequest request);
+
+    @POST("api/auth/verify-email-otp/")
+    Call<Void> verifyEmailOtp(@Body VerifyOtpRequest request);
+
+    @POST("api/auth/resend-email-otp/")
+    Call<Void> resendEmailOtp(@Body ResendOtpRequest request);
+
+    @POST("api/auth/login/")
+    Call<TokenResponse> login(@Body LoginRequest request);
+
+    @POST("api/auth/token/refresh/")
+    Call<TokenResponse> refreshToken(@Body RefreshRequest request);
+
+    @POST("api/auth/forgot-password/")
+    Call<Void> forgotPassword(@Body ForgotPasswordRequest request);
+
+    @POST("api/auth/reset-password/")
+    Call<Void> resetPassword(@Body ResetPasswordRequest request);
+
+    @POST("api/orders/")
+    Call<Order> placeOrder(@Header("Authorization") String token, @Body OrderRequest request);
+
+    @GET("api/orders/")
+    Call<List<Order>> getOrders(@Header("Authorization") String token);
+
+    @GET("api/orders/{id}/")
+    Call<Order> getOrderDetails(@Header("Authorization") String token, @Path("id") int id);
+
+    @GET("api/reviews/reviews/")
+    Call<ReviewListResponse> getReviews(
+        @Query("restaurant_id") Integer restaurantId,
+        @Query("food_item_id") Integer foodItemId,
+        @Query("include_summary") boolean includeSummary,
+        @Query("page") Integer page,
+        @Query("ordering") String ordering,
+        @Query("filter") String filter
+    );
+
+    @POST("api/reviews/reviews/")
+    Call<Review> postReview(
+        @Header("Authorization") String token,
+        @Body Review review
+    );
 }

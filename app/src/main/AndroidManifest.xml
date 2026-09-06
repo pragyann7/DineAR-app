@@ -5,20 +5,21 @@ xmlns:tools="http://schemas.android.com/tools">
 <!-- Camera permission -->
 <uses-permission android:name="android.permission.CAMERA" />
 <uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
 <uses-feature
     android:name="android.hardware.camera"
     android:required="false" />
 <uses-feature
     android:name="android.hardware.camera.ar"
-    android:required="true" />
+    android:required="false" />
 
 <application
+    android:name=".DineARApplication"
     android:usesCleartextTraffic="true"
-    android:allowBackup="true"
-    android:dataExtractionRules="@xml/data_extraction_rules"
-    android:fullBackupContent="@xml/backup_rules"
-    android:icon="@mipmap/ic_launcher"
+    android:allowBackup="false"
+    android:icon="@drawable/dinear"
     android:label="@string/app_name"
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
@@ -27,15 +28,21 @@ xmlns:tools="http://schemas.android.com/tools">
     <!-- ARCore requirement -->
     <meta-data
         android:name="com.google.ar.core"
-        android:value="required"
+        android:value="optional"
         tools:replace="android:value" />
 
     <activity android:name=".ServerConfigActivity" />
     <activity android:name=".location.LocationActivity" />
+    <activity android:name=".ProfileActivity" />
+    <activity android:name=".FavoritesActivity" />
     <activity android:name=".menu.MenuActivity" />
     <activity android:name=".menu.FoodDetailsActivity" />
     <activity android:name=".RestaurantDetailsActivity" />
+    <activity android:name=".CategoryActivity" />
+    <activity android:name=".CartActivity" />
+    <activity android:name=".OrdersActivity" />
     <activity android:name=".auth.AuthActivity"
+        android:theme="@style/Theme.App.Starting"
         android:exported="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -44,6 +51,9 @@ xmlns:tools="http://schemas.android.com/tools">
     </activity>
     <activity android:name=".auth.LoginActivity" />
     <activity android:name=".auth.SignupActivity" />
+    <activity android:name=".auth.VerifyOtpActivity" />
+    <activity android:name=".auth.ForgotPasswordActivity" />
+    <activity android:name=".auth.ResetPasswordActivity" />
 
     <activity
         android:name=".MainActivity"
@@ -51,7 +61,10 @@ xmlns:tools="http://schemas.android.com/tools">
 
     </activity>
 
+    <activity android:name=".WriteReviewActivity" />
+    <activity android:name=".ReviewsListingActivity" />
     <activity android:name=".ARActivity" />
+    <activity android:name=".DiscoverActivity" />
 
 </application>
 

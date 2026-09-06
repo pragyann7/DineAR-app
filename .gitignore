@@ -1,15 +1,31 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
-/build
-/captures
+build/
+captures/
 .externalNativeBuild
 .cxx
-local.properties
+.artifacts
+.kotlin
+
+# IDE - Android Studio / IntelliJ
+.idea/workspace.xml
+.idea/libraries
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/planningMode.xml
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/markdown.xml
+.idea/caches/
+.idea/shelf/
+.idea/.DS_Store
+
+# Android-specific
+*.jks
+*.keystore
+
+# Generated files
+google-services.json

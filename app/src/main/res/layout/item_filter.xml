@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardFilter"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="12.dp"
-    app:cardCornerRadius="20.dp"
-    app:cardElevation="0dp">
+    android:layout_marginEnd="8.dp"
+    android:layout_marginVertical="4.dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/divider">
 
     <TextView
         android:id="@+id/tvFilterName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/gray_light"
-        android:paddingHorizontal="20.dp"
-        android:paddingVertical="10.dp"
+        android:gravity="center"
+        android:minWidth="70dp"
+        android:paddingHorizontal="16.dp"
+        android:paddingVertical="8.dp"
         android:textColor="@color/black"
-        android:textSize="14sp" />
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>
