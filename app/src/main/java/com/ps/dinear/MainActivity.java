@@ -118,9 +118,30 @@ public class MainActivity extends AppCompatActivity {
         // Dynamically adjust status bar spacer height
         View statusBarSpacer = findViewById(R.id.statusBarSpacer);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
-            androidx.core.graphics.Insets bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
-            v.getLayoutParams().height = bars.top;
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            v.getLayoutParams().height = statusBars.top;
             v.requestLayout();
+            
+            // Also handle bottom navigation insets
+            View bottomNav = findViewById(R.id.bottomNav);
+            View arScan = findViewById(R.id.btnARScan);
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            
+            if (bottomNav != null) {
+                float density = getResources().getDisplayMetrics().density;
+                bottomNav.getLayoutParams().height = (int) (70 * density) + navBars.bottom;
+                bottomNav.setPadding(bottomNav.getPaddingLeft(), (int) (4 * density), 
+                                  bottomNav.getPaddingRight(), (int) (8 * density) + navBars.bottom);
+                bottomNav.requestLayout();
+            }
+            
+            if (arScan != null) {
+                android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) arScan.getLayoutParams();
+                float density = getResources().getDisplayMetrics().density;
+                mlp.bottomMargin = (int) (35 * density) + navBars.bottom;
+                arScan.setLayoutParams(mlp);
+            }
+            
             return insets;
         });
 

@@ -49,6 +49,16 @@ public class ProfileActivity extends AppCompatActivity {
         tvEmail.setText(email);
 
         findViewById(R.id.btnBackProfile).setOnClickListener(v -> finish());
+
+        // Handle navigation bar insets for scrollable content
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.llProfileHeader).getParent().getParent() instanceof androidx.core.widget.NestedScrollView 
+            ? (View) findViewById(R.id.llProfileHeader).getParent().getParent() 
+            : findViewById(android.R.id.content), (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), (int) (40 * density) + navBars.bottom);
+            return insets;
+        });
         
         // Avatar Change Trigger
         View.OnClickListener avatarTrigger = v -> showChangeAvatarSheet(ivProfile);

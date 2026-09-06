@@ -64,6 +64,14 @@ public class FavoritesActivity extends AppCompatActivity {
 
         rvFavItems.setLayoutManager(new LinearLayoutManager(this));
 
+        // Handle navigation bar insets for list
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rvFavItems, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), (int) (40 * density) + navBars.bottom);
+            return insets;
+        });
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         requestLocationPermission();
 

@@ -23,6 +23,13 @@ public class SignupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         super.setContentView(R.layout.activity_signup);
 
+        // Handle navigation bar insets
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), navBars.bottom);
+            return insets;
+        });
+
         EditText etFirstName = findViewById(R.id.etSignupFirstName);
         EditText etLastName = findViewById(R.id.etSignupLastName);
         EditText etEmail = findViewById(R.id.etSignupEmail);

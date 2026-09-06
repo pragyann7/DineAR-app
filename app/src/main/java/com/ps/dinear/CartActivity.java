@@ -45,6 +45,15 @@ public class CartActivity extends AppCompatActivity {
         findViewById(R.id.btnBackCart).setOnClickListener(v -> finish());
         findViewById(R.id.btnCheckout).setOnClickListener(v -> checkout());
 
+        // Handle navigation bar insets for checkout card
+        View checkoutCard = findViewById(R.id.cvCheckout);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(checkoutCard, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), (int) (16 * density), v.getPaddingRight(), (int) (32 * density) + navBars.bottom);
+            return insets;
+        });
+
         updateCartUI();
         loadOrderHistory();
     }

@@ -28,6 +28,13 @@ public class AuthActivity extends AppCompatActivity {
 
         super.setContentView(R.layout.activity_auth);
 
+        // Handle navigation bar insets
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), navBars.bottom);
+            return insets;
+        });
+
         findViewById(R.id.btnServerSettings).setOnClickListener(v -> {
             startActivity(new Intent(this, ServerConfigActivity.class));
         });

@@ -76,6 +76,23 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
 
         fabToggleList.setOnClickListener(v -> toggleRestaurantList());
 
+        // Handle navigation bar insets for restaurant list and FAB
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rvRestaurants, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            
+            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            float density = getResources().getDisplayMetrics().density;
+            mlp.bottomMargin = (int) (16 * density) + navBars.bottom;
+            v.setLayoutParams(mlp);
+            
+            // Adjust FAB margin too
+            android.view.ViewGroup.MarginLayoutParams fabMlp = (android.view.ViewGroup.MarginLayoutParams) fabToggleList.getLayoutParams();
+            fabMlp.bottomMargin = (int) (20 * density) + navBars.bottom;
+            fabToggleList.setLayoutParams(fabMlp);
+            
+            return insets;
+        });
+
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
