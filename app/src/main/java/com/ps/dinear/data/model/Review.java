@@ -21,6 +21,15 @@ public class Review {
     @SerializedName("ar_match_percent")
     private Integer arMatchPercent;
     
+    @SerializedName("helpful_count")
+    private int helpfulCount;
+    
+    @SerializedName("is_helpful")
+    private boolean isHelpful;
+    
+    @SerializedName("is_own_review")
+    private boolean isOwnReview;
+    
     @SerializedName("is_verified_purchase")
     private boolean isVerified;
     
@@ -75,6 +84,11 @@ public class Review {
     public float getRating() { return rating; }
     public String getContent() { return content; }
     public Integer getArMatchPercent() { return arMatchPercent; }
+    public int getHelpfulCount() { return helpfulCount; }
+    public boolean isHelpful() { return isHelpful; }
+    public boolean isOwnReview() { return isOwnReview; }
+    public void setHelpfulCount(int count) { this.helpfulCount = count; }
+    public void setHelpful(boolean helpful) { this.isHelpful = helpful; }
     public boolean isVerified() { return isVerified; }
     public List<ReviewImage> getImages() { return images; }
     public RestaurantResponse getResponse() { return response; }

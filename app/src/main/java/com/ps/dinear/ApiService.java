@@ -103,6 +103,7 @@ public interface ApiService {
 
     @GET("api/reviews/reviews/")
     Call<ReviewListResponse> getReviews(
+        @Header("Authorization") String token,
         @Query("restaurant_id") Integer restaurantId,
         @Query("food_item_id") Integer foodItemId,
         @Query("include_summary") boolean includeSummary,
@@ -115,5 +116,11 @@ public interface ApiService {
     Call<Review> postReview(
         @Header("Authorization") String token,
         @Body Review review
+    );
+
+    @POST("api/reviews/reviews/{id}/helpful/")
+    Call<java.util.Map<String, Object>> toggleHelpful(
+        @Header("Authorization") String token,
+        @Path("id") int reviewId
     );
 }

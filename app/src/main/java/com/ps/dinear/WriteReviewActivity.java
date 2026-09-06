@@ -192,7 +192,18 @@ public class WriteReviewActivity extends AppCompatActivity {
                     Toast.makeText(WriteReviewActivity.this, "Review submitted successfully!", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Toast.makeText(WriteReviewActivity.this, "Failed to submit review", Toast.LENGTH_SHORT).show();
+                    String errorMsg = "Failed to submit review";
+                    try (okhttp3.ResponseBody errorBody = response.errorBody()) {
+                        if (errorBody != null) {
+                            String errorJson = errorBody.string();
+                            if (errorJson.contains("detail")) {
+                                errorMsg = errorJson.split("\"detail\":\"")[1].split("\"")[0];
+                            } else if (errorJson.contains("[\"")) {
+                                errorMsg = errorJson.split("\\[\"")[1].split("\"]")[0];
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                    Toast.makeText(WriteReviewActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 }
             }
 
