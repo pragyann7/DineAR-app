@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.maplibre)
     implementation(libs.play.services.location)
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))

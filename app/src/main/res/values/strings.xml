@@ -4,4 +4,6 @@
     <string name="discover">Discover</string>
     <string name="own_a_restaurant">Own a Restaurant?</string>
     <string name="register_info">Want to list your restaurant? Contact our administrative head for registration and AR setup.</string>
+    <string name="hello_placeholder">HELLO, %1$s!</string>
+    <string name="special_offer_placeholder">Special Offer:\n%1$s</string>
 </resources>
