@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -60,6 +63,25 @@ import io.github.sceneview.rememberMainLightNode
 import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberOnGestureListener
+import com.ps.dinear.utils.ArCoreHelper
+import io.github.sceneview.RenderQuality
+import io.github.sceneview.SceneView
+import io.github.sceneview.SurfaceType
+import io.github.sceneview.applyRenderQuality
+import io.github.sceneview.ar.rememberAREnvironment
+import io.github.sceneview.environment.Environment
+import io.github.sceneview.node.CameraNode
+import io.github.sceneview.rememberARView
+import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.rememberEnvironment
+import io.github.sceneview.rememberEnvironmentLoader
+import io.github.sceneview.rememberScene
+import io.github.sceneview.rememberView
+import com.google.android.filament.View as FilamentView
+import com.google.android.filament.Skybox
+import com.google.android.filament.utils.Manipulator
+import io.github.sceneview.gesture.CameraGestureDetector
+import io.github.sceneview.gesture.FovZoomCameraManipulator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -72,6 +94,8 @@ import java.util.UUID
 private const val MAX_PLACED_OBJECTS = 8
 private const val MODEL_SCALE_INITIAL = 1.0f
 private val DINEAR_ORANGE = Color(0xFFF45905)
+
+enum class ViewMode { PLANE, MARKER, STUDIO }
 
 data class PlacedDish(
     val id: String = UUID.randomUUID().toString(),
@@ -234,6 +258,16 @@ class ARActivity : ComponentActivity() {
     private val viewModel: ARViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         super.onCreate(savedInstanceState)
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
@@ -261,13 +295,18 @@ class ARActivity : ComponentActivity() {
             viewModel.fetchGlobalFeaturedFoods(this, city)
         }
 
+        val isArSupported = ArCoreHelper.isArCoreSupported(this)
+        val initialViewMode = if (isArSupported) ViewMode.PLANE else ViewMode.STUDIO
+
         setContent {
             ARScreen(
                 initialMenuItem = selectedItem,
                 menuList = viewModel.menuItems,
                 restaurantId = restaurantId,
                 activity = this,
-                viewModel = viewModel
+                viewModel = viewModel,
+                isArSupported = isArSupported,
+                initialViewMode = initialViewMode
             )
         }
     }
@@ -294,16 +333,17 @@ private fun ARScreen(
     menuList: List<MenuItem>,
     restaurantId: Int,
     activity: ARActivity,
-    viewModel: ARViewModel
+    viewModel: ARViewModel,
+    isArSupported: Boolean,
+    initialViewMode: ViewMode
 ) {
     val context = LocalContext.current
     val engine = rememberEngine()
     val modelLoader = rememberModelLoader(engine)
     val materialLoader = rememberMaterialLoader(engine)
 
+    var viewMode by remember { mutableStateOf(initialViewMode) }
     var session by remember { mutableStateOf<Session?>(null) }
-
-    var isMarkerMode by remember { mutableStateOf(false) }
     var markerAnchor by remember { mutableStateOf<Anchor?>(null) }
     var markerDatabase by remember { mutableStateOf<AugmentedImageDatabase?>(null) }
 
@@ -313,6 +353,10 @@ private fun ARScreen(
 
     var currentMenuItem by remember { mutableStateOf(initialMenuItem) }
     var isMenuOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentMenuItem) {
+        transform.reset()
+    }
 
     fun downloadModel(item: MenuItem) {
         val rawUrl = item.modelUrl ?: ""
@@ -400,12 +444,12 @@ private fun ARScreen(
         }
     }
 
-    LaunchedEffect(isMarkerMode, session, markerDatabase) {
+    LaunchedEffect(viewMode, session, markerDatabase) {
         session?.let { s ->
             s.configure { config ->
                 config.lightEstimationMode = Config.LightEstimationMode.DISABLED
                 config.focusMode = Config.FocusMode.AUTO
-                if (isMarkerMode) {
+                if (viewMode == ViewMode.MARKER) {
                     markerDatabase?.let { config.augmentedImageDatabase = it }
                     config.planeFindingMode = Config.PlaneFindingMode.DISABLED
                 } else {
@@ -415,6 +459,8 @@ private fun ARScreen(
             }
         }
     }
+
+
 
     fun selectNode(node: ModelNode?, dishId: String?) {
         transform.selectedModelNode = node
@@ -437,64 +483,87 @@ private fun ARScreen(
         placedDishes.forEach { it.anchor.detach() }
         placedDishes.clear()
         clearSelection()
+        markerAnchor?.detach()
+        markerAnchor = null
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ArSceneContent(
-            engine = engine,
-            modelLoader = modelLoader,
-            materialLoader = materialLoader,
-            session = session,
-            onSessionCreated = { session = it },
-            isMarkerMode = isMarkerMode,
-            isMenuOpen = isMenuOpen,
-            markerAnchor = markerAnchor,
-            onMarkerAnchorFound = { markerAnchor = it },
-            placedDishes = placedDishes,
-            transform = transform,
-            selectedDishId = selectedDishId,
-            currentMenuItem = currentMenuItem,
-            loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
-            onNodeTapped = { node, dishId -> selectNode(node, dishId) },
-            onEmptyTap = { hit ->
-                if (isMenuOpen) {
-                    isMenuOpen = false
-                } else if (transform.selectedNodeId != null) {
-                    clearSelection()
-                } else if (!isMarkerMode) {
-                    val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
-                    if (model != null) {
-                        if (placedDishes.size < MAX_PLACED_OBJECTS) {
-                            val instance = modelLoader.assetLoader.createInstance(model)
-                            if (instance != null) {
-                                placedDishes.add(
-                                    PlacedDish(
-                                        anchor = hit.createAnchor(),
-                                        menuItem = currentMenuItem,
-                                        model = model,
-                                        modelInstance = instance
-                                    )
-                                )
+        key(viewMode) {
+            if (viewMode != ViewMode.STUDIO) {
+                ArSceneContent(
+                    engine = engine,
+                    modelLoader = modelLoader,
+                    materialLoader = materialLoader,
+                    session = session,
+                    onSessionCreated = { session = it },
+                    isMarkerMode = viewMode == ViewMode.MARKER,
+                    isMenuOpen = isMenuOpen,
+                    markerAnchor = markerAnchor,
+                    onMarkerAnchorFound = { markerAnchor = it },
+                    placedDishes = placedDishes,
+                    transform = transform,
+                    selectedDishId = selectedDishId,
+                    currentMenuItem = currentMenuItem,
+                    loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                    onNodeTapped = { node, dishId -> selectNode(node, dishId) },
+                    onEmptyTap = { hit ->
+                        if (isMenuOpen) {
+                            isMenuOpen = false
+                        } else if (transform.selectedNodeId != null) {
+                            clearSelection()
+                        } else if (viewMode == ViewMode.PLANE) {
+                            val model = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)]
+                            if (model != null) {
+                                if (placedDishes.size < MAX_PLACED_OBJECTS) {
+                                    val instance = modelLoader.assetLoader.createInstance(model)
+                                    if (instance != null) {
+                                        placedDishes.add(
+                                            PlacedDish(
+                                                anchor = hit.createAnchor(),
+                                                menuItem = currentMenuItem,
+                                                model = model,
+                                                modelInstance = instance
+                                            )
+                                        )
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
                             }
-                        } else {
-                            Toast.makeText(context, "Max objects reached", Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(context, "Model not ready yet", Toast.LENGTH_SHORT).show()
+                    },
+                    onClearSelection = {
+                        if (isMenuOpen) {
+                            isMenuOpen = false
+                        } else {
+                            clearSelection()
+                        }
                     }
-                }
-            },
-            onClearSelection = {
-                if (isMenuOpen) {
-                    isMenuOpen = false
-                } else {
-                    clearSelection()
+                )
+            } else {
+                key(currentMenuItem.id) {
+                    NonArSceneContent(
+                        engine = engine,
+                        modelLoader = modelLoader,
+                        transform = transform,
+                        currentMenuItem = currentMenuItem,
+                        loadedModel = viewModel.loadedModels[RetrofitClient.getFullUrl(context, currentMenuItem.modelUrl)],
+                        onClearSelection = {
+                            if (isMenuOpen) {
+                                isMenuOpen = false
+                            } else {
+                                clearSelection()
+                            }
+                        }
+                    )
                 }
             }
-        )
+        }
 
-        if (!isMenuOpen && transform.selectedNodeId == null) {
-            val guideText = if (isMarkerMode) {
+        if (viewMode != ViewMode.STUDIO && !isMenuOpen && transform.selectedNodeId == null) {
+            val guideText = if (viewMode == ViewMode.MARKER) {
                 if (markerAnchor == null) "Scan the AR marker to view dish" else ""
             } else {
                 if (placedDishes.isEmpty()) "Move device slowly and tap to place dish" else ""
@@ -523,107 +592,141 @@ private fun ARScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .statusBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Clear Table Button (Left Side)
-            if (placedDishes.isNotEmpty()) {
+        if (isArSupported) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .statusBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Clear Table Button (Left Side)
+                if (viewMode == ViewMode.PLANE && placedDishes.isNotEmpty()) {
+                    Surface(
+                        onClick = { clearAllDishes() },
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.9f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Box(modifier = Modifier.padding(10.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "Clear Table",
+                                tint = Color.Red,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Spacer(modifier = Modifier.size(44.dp))
+                }
+
                 Surface(
-                    onClick = { clearAllDishes() },
-                    shape = CircleShape,
+                    modifier = Modifier.wrapContentSize(),
+                    shape = RoundedCornerShape(24.dp),
                     color = Color.White.copy(alpha = 0.9f),
                     shadowElevation = 4.dp
                 ) {
-                    Box(modifier = Modifier.padding(10.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteSweep,
-                            contentDescription = "Clear Table",
-                            tint = Color.Red,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            } else {
-                Spacer(modifier = Modifier.size(44.dp))
-            }
-
-            Surface(
-                modifier = Modifier.wrapContentSize(),
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White.copy(alpha = 0.9f),
-                shadowElevation = 4.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (!isMarkerMode) DINEAR_ORANGE else Color.Transparent)
-                            .clickable {
-                                if (isMarkerMode) {
-                                    isMarkerMode = false
-                                    clearAllDishes()
-                                    transform.reset()
-                                    markerAnchor?.detach()
-                                    markerAnchor = null
-                                }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icon_3d),
-                            contentDescription = null,
-                            tint = if (!isMarkerMode) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Plane",
-                            color = if (!isMarkerMode) Color.White else Color.Gray,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isMarkerMode) DINEAR_ORANGE else Color.Transparent)
-                            .clickable {
-                                if (!isMarkerMode) {
-                                    isMarkerMode = true
-                                    clearAllDishes()
-                                    transform.reset()
-                                    markerAnchor = null
+                        // Plane Mode
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (viewMode == ViewMode.PLANE) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (viewMode != ViewMode.PLANE) {
+                                        clearAllDishes()
+                                        transform.reset()
+                                        viewMode = ViewMode.PLANE
+                                    }
                                 }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icon_qr),
-                            contentDescription = null,
-                            tint = if (isMarkerMode) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "Marker",
-                            color = if (isMarkerMode) Color.White else Color.Gray,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_3d),
+                                contentDescription = null,
+                                tint = if (viewMode == ViewMode.PLANE) Color.White else Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                "Plane",
+                                color = if (viewMode == ViewMode.PLANE) Color.White else Color.Gray,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Marker Mode
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (viewMode == ViewMode.MARKER) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (viewMode != ViewMode.MARKER) {
+                                        clearAllDishes()
+                                        transform.reset()
+                                        viewMode = ViewMode.MARKER
+                                    }
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_qr),
+                                contentDescription = null,
+                                tint = if (viewMode == ViewMode.MARKER) Color.White else Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                "Marker",
+                                color = if (viewMode == ViewMode.MARKER) Color.White else Color.Gray,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Studio Mode
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (viewMode == ViewMode.STUDIO) DINEAR_ORANGE else Color.Transparent)
+                                .clickable {
+                                    if (viewMode != ViewMode.STUDIO) {
+                                        clearAllDishes()
+                                        transform.reset()
+                                        session = null // Explicitly null out session when leaving AR
+                                        viewMode = ViewMode.STUDIO
+                                    }
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Camera,
+                                contentDescription = null,
+                                tint = if (viewMode == ViewMode.STUDIO) Color.White else Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                "Studio",
+                                color = if (viewMode == ViewMode.STUDIO) Color.White else Color.Gray,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
+        } else {
+             Spacer(modifier = Modifier.statusBarsPadding())
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(bottom = 32.dp), contentAlignment = Alignment.BottomCenter) {
@@ -648,14 +751,14 @@ private fun ARScreen(
                         // Keeps zero-latency feedback while a node reference is live (dragging).
                         transform.selectedModelNode?.rotation = Rotation(0f, newRotation, 0f)
                         // Writes to the State-backed value so it stays correct after deselecting too.
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.rotationY?.value = newRotation
                         }
                     },
                     onScaleChange = { newScale ->
                         transform.currentScale = newScale
                         transform.selectedModelNode?.scale = Scale(newScale, newScale, newScale)
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.scale?.value = newScale
                         }
                     },
@@ -667,14 +770,14 @@ private fun ARScreen(
                             it.rotation = Rotation(0f, 0f, 0f)
                             it.scale = Scale(1f, 1f, 1f)
                         }
-                        if (selectedDishId != "marker_dish") {
+                        if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                             placedDishes.find { it.id == selectedDishId }?.let {
                                 it.rotationY.value = 0f
                                 it.scale.value = 1f
                             }
                         }
                     },
-                    onDelete = if (selectedDishId != "marker_dish") {
+                    onDelete = if (selectedDishId != "marker_dish" && selectedDishId != "3d_dish") {
                         {
                             placedDishes.find { it.id == selectedDishId }?.let { dish ->
                                 dish.anchor.detach()
@@ -786,8 +889,22 @@ private fun ArSceneContent(
             modelLoader = modelLoader,
             materialLoader = materialLoader,
             planeRenderer = false,
-            mainLightNode = rememberMainLightNode(engine) { intensity = 2000f },
-            fillLightNode = rememberFillLightNode(engine) { intensity = 800f },
+            environment = rememberAREnvironment(engine),
+            view = rememberARView(engine).apply {
+                applyRenderQuality(RenderQuality.Performance)
+                dynamicResolutionOptions = dynamicResolutionOptions.apply { enabled = false }
+                bloomOptions = bloomOptions.apply { enabled = false }
+                antiAliasing = FilamentView.AntiAliasing.FXAA
+                setShadowingEnabled(false)
+            },
+            mainLightNode = rememberMainLightNode(engine) { 
+                intensity = 30_000f 
+                isShadowCaster = false
+            },
+            fillLightNode = rememberFillLightNode(engine) { 
+                intensity = 10_000f 
+                isShadowCaster = false
+            },
             onSessionCreated = onSessionCreatedStable,
             onSessionUpdated = onSessionUpdatedStable,
             onGestureListener = gestureListener
@@ -810,6 +927,7 @@ private fun ArSceneContent(
                             ModelNode(
                                 modelInstance = dish.modelInstance,
                                 scaleToUnits = null,
+                                centerOrigin = Position(y = -1.0f),
                                 rotation = Rotation(0f, dish.rotationY.value, 0f),
                                 scale = Scale(MODEL_SCALE_INITIAL * dish.scale.value),
                                 apply = {
@@ -844,6 +962,7 @@ private fun ArSceneContent(
                                     ModelNode(
                                         modelInstance = inst,
                                         scaleToUnits = null,
+                                        centerOrigin = Position(y = -1.0f),
                                         rotation = Rotation(0f, transform.rotationDegrees, 0f),
                                         scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
                                         apply = {
@@ -866,6 +985,94 @@ private fun ArSceneContent(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NonArSceneContent(
+    engine: com.google.android.filament.Engine,
+    modelLoader: io.github.sceneview.loaders.ModelLoader,
+    transform: ArTransformState,
+    currentMenuItem: MenuItem,
+    loadedModel: Model?,
+    onClearSelection: () -> Unit
+) {
+    val cameraNode = rememberCameraNode(engine) {
+        position = Position(z = 2.0f, y = 0.5f)
+        lookAt(Position(y = 0.0f))
+    }
+
+    val cameraManipulator = remember(cameraNode) {
+        FovZoomCameraManipulator(
+            inner = CameraGestureDetector.DefaultCameraManipulator(
+                manipulator = Manipulator.Builder()
+                    .targetPosition(0f, 0f, 0f)
+                    .orbitHomePosition(0f, 0.5f, 2f)
+                    .build(Manipulator.Mode.ORBIT)
+            ),
+            cameraNode = cameraNode,
+            fovRangeDegrees = 20f..80f
+        )
+    }
+
+    val gestureListener = rememberOnGestureListener(
+        onSingleTapConfirmed = { _, _ ->
+            onClearSelection()
+        }
+    )
+
+    val envLoader = rememberEnvironmentLoader(engine)
+    val environment = rememberEnvironment(envLoader) {
+        val skybox = Skybox.Builder().color(0.96f, 0.96f, 0.96f, 1.0f).build(engine)
+        val indirectLight = envLoader.createKTX1Environment(
+            iblAssetFile = "environments/neutral/neutral_ibl.ktx"
+        ).indirectLight
+        envLoader.createEnvironment(indirectLight = indirectLight, skybox = skybox)
+    }
+
+    SceneView(
+        modifier = Modifier.fillMaxSize(),
+        engine = engine,
+        modelLoader = modelLoader,
+        cameraNode = cameraNode,
+        cameraManipulator = cameraManipulator,
+        scene = rememberScene(engine),
+        renderQuality = RenderQuality.Performance,
+        environment = environment,
+        view = rememberView(engine).apply {
+            applyRenderQuality(RenderQuality.Performance)
+            dynamicResolutionOptions = dynamicResolutionOptions.apply { enabled = false }
+            bloomOptions = bloomOptions.apply { enabled = false }
+            antiAliasing = FilamentView.AntiAliasing.FXAA
+            setShadowingEnabled(false)
+        },
+        mainLightNode = rememberMainLightNode(engine) {
+            intensity = 30_000f
+            isShadowCaster = false
+        },
+        fillLightNode = rememberFillLightNode(engine) {
+            intensity = 10_000f
+            isShadowCaster = false
+        },
+        onGestureListener = gestureListener
+    ) {
+        loadedModel?.let { model ->
+            val instance = remember(model) {
+                modelLoader.assetLoader.createInstance(model)
+            }
+            instance?.let { inst ->
+                ModelNode(
+                    modelInstance = inst,
+                    scaleToUnits = 0.8f,
+                    centerOrigin = Position(y = -1.0f), // Align model bottom to y=0
+                    rotation = Rotation(0f, transform.rotationDegrees, 0f),
+                    scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
+                    apply = {
+                        name = "3d_dish"
+                    }
+                )
             }
         }
     }
@@ -898,7 +1105,8 @@ private fun MenuOverlay(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.85f),
+                .fillMaxHeight(0.85f)
+                .graphicsLayer { clip = true },
             color = Color.White,
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             shadowElevation = 8.dp
@@ -927,12 +1135,17 @@ private fun MenuOverlay(
                     )
 
                     Box {
-                        IconButton(onClick = { activeTab = "CART" }) {
+                        IconButton(
+                            onClick = { activeTab = "CART" },
+                            modifier = Modifier.clip(CircleShape),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = if (activeTab == "CART") DINEAR_ORANGE else Color.Black
+                            )
+                        ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_cart_premium),
                                 contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = if (activeTab == "CART") DINEAR_ORANGE else Color.Black
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                         
@@ -967,12 +1180,19 @@ private fun MenuOverlay(
                 Surface(modifier = Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 16.dp) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp, top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { activeTab = "MENU" }
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                    indication = ripple(color = Color.White),
+                                    onClick = { activeTab = "MENU" }
+                                )
+                                .padding(vertical = 4.dp)
                         ) {
                             Icon(Icons.Default.Restaurant, null, tint = if (activeTab == "MENU") DINEAR_ORANGE else Color.Gray)
                             Text("MENU", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "MENU") DINEAR_ORANGE else Color.Gray)
@@ -980,14 +1200,23 @@ private fun MenuOverlay(
 
                         IconButton(
                             onClick = onClose,
-                            modifier = Modifier.size(64.dp).background(Color(0xFF6B6B00), CircleShape)
+                            modifier = Modifier.size(64.dp).clip(CircleShape).background(DINEAR_ORANGE),
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
                         ) {
-                            Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Default.Close, null, modifier = Modifier.size(32.dp))
                         }
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { activeTab = "FAVORITES" }
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                    indication = ripple(color = Color.White),
+                                    onClick = { activeTab = "FAVORITES" }
+                                )
+                                .padding(vertical = 4.dp)
                         ) {
                             Icon(Icons.Default.Star, null, tint = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
                             Text("FAVORITE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (activeTab == "FAVORITES") DINEAR_ORANGE else Color.Gray)
@@ -1013,23 +1242,27 @@ private fun MenuTabContent(
     // Pagination state
     var visibleItemCount by remember { mutableIntStateOf(7) }
 
-    val categories = remember(menuList.size) {
+    val categories = remember(menuList) {
         val cats = mutableListOf("All")
         val uniqueCats = menuList.mapNotNull { it.category }.distinct().sorted()
         cats.addAll(uniqueCats)
         cats
     }
 
-    val filteredList = remember(menuList.size, searchQuery, selectedCategory) {
-        menuList.filter { item ->
-            val matchesSearch = item.name.contains(searchQuery, ignoreCase = true) ||
-                    (item.getDescription() != null && item.getDescription().contains(searchQuery, ignoreCase = true))
-            val matchesCategory = selectedCategory == "All" || item.category == selectedCategory
-            matchesSearch && matchesCategory
+    val filteredList by remember(menuList, searchQuery, selectedCategory) {
+        derivedStateOf {
+            menuList.filter { item ->
+                val matchesSearch = item.name.contains(searchQuery, ignoreCase = true) ||
+                        (item.getDescription() != null && item.getDescription().contains(searchQuery, ignoreCase = true))
+                val matchesCategory = selectedCategory == "All" || item.category == selectedCategory
+                matchesSearch && matchesCategory
+            }
         }
     }
 
-    val pagedList = filteredList.take(visibleItemCount)
+    val pagedList = remember(filteredList, visibleItemCount) {
+        filteredList.take(visibleItemCount)
+    }
 
     Column {
         OutlinedTextField(
@@ -1051,7 +1284,8 @@ private fun MenuTabContent(
                 unfocusedContainerColor = Color(0xFFF5F5F5),
                 focusedContainerColor = Color(0xFFF5F5F5),
                 unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = Color.Transparent
+                focusedBorderColor = DINEAR_ORANGE,
+                cursorColor = DINEAR_ORANGE
             )
         )
 
@@ -1062,12 +1296,16 @@ private fun MenuTabContent(
             contentPadding = PaddingValues(horizontal = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(categories) { category ->
+            items(
+                items = categories,
+                key = { it },
+                contentType = { "category" }
+            ) { category ->
                 val isCatSelected = category == selectedCategory
                 Surface(
-                    modifier = Modifier.clickable { selectedCategory = category },
+                    onClick = { selectedCategory = category },
                     shape = RoundedCornerShape(20.dp),
-                    color = if (isCatSelected) Color(0xFF6B6B00) else Color.White,
+                    color = if (isCatSelected) DINEAR_ORANGE else Color.White,
                     border = if (!isCatSelected) CardDefaults.outlinedCardBorder() else null
                 ) {
                     Text(
@@ -1089,14 +1327,20 @@ private fun MenuTabContent(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize()
+                    .graphicsLayer { clip = true },
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                items(pagedList, key = { it.id }) { item ->
+                items(
+                    items = pagedList,
+                    key = { it.id },
+                    contentType = { "menu_item" }
+                ) { item ->
+                    val modelUrl = remember(item.modelUrl) { RetrofitClient.getFullUrl(context, item.modelUrl) }
                     VerticalMenuItemRow(
                         item = item,
                         restaurantId = restaurantId,
-                        downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
+                        downloadState = downloadStates[modelUrl] ?: DownloadState.Idle,
                         onClick = { onItemSelected(item) }
                     )
                 }
@@ -1130,12 +1374,16 @@ fun VerticalMenuItemRow(
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val imageUrl = remember(item.imageUrl) { RetrofitClient.getFullUrl(context, item.imageUrl) }
+    val description = remember(item) { item.getDescription() ?: "Freshly prepared dish with premium ingredients." }
+    
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
+            .graphicsLayer { clip = true }
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Removed elevation for scroll performance
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -1143,7 +1391,7 @@ fun VerticalMenuItemRow(
         ) {
             Box(modifier = Modifier.size(80.dp)) {
                 AsyncImage(
-                    model = RetrofitClient.getFullUrl(context, item.imageUrl),
+                    model = imageUrl,
                     contentDescription = item.name,
                     modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)),
                     contentScale = ContentScale.Crop
@@ -1164,7 +1412,7 @@ fun VerticalMenuItemRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = item.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
                 Text(
-                    text = item.getDescription() ?: "Freshly prepared dish with premium ingredients.",
+                    text = description,
                     fontSize = 12.sp,
                     color = Color.Gray,
                     maxLines = 2,
@@ -1176,7 +1424,7 @@ fun VerticalMenuItemRow(
                 } else {
                     "${item.currency} ${item.price.toInt()}"
                 }
-                Text(text = priceText, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFB8860B))
+                Text(text = priceText, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DINEAR_ORANGE)
             }
 
             IconButton(
@@ -1189,7 +1437,7 @@ fun VerticalMenuItemRow(
                         Toast.makeText(context, "Error: Restaurant ID unknown", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier.size(40.dp).background(Color(0xFFD4AF37), CircleShape)
+                modifier = Modifier.size(40.dp).background(Color(0xFFFF863F), CircleShape)
             ) {
                 Icon(Icons.Default.Add, null, tint = Color.White)
             }
@@ -1339,7 +1587,8 @@ fun TransformPanel(
     onDelete: (() -> Unit)? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding(),
+        modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding()
+            .graphicsLayer { clip = true },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)

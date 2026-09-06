@@ -217,6 +217,7 @@ public class FoodDetailsActivity extends AppCompatActivity {
             ((android.widget.RatingBar) findViewById(R.id.rbAvgRatingDetails)).setRating(summary.getAverageRating());
             ((TextView) findViewById(R.id.tvAvgRatingSubtext)).setText("out of 5");
             ((TextView) findViewById(R.id.tvReviewsCountDetails)).setText("(" + summary.getTotalReviews() + " dish reviews)");
+            findViewById(R.id.btnSeeAllReviewsDetails).setVisibility(View.VISIBLE);
             ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsDetails)).setText("See All " + summary.getTotalReviews() + " Reviews →");
         } else {
             ((TextView) findViewById(R.id.tvFoodRatingDetails)).setText("N/A");
@@ -224,7 +225,7 @@ public class FoodDetailsActivity extends AppCompatActivity {
             ((android.widget.RatingBar) findViewById(R.id.rbAvgRatingDetails)).setRating(0f);
             ((TextView) findViewById(R.id.tvAvgRatingSubtext)).setText("New Dish");
             ((TextView) findViewById(R.id.tvReviewsCountDetails)).setText("(0 reviews)");
-            ((androidx.appcompat.widget.AppCompatButton) findViewById(R.id.btnSeeAllReviewsDetails)).setText("Write a Review →");
+            findViewById(R.id.btnSeeAllReviewsDetails).setVisibility(View.GONE);
         }
 
         if (summary.getTotalReviews() > 0) {

@@ -13,7 +13,7 @@ xmlns:tools="http://schemas.android.com/tools">
     android:required="false" />
 <uses-feature
     android:name="android.hardware.camera.ar"
-    android:required="true" />
+    android:required="false" />
 
 <application
     android:name=".DineARApplication"
@@ -28,7 +28,7 @@ xmlns:tools="http://schemas.android.com/tools">
     <!-- ARCore requirement -->
     <meta-data
         android:name="com.google.ar.core"
-        android:value="required"
+        android:value="optional"
         tools:replace="android:value" />
 
     <activity android:name=".ServerConfigActivity" />
