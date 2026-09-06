@@ -117,23 +117,33 @@ public class ReviewsListingActivity extends AppCompatActivity {
             if (restaurantId != null) intent.putExtra("restaurantId", restaurantId);
             if (restaurantName != null) intent.putExtra("restaurantName", restaurantName);
             if (foodItem != null) intent.putExtra("selectedItem", foodItem);
+            
+            String imgUrl = getIntent().getStringExtra("imageUrl");
+            if (imgUrl != null) intent.putExtra("restaurantImage", imgUrl);
+            
             startActivity(intent);
         });
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
         fetchReviews(1);
     }
 
     private void showSortMenu(View v) {
         PopupMenu popup = new PopupMenu(this, v);
         popup.getMenu().add(0, 1, 0, "Newest First");
-        popup.getMenu().add(0, 2, 1, "Highest Rating");
-        popup.getMenu().add(0, 3, 2, "Lowest Rating");
+        popup.getMenu().add(0, 4, 1, "Most Helpful");
+        popup.getMenu().add(0, 2, 2, "Highest Rating");
+        popup.getMenu().add(0, 3, 3, "Lowest Rating");
         
         popup.setOnMenuItemClickListener(item -> {
             String newOrdering;
             String label;
             switch (item.getItemId()) {
                 case 1: newOrdering = "-created_at"; label = "Newest First"; break;
+                case 4: newOrdering = "-helpful"; label = "Most Helpful"; break;
                 case 2: newOrdering = "-rating"; label = "Highest Rating"; break;
                 case 3: newOrdering = "rating"; label = "Lowest Rating"; break;
                 default: return false;
@@ -195,8 +205,11 @@ public class ReviewsListingActivity extends AppCompatActivity {
             findViewById(R.id.pbLoadMore).setVisibility(View.VISIBLE);
         }
 
+        String token = SharedPrefManager.getAccessToken(this);
+        String authHeader = token != null ? "Bearer " + token : null;
+
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getReviews(restaurantId, foodItemId, page == 1, page, currentOrdering, currentFilter).enqueue(new Callback<ReviewListResponse>() {
+        apiService.getReviews(authHeader, restaurantId, foodItemId, page == 1, page, currentOrdering, currentFilter).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
                 isLoading = false;

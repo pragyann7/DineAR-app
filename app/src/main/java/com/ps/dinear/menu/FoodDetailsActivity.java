@@ -15,6 +15,7 @@ import com.ps.dinear.CartManager;
 import com.ps.dinear.FavoritesManager;
 import com.ps.dinear.MenuItem;
 import com.ps.dinear.ApiService;
+import com.ps.dinear.SharedPrefManager;
 import com.ps.dinear.R;
 import com.ps.dinear.RetrofitClient;
 import com.ps.dinear.ReviewsListingActivity;
@@ -24,6 +25,8 @@ import com.ps.dinear.data.model.ReviewListResponse;
 import com.ps.dinear.data.model.ReviewSummary;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import android.widget.LinearLayout;
+import java.util.List;
 
 import java.util.Locale;
 import java.util.Map;
@@ -178,13 +181,23 @@ public class FoodDetailsActivity extends AppCompatActivity {
             intent.putExtra("imageUrl", item.getImageUrl());
             startActivity(intent);
         });
+    }
 
-        fetchReviews(item.getId());
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MenuItem item = (MenuItem) getIntent().getSerializableExtra("selectedItem");
+        if (item != null) {
+            fetchReviews(item.getId());
+        }
     }
 
     private void fetchReviews(int foodItemId) {
+        String token = SharedPrefManager.getAccessToken(this);
+        String authHeader = token != null ? "Bearer " + token : null;
+        
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getReviews(null, foodItemId, true, 1, null, null).enqueue(new Callback<ReviewListResponse>() {
+        apiService.getReviews(authHeader, null, foodItemId, true, 1, "-helpful", null).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -193,11 +206,11 @@ public class FoodDetailsActivity extends AppCompatActivity {
                         updateReviewSummary(listResponse.getSummary());
                     }
                     if (listResponse.getResults() != null && !listResponse.getResults().isEmpty()) {
-                        updateTopReview(listResponse.getResults().get(0));
+                        updateTopReviews(listResponse.getResults());
                         findViewById(R.id.llEmptyReviewsDetails).setVisibility(View.GONE);
                         findViewById(R.id.tvTopReviewsHeader).setVisibility(View.VISIBLE);
                     } else {
-                        findViewById(R.id.includeTopReview).setVisibility(View.GONE);
+                        findViewById(R.id.llTopReviewsContainerDetails).setVisibility(View.GONE);
                         findViewById(R.id.llEmptyReviewsDetails).setVisibility(View.VISIBLE);
                         findViewById(R.id.tvTopReviewsHeader).setVisibility(View.GONE);
                     }
@@ -260,31 +273,104 @@ public class FoodDetailsActivity extends AppCompatActivity {
         ((TextView) row.findViewById(R.id.tvRatingCount)).setText(String.valueOf(count));
     }
 
-    private void updateTopReview(Review review) {
-        View topReviewView = findViewById(R.id.includeTopReview);
-        topReviewView.setVisibility(View.VISIBLE);
-        ((TextView) topReviewView.findViewById(R.id.tvReviewerName)).setText(review.getUserName());
-        ((TextView) topReviewView.findViewById(R.id.tvReviewDate)).setText(review.getDate());
-        ((TextView) topReviewView.findViewById(R.id.tvReviewContent)).setText(review.getContent());
-        ((android.widget.RatingBar) topReviewView.findViewById(R.id.ratingBarItem)).setRating(review.getRating());
-        
-        if (review.getArMatchPercent() != null) {
-            ((TextView) topReviewView.findViewById(R.id.tvARPortionMatch)).setText("AR Match: " + review.getArMatchPercent() + "% Correct");
+    private void updateTopReviews(List<Review> reviews) {
+        LinearLayout container = findViewById(R.id.llTopReviewsContainerDetails);
+        container.removeAllViews();
+        container.setVisibility(View.VISIBLE);
+
+        int count = 0;
+        for (Review review : reviews) {
+            if (count >= 3) break;
+            
+            View topReviewView = getLayoutInflater().inflate(R.layout.item_review, container, false);
+            ((TextView) topReviewView.findViewById(R.id.tvReviewerName)).setText(review.getUserName());
+            ((TextView) topReviewView.findViewById(R.id.tvReviewDate)).setText(review.getDate());
+            ((TextView) topReviewView.findViewById(R.id.tvReviewContent)).setText(review.getContent());
+            ((android.widget.RatingBar) topReviewView.findViewById(R.id.ratingBarItem)).setRating(review.getRating());
+            
+            if (review.getArMatchPercent() != null) {
+                ((TextView) topReviewView.findViewById(R.id.tvARPortionMatch)).setText("AR Match: " + review.getArMatchPercent() + "% Correct");
+                ((View) topReviewView.findViewById(R.id.tvARPortionMatch).getParent()).setVisibility(View.VISIBLE);
+            } else {
+                ((View) topReviewView.findViewById(R.id.tvARPortionMatch).getParent()).setVisibility(View.GONE);
+            }
+            
+            if (review.getUserAvatar() != null) {
+                Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getUserAvatar()))
+                    .placeholder(R.drawable.avatar_0)
+                    .into((ImageView) topReviewView.findViewById(R.id.ivReviewerAvatar));
+            }
+            
+            if (review.getImages() != null && !review.getImages().isEmpty()) {
+                topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.VISIBLE);
+                Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getImages().get(0).getImage()))
+                    .into((ImageView) topReviewView.findViewById(R.id.ivReviewImage));
+            } else {
+                topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.GONE);
+            }
+            
+            container.addView(topReviewView);
+            
+            TextView tvHelpful = topReviewView.findViewById(R.id.tvHelpfulCount);
+            ImageView ivHelpful = (ImageView) ((android.view.ViewGroup) topReviewView.findViewById(R.id.btnHelpful)).getChildAt(0);
+            
+            updateHelpfulView(review, tvHelpful, ivHelpful);
+
+            if (review.isOwnReview()) {
+                topReviewView.findViewById(R.id.btnHelpful).setEnabled(false);
+                tvHelpful.setAlpha(0.6f);
+                ivHelpful.setAlpha(0.4f);
+            } else {
+                topReviewView.findViewById(R.id.btnHelpful).setEnabled(true);
+                tvHelpful.setAlpha(1.0f);
+                ivHelpful.setAlpha(1.0f);
+                topReviewView.findViewById(R.id.btnHelpful).setOnClickListener(v -> toggleHelpful(review, tvHelpful, ivHelpful));
+            }
+            
+            topReviewView.findViewById(R.id.btnShare).setOnClickListener(v -> shareReview(review));
+
+            count++;
         }
-        
-        if (review.getUserAvatar() != null) {
-            Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getUserAvatar()))
-                .placeholder(R.drawable.avatar_0)
-                .into((ImageView) topReviewView.findViewById(R.id.ivReviewerAvatar));
+    }
+
+    private void updateHelpfulView(Review review, TextView tv, ImageView iv) {
+        tv.setText("Helpful" + (review.getHelpfulCount() > 0 ? " (" + review.getHelpfulCount() + ")" : ""));
+        int colorRes = review.isHelpful() ? R.color.orange_primary : R.color.gray_text;
+        int color = androidx.core.content.ContextCompat.getColor(this, colorRes);
+        tv.setTextColor(color);
+        iv.setColorFilter(color);
+    }
+
+    private void toggleHelpful(Review review, TextView tv, ImageView iv) {
+        String token = SharedPrefManager.getAccessToken(this);
+        if (token == null) {
+            Toast.makeText(this, "Please login to like reviews", Toast.LENGTH_SHORT).show();
+            return;
         }
-        
-        if (review.getImages() != null && !review.getImages().isEmpty()) {
-            topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.VISIBLE);
-            Glide.with(this).load(RetrofitClient.getFullUrl(this, review.getImages().get(0).getImage()))
-                .into((ImageView) topReviewView.findViewById(R.id.ivReviewImage));
-        } else {
-            topReviewView.findViewById(R.id.cvReviewImage).setVisibility(View.GONE);
-        }
+
+        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        apiService.toggleHelpful("Bearer " + token, review.getId()).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean isHelpful = (boolean) response.body().get("is_helpful");
+                    int count = ((Double) response.body().get("helpful_count")).intValue();
+                    review.setHelpful(isHelpful);
+                    review.setHelpfulCount(count);
+                    updateHelpfulView(review, tv, iv);
+                }
+            }
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {}
+        });
+    }
+
+    private void shareReview(Review review) {
+        String shareBody = "Check out this review by " + review.getUserName() + " on DineAR: \"" + review.getContent() + "\"";
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, shareBody);
+        startActivity(Intent.createChooser(intent, "Share Review via"));
     }
 
     private void addChip(ChipGroup group, String text) {
