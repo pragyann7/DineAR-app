@@ -61,9 +61,21 @@ import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberOnGestureListener
 import com.ps.dinear.utils.ArCoreHelper
+import io.github.sceneview.RenderQuality
 import io.github.sceneview.SceneView
+import io.github.sceneview.SurfaceType
+import io.github.sceneview.applyRenderQuality
+import io.github.sceneview.ar.rememberAREnvironment
+import io.github.sceneview.environment.Environment
 import io.github.sceneview.node.CameraNode
+import io.github.sceneview.rememberARView
 import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.rememberEnvironment
+import io.github.sceneview.rememberEnvironmentLoader
+import io.github.sceneview.rememberScene
+import io.github.sceneview.rememberView
+import com.google.android.filament.View as FilamentView
+import com.google.android.filament.Skybox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -265,9 +277,10 @@ class ARActivity : ComponentActivity() {
             viewModel.fetchGlobalFeaturedFoods(this, city)
         }
 
-        val isArSupported = ArCoreHelper.isArCoreSupported(this)
+//        val isArSupported = ArCoreHelper.isArCoreSupported(this)
 
-//        val isArSupported = false
+        val isArSupported = false
+
         setContent {
             ARScreen(
                 initialMenuItem = selectedItem,
@@ -322,6 +335,10 @@ private fun ARScreen(
 
     var currentMenuItem by remember { mutableStateOf(initialMenuItem) }
     var isMenuOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentMenuItem) {
+        transform.reset()
+    }
 
     fun downloadModel(item: MenuItem) {
         val rawUrl = item.modelUrl ?: ""
@@ -819,8 +836,22 @@ private fun ArSceneContent(
             modelLoader = modelLoader,
             materialLoader = materialLoader,
             planeRenderer = false,
-            mainLightNode = rememberMainLightNode(engine) { intensity = 2000f },
-            fillLightNode = rememberFillLightNode(engine) { intensity = 800f },
+            environment = rememberAREnvironment(engine),
+            view = rememberARView(engine).apply {
+                applyRenderQuality(RenderQuality.Performance)
+                dynamicResolutionOptions = dynamicResolutionOptions.apply { enabled = false }
+                bloomOptions = bloomOptions.apply { enabled = false }
+                antiAliasing = FilamentView.AntiAliasing.FXAA
+                setShadowingEnabled(false)
+            },
+            mainLightNode = rememberMainLightNode(engine) { 
+                intensity = 30_000f 
+                isShadowCaster = false
+            },
+            fillLightNode = rememberFillLightNode(engine) { 
+                intensity = 10_000f 
+                isShadowCaster = false
+            },
             onSessionCreated = onSessionCreatedStable,
             onSessionUpdated = onSessionUpdatedStable,
             onGestureListener = gestureListener
@@ -843,6 +874,7 @@ private fun ArSceneContent(
                             ModelNode(
                                 modelInstance = dish.modelInstance,
                                 scaleToUnits = null,
+                                centerOrigin = Position(y = -1.0f),
                                 rotation = Rotation(0f, dish.rotationY.value, 0f),
                                 scale = Scale(MODEL_SCALE_INITIAL * dish.scale.value),
                                 apply = {
@@ -877,6 +909,7 @@ private fun ArSceneContent(
                                     ModelNode(
                                         modelInstance = inst,
                                         scaleToUnits = null,
+                                        centerOrigin = Position(y = -1.0f),
                                         rotation = Rotation(0f, transform.rotationDegrees, 0f),
                                         scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
                                         apply = {
@@ -929,16 +962,41 @@ private fun NonArSceneContent(
         }
     )
 
+    val envLoader = rememberEnvironmentLoader(engine)
+    val skybox = remember(engine) {
+        Skybox.Builder().color(0.96f, 0.96f, 0.96f, 1.0f).build(engine)
+    }
+    val environment = rememberEnvironment(envLoader) {
+        envLoader.createEnvironment(
+            indirectLight = envLoader.createKTX1Environment(
+                iblAssetFile = "environments/neutral/neutral_ibl.ktx"
+            ).indirectLight,
+            skybox = skybox
+        )
+    }
+
     SceneView(
         modifier = Modifier.fillMaxSize(),
         engine = engine,
         modelLoader = modelLoader,
         cameraNode = cameraNode,
+        scene = rememberScene(engine),
+        renderQuality = RenderQuality.Default,
+        environment = environment,
+        view = rememberView(engine).apply {
+            applyRenderQuality(RenderQuality.Performance)
+            dynamicResolutionOptions = dynamicResolutionOptions.apply { enabled = false }
+            bloomOptions = bloomOptions.apply { enabled = false }
+            antiAliasing = FilamentView.AntiAliasing.FXAA
+            setShadowingEnabled(false)
+        },
         mainLightNode = rememberMainLightNode(engine) {
-            intensity = 2000f
+            intensity = 30_000f
+            isShadowCaster = false
         },
         fillLightNode = rememberFillLightNode(engine) {
-            intensity = 1000f
+            intensity = 10_000f
+            isShadowCaster = false
         },
         onGestureListener = gestureListener
     ) {
@@ -950,8 +1008,9 @@ private fun NonArSceneContent(
                 ModelNode(
                     modelInstance = inst,
                     scaleToUnits = 0.8f,
+                    centerOrigin = Position(y = -1.0f), // Align model bottom to y=0
                     rotation = Rotation(0f, transform.rotationDegrees, 0f),
-                    scale = Scale(transform.currentScale),
+                    scale = Scale(MODEL_SCALE_INITIAL * transform.currentScale),
                     apply = {
                         name = "3d_dish"
                         if (transform.selectedNodeId == "3d_dish") {
