@@ -65,6 +65,10 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        
         MapLibre.getInstance(this);
         setContentView(R.layout.activity_discover);
 

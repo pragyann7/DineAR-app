@@ -18,6 +18,9 @@ public class AuthActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
+        
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         // Check if user is already authenticated or guest
         if (SharedPrefManager.isLoggedIn(this) || SharedPrefManager.isGuest(this)) {

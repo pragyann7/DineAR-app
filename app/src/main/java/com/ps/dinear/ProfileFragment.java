@@ -58,8 +58,8 @@ public class ProfileFragment extends Fragment {
         if (ivProfile != null) {
             View.OnClickListener avatarTrigger = v -> showChangeAvatarSheet(ivProfile);
             ivProfile.setOnClickListener(avatarTrigger);
-            View header = view.findViewById(R.id.llProfileHeader);
-            if (header != null) header.setOnClickListener(avatarTrigger);
+            View btnEditAvatar = view.findViewById(R.id.btnEditAvatar);
+            if (btnEditAvatar != null) btnEditAvatar.setOnClickListener(avatarTrigger);
         }
 
         View btnPersonal = view.findViewById(R.id.btnPersonalInfo);
@@ -68,17 +68,14 @@ public class ProfileFragment extends Fragment {
         View btnOrders = view.findViewById(R.id.btnProfileOrders);
         if (btnOrders != null) btnOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), OrdersActivity.class)));
         
-        View btnAddrs = view.findViewById(R.id.btnAddresses);
-        if (btnAddrs != null) btnAddrs.setOnClickListener(v -> Toast.makeText(getContext(), "Addresses coming soon", Toast.LENGTH_SHORT).show());
-        
-        View btnPay = view.findViewById(R.id.btnPaymentMethods);
-        if (btnPay != null) btnPay.setOnClickListener(v -> Toast.makeText(getContext(), "Payment Methods coming soon", Toast.LENGTH_SHORT).show());
-        
-        View btnSett = view.findViewById(R.id.btnSettings);
-        if (btnSett != null) btnSett.setOnClickListener(v -> startActivity(new Intent(getContext(), ServerConfigActivity.class)));
-        
-        View btnHelp = view.findViewById(R.id.btnHelpSupport);
-        if (btnHelp != null) btnHelp.setOnClickListener(v -> Toast.makeText(getContext(), "Help & Support coming soon", Toast.LENGTH_SHORT).show());
+        View btnChangePassword = view.findViewById(R.id.btnChangePassword);
+        if (btnChangePassword != null) btnChangePassword.setOnClickListener(v -> Toast.makeText(getContext(), "Change Password coming soon", Toast.LENGTH_SHORT).show());
+
+        View btnSettings = view.findViewById(R.id.btnSettings);
+        if (btnSettings != null) btnSettings.setOnClickListener(v -> startActivity(new Intent(getContext(), ServerConfigActivity.class)));
+
+        View btnMore = view.findViewById(R.id.btnMore);
+        if (btnMore != null) btnMore.setOnClickListener(v -> Toast.makeText(getContext(), "More options coming soon", Toast.LENGTH_SHORT).show());
 
         View btnLogout = view.findViewById(R.id.btnProfileLogout);
         if (btnLogout != null) {

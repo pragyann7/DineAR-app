@@ -263,20 +263,34 @@ public class MainActivity extends AppCompatActivity {
         if (navController != null) {
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
                 int destId = destination.getId();
+                int orangeColor = androidx.core.content.ContextCompat.getColor(this, R.color.orange_primary);
+                
                 if (destId == R.id.homeFragment) {
                     updateNavUI(0);
                     rlHeader.setVisibility(View.VISIBLE);
                     setHeaderState(null, true, true);
                     checkAndRestoreErrorState();
+                    
+                    getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+                    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                            .setAppearanceLightStatusBars(true);
                 } else if (destId == R.id.favoritesFragment) {
                     updateNavUI(2);
                     rlHeader.setVisibility(View.VISIBLE);
                     setHeaderState("My Favorites", false, false);
                     checkAndRestoreErrorState();
+                    
+                    getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+                    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                            .setAppearanceLightStatusBars(true);
                 } else if (destId == R.id.profileFragment) {
                     updateNavUI(3);
                     rlHeader.setVisibility(View.GONE);
                     hideErrorOverlay(false);
+                    
+                    getWindow().setStatusBarColor(orangeColor);
+                    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                            .setAppearanceLightStatusBars(false);
                 }
             });
         }
