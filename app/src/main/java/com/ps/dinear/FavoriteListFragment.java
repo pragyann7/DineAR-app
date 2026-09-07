@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,7 +31,7 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
 
     private int type;
     private RecyclerView rvFavItems;
-    private ProgressBar pbFav;
+    private View shimmerFav;
     private View llNoResults;
 
     private RestaurantAdapter restaurantAdapter;
@@ -73,7 +71,7 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
         super.onViewCreated(view, savedInstanceState);
 
         rvFavItems = view.findViewById(R.id.rvFavItems);
-        pbFav = view.findViewById(R.id.pbFav);
+        shimmerFav = view.findViewById(R.id.shimmerFav);
         llNoResults = view.findViewById(R.id.llFavNoResults);
 
         if (rvFavItems != null) {
@@ -99,7 +97,7 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
     @Override
     public void onResume() {
         super.onResume();
-        if (!isLoading) {
+        if (!isLoading && favRestaurants.isEmpty() && favFoods.isEmpty()) {
             loadFavorites();
         }
     }
@@ -117,6 +115,11 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
         }
     }
 
+    public void refreshData() {
+        if (!isAdded()) return;
+        loadFavorites();
+    }
+
     private void loadFavorites() {
         if (!isAdded() || getContext() == null || isLoading) return;
 
@@ -126,9 +129,9 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
         }
 
         isLoading = true;
-        if (pbFav != null) pbFav.setVisibility(View.VISIBLE);
+        if (shimmerFav != null) shimmerFav.setVisibility(View.VISIBLE);
         if (llNoResults != null) llNoResults.setVisibility(View.GONE);
-        if (rvFavItems != null && rvFavItems.getAdapter() == null) rvFavItems.setVisibility(View.GONE);
+        if (rvFavItems != null) rvFavItems.setVisibility(View.GONE);
 
         String token = "Bearer " + SharedPrefManager.getAccessToken(getContext());
         ApiService api = RetrofitClient.getClient(getContext()).create(ApiService.class);
@@ -138,15 +141,15 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
                 isLoading = false;
                 if (!isAdded() || getView() == null) return;
                 
-                if (pbFav != null) pbFav.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
+                    if (shimmerFav != null) shimmerFav.setVisibility(View.GONE);
+                    notifyActivitySuccess();
                     favRestaurants = response.body().getRestaurants();
                     favFoods = response.body().getFoodItems();
-                    
                     fetchLocationAndUpdateDistances();
                     updateView();
-                } else if (getContext() != null) {
-                    Toast.makeText(getContext(), "Failed to load favorites", Toast.LENGTH_SHORT).show();
+                } else {
+                    notifyActivityFailure();
                 }
             }
 
@@ -154,12 +157,21 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
             public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) {
                 isLoading = false;
                 if (!isAdded() || getView() == null) return;
-                if (pbFav != null) pbFav.setVisibility(View.GONE);
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                }
+                notifyActivityFailure();
             }
         });
+    }
+
+    private void notifyActivityFailure() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showErrorOverlay();
+        }
+    }
+
+    private void notifyActivitySuccess() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideErrorOverlay();
+        }
     }
 
     private void fetchLocationAndUpdateDistances() {
@@ -195,7 +207,7 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
         
         boolean hasItems;
 
-        if (type == 0) { // Restaurants
+        if (type == 0) {
             if (restaurantAdapter == null) {
                 restaurantAdapter = new RestaurantAdapter(getContext(), new ArrayList<>(favRestaurants), restaurant -> {
                     Intent intent = new Intent(getContext(), RestaurantDetailsActivity.class);
@@ -224,7 +236,7 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
                 restaurantAdapter.updateList(favRestaurants);
             }
             hasItems = !favRestaurants.isEmpty();
-        } else { // Foods
+        } else {
             if (foodAdapter == null) {
                 foodAdapter = new MenuAdapter(getContext());
                 rvFavItems.setAdapter(foodAdapter);

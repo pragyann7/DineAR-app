@@ -68,6 +68,10 @@
                 app:spanCount="2"
                 tools:listitem="@layout/item_filter" />
 
+            <include
+                android:id="@+id/shimmerCategories"
+                layout="@layout/skeleton_grid_categories" />
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

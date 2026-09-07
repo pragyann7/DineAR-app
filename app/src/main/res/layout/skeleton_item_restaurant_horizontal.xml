@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16.dp"
+    app:cardCornerRadius="16.dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12.dp">
+
+        <View
+            android:id="@+id/sk_image"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/bg_skeleton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/sk_name"
+            android:layout_width="120dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="12.dp"
+            android:background="@drawable/bg_skeleton"
+            app:layout_constraintStart_toEndOf="@id/sk_image"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/sk_cuisine"
+            android:layout_width="80dp"
+            android:layout_height="12dp"
+            android:layout_marginTop="4.dp"
+            android:background="@drawable/bg_skeleton"
+            app:layout_constraintStart_toStartOf="@id/sk_name"
+            app:layout_constraintTop_toBottomOf="@id/sk_name" />
+
+        <View
+            android:id="@+id/sk_tags"
+            android:layout_width="100dp"
+            android:layout_height="12dp"
+            android:layout_marginTop="12.dp"
+            android:background="@drawable/bg_skeleton"
+            app:layout_constraintStart_toStartOf="@id/sk_name"
+            app:layout_constraintTop_toBottomOf="@id/sk_cuisine" />
+
+        <View
+            android:id="@+id/sk_btn"
+            android:layout_width="80dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_skeleton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

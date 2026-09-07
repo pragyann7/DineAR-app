@@ -57,14 +57,84 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:tint="@color/orange_primary" />
 
-    <ProgressBar
-        android:id="@+id/progressBarDiscover"
-        android:layout_width="wrap_content"
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmerDiscover"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16.dp"
+        android:paddingHorizontal="16.dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:shimmer_auto_start="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <include layout="@layout/skeleton_item_restaurant_horizontal" />
+            <include layout="@layout/skeleton_item_restaurant_horizontal" />
+        </LinearLayout>
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+    <!-- Internal Error Layout -->
+    <LinearLayout
+        android:id="@+id/llDiscoverError"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/app_bg"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32.dp"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:alpha="0.6"
+            android:src="@android:drawable/ic_dialog_alert"
+            app:tint="@color/red_600" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20.dp"
+            android:text="Connection Error"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12.dp"
+            android:gravity="center"
+            android:text="Unable to reach our servers.\nPlease check your internet connection."
+            android:textColor="@color/gray_text"
+            android:textSize="14sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnDiscoverRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32.dp"
+            android:background="@drawable/bg_button_orange"
+            android:paddingHorizontal="32.dp"
+            android:text="Retry"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/pbDiscoverRetry"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="32.dp"
+            android:indeterminateTint="@color/orange_primary"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

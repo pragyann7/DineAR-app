@@ -10,9 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -26,12 +24,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.tabs.TabLayout;
 import com.ps.dinear.data.model.Restaurant;
 import com.ps.dinear.data.model.SearchResponse;
-import com.ps.dinear.location.LocationActivity;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,10 +43,8 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     private MenuAdapter menuAdapter;
     private FilterAdapter filterAdapter;
     private FeaturedFoodAdapter featuredFoodAdapter;
-    private ProgressBar progressBar;
-    private TextView tvWelcome;
+    private View layoutShimmer;
     private TabLayout tabLayoutSearch;
-    private TextView tvCartBadge;
     
     private MenuItem featuredDish;
     private String featuredRestaurantSlug;
@@ -65,13 +58,11 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     private List<Restaurant> lastResResults = new ArrayList<>();
     private List<MenuItem> lastFoodResults = new ArrayList<>();
     private List<Restaurant> allRestaurantsInCity = new ArrayList<>();
-    private FusedLocationProviderClient fusedLocationClient;
+    private com.google.android.gms.location.FusedLocationProviderClient fusedLocationClient;
     private Location userLocation;
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
-
-    private final CartManager.CartListener cartListener = this::updateCartBadge;
 
     private final ActivityResultLauncher<Intent> categoryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -85,7 +76,6 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                             filterAdapter.setSelectedCategory(selected);
                         }
                         if (isAdded()) setupRestaurants(getView());
-                        Toast.makeText(getContext(), "Filtered by: " + selected, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     if (filterAdapter != null) {
@@ -105,22 +95,9 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        tvWelcome = view.findViewById(R.id.tvWelcome);
-        updateWelcomeText();
-
-        TextView tvCurrentLocation = view.findViewById(R.id.tvCurrentLocation);
-        String locationText = SharedPrefManager.getCity(getContext()) + ", " + SharedPrefManager.getDistrict(getContext());
-        tvCurrentLocation.setText(locationText);
-
-        tvCartBadge = view.findViewById(R.id.tvCartBadge);
-        View btnCart = view.findViewById(R.id.btnCart);
-        if (btnCart != null) btnCart.setOnClickListener(v -> startActivity(new Intent(getContext(), CartActivity.class)));
-
-        View btnChangeLocation = view.findViewById(R.id.btnChangeLocation);
-        if (btnChangeLocation != null) btnChangeLocation.setOnClickListener(v -> startActivity(new Intent(getContext(), LocationActivity.class)));
-
-        View btnFilter = view.findViewById(R.id.btnFilter);
-        if (btnFilter != null) btnFilter.setOnClickListener(v -> {
+        layoutShimmer = view.findViewById(R.id.layoutShimmer);
+        
+        view.findViewById(R.id.btnFilter).setOnClickListener(v -> {
             SearchFilterBottomSheet bottomSheet = new SearchFilterBottomSheet(
                 (sort, rating) -> {
                     currentSort = sort;
@@ -140,7 +117,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         setupFeaturedFoods(view);
         
         try {
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+            fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(requireActivity());
             requestLocationPermission();
         } catch (Exception ignored) {}
 
@@ -155,52 +132,35 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             }
         });
 
-        View btnRetry = view.findViewById(R.id.btnRetry);
-        if (btnRetry != null) btnRetry.setOnClickListener(v -> {
-            if (currentSearchQuery != null && !currentSearchQuery.isEmpty()) {
-                performSearch(getView());
-            } else {
-                setupRestaurants(getView());
-            }
-        });
-
-        RecyclerView rvFeatured = view.findViewById(R.id.rvFeaturedFoods);
-        if (rvFeatured != null) {
-            rvFeatured.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-            featuredFoodAdapter = new FeaturedFoodAdapter(getContext());
-            rvFeatured.setAdapter(featuredFoodAdapter);
-        }
-
-        CartManager.getInstance().addListener(cartListener);
         FavoritesManager.getInstance().addListener(this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateWelcomeText();
-        updateCartBadge();
-        
-        if (getView() != null) {
-            ImageView ivProfile = getView().findViewById(R.id.ivHomeProfile);
-            if (ivProfile != null) {
-                ivProfile.setImageResource(SharedPrefManager.getUserAvatar(getContext()));
-            }
-        }
-
         refreshAdapters();
+        if (lastResResults.isEmpty()) {
+            setupRestaurants(getView());
+            setupFeaturedFoods(getView());
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        CartManager.getInstance().removeListener(cartListener);
         FavoritesManager.getInstance().removeListener(this);
     }
 
     @Override
     public void onFavoritesUpdated() {
         refreshAdapters();
+    }
+
+    public void refreshData() {
+        if (!isAdded() || getView() == null) return;
+        setupFilters(getView());
+        setupRestaurants(getView());
+        setupFeaturedFoods(getView());
     }
 
     private void refreshAdapters() {
@@ -210,36 +170,8 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (menuAdapter != null) {
             menuAdapter.notifyDataSetChanged();
         }
-    }
-
-    private void updateWelcomeText() {
-        if (tvWelcome == null || !isAdded()) return;
-        String name = SharedPrefManager.getUserName(getContext());
-        String email = SharedPrefManager.getUserEmail(getContext());
-
-        if (SharedPrefManager.isGuest(getContext())) {
-            name = "Guest";
-        } else if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
-            if (email != null && !email.trim().isEmpty() && email.contains("@")) {
-                name = email.split("@")[0];
-            } else {
-                name = "User";
-            }
-        }
-        
-        if (name != null) {
-            tvWelcome.setText(getString(R.string.hello_placeholder, name.toUpperCase()));
-        }
-    }
-
-    private void updateCartBadge() {
-        if (tvCartBadge == null || !isAdded()) return;
-        int count = CartManager.getInstance().getItemCount();
-        if (count > 0) {
-            tvCartBadge.setText(String.valueOf(count));
-            tvCartBadge.setVisibility(View.VISIBLE);
-        } else {
-            tvCartBadge.setVisibility(View.GONE);
+        if (featuredFoodAdapter != null) {
+            featuredFoodAdapter.notifyDataSetChanged();
         }
     }
 
@@ -277,6 +209,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                         }
                     }
                     setupRestaurants(getView());
+                    setupFeaturedFoods(getView());
                 } else {
                     toggleHomeContent(getView(), false);
                     if (tabLayoutSearch != null) tabLayoutSearch.setVisibility(View.VISIBLE);
@@ -313,8 +246,6 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (show) {
             View noRes = root.findViewById(R.id.llNoResults);
             if (noRes != null) noRes.setVisibility(View.GONE);
-            View netErr = root.findViewById(R.id.llNetworkError);
-            if (netErr != null) netErr.setVisibility(View.GONE);
             View scroll = root.findViewById(R.id.nestedScrollView);
             if (scroll != null) scroll.setVisibility(View.VISIBLE);
         }
@@ -330,6 +261,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             @Override
             public void onResponse(@NonNull Call<List<Restaurant.Category>> call, @NonNull Response<List<Restaurant.Category>> response) {
                 if (!isAdded()) return;
+                if (response.isSuccessful()) notifyActivitySuccess();
                 List<String> filters = new ArrayList<>();
                 filters.add("Home");
                 if (response.isSuccessful() && response.body() != null) {
@@ -354,6 +286,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             @Override
             public void onFailure(@NonNull Call<List<Restaurant.Category>> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
+                notifyActivityFailure();
                 List<String> filters = new ArrayList<>();
                 filters.add("Home");
                 filters.add("More →");
@@ -373,6 +306,15 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
 
     private void setupFeaturedFoods(View root) {
         if (root == null || !isAdded()) return;
+        RecyclerView rvFeatured = root.findViewById(R.id.rvFeaturedFoods);
+        if (rvFeatured == null) return;
+        
+        if (featuredFoodAdapter == null) {
+            rvFeatured.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            featuredFoodAdapter = new FeaturedFoodAdapter(getContext());
+            rvFeatured.setAdapter(featuredFoodAdapter);
+        }
+
         String city = SharedPrefManager.getCity(getContext());
         ApiService api = RetrofitClient.getClient(getContext()).create(ApiService.class);
         
@@ -381,12 +323,13 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             public void onResponse(@NonNull Call<SearchResponse> call, @NonNull Response<SearchResponse> response) {
                 if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null) {
+                    notifyActivitySuccess();
                     List<MenuItem> foods = response.body().getFoodItems();
                     if (foods != null && !foods.isEmpty()) {
                         java.util.Collections.shuffle(foods);
-                        if (featuredFoodAdapter != null) featuredFoodAdapter.setData(foods);
-                        featuredDish = foods.get(0);
+                        featuredFoodAdapter.setData(foods);
                         
+                        featuredDish = foods.get(0);
                         List<Restaurant> restaurants = response.body().getRestaurants();
                         if (featuredDish.getRestaurantIds() != null && !featuredDish.getRestaurantIds().isEmpty() && restaurants != null) {
                             for (Restaurant r : restaurants) {
@@ -397,12 +340,17 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                                 }
                             }
                         }
-                        if (isAdded()) updatePromoBanner(getView());
+                        updatePromoBanner(getView());
                     }
+                } else {
+                    notifyActivityFailure();
                 }
             }
             @Override
-            public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) {}
+            public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                notifyActivityFailure();
+            }
         });
     }
 
@@ -418,7 +366,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         
         if (ivBanner != null) {
             String fullImageUrl = RetrofitClient.getFullUrl(getContext(), featuredDish.getImageUrl());
-            Glide.with(HomeFragment.this).load(fullImageUrl).placeholder(R.drawable.burger).into(ivBanner);
+            Glide.with(this).load(fullImageUrl).placeholder(R.drawable.burger).into(ivBanner);
         }
     }
 
@@ -495,16 +443,17 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             if (noRes != null) noRes.setVisibility(hasResults ? View.GONE : View.VISIBLE);
             recyclerView.setVisibility(hasResults ? View.VISIBLE : View.GONE);
         }
+        
+        if (layoutShimmer != null) layoutShimmer.setVisibility(View.GONE);
+        View scroll = root.findViewById(R.id.nestedScrollView);
+        if (scroll != null) scroll.setVisibility(View.VISIBLE);
     }
 
     private void performSearch(View root) {
         if (root == null || !isAdded()) return;
-        progressBar = root.findViewById(R.id.progressBar);
-        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        if (layoutShimmer != null) layoutShimmer.setVisibility(View.VISIBLE);
         View noRes = root.findViewById(R.id.llNoResults);
         if (noRes != null) noRes.setVisibility(View.GONE);
-        View netErr = root.findViewById(R.id.llNetworkError);
-        if (netErr != null) netErr.setVisibility(View.GONE);
         RecyclerView recyclerView = root.findViewById(R.id.recyclerView);
         if (recyclerView != null) recyclerView.setVisibility(View.GONE);
 
@@ -513,10 +462,11 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         api.search(currentSearchQuery, city).enqueue(new Callback<SearchResponse>() {
             @Override
             public void onResponse(@NonNull Call<SearchResponse> call, @NonNull Response<SearchResponse> response) {
-                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 if (!isAdded()) return;
                 
                 if (response.isSuccessful() && response.body() != null) {
+                    if (layoutShimmer != null) layoutShimmer.setVisibility(View.GONE);
+                    notifyActivitySuccess();
                     lastResResults = new ArrayList<>(response.body().getRestaurants());
                     lastFoodResults = response.body().getFoodItems();
 
@@ -538,17 +488,14 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                         }
                     }
                     if (isAdded()) updateSearchResultsView(getView());
+                } else {
+                    notifyActivityFailure();
                 }
             }
             @Override
             public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) {
-                if (progressBar != null) progressBar.setVisibility(View.GONE);
-                if (isAdded() && getView() != null) {
-                    View err = getView().findViewById(R.id.llNetworkError);
-                    if (err != null) err.setVisibility(View.VISIBLE);
-                    View scroll = getView().findViewById(R.id.nestedScrollView);
-                    if (scroll != null) scroll.setVisibility(View.GONE);
-                }
+                if (!isAdded()) return;
+                notifyActivityFailure();
             }
         });
     }
@@ -558,18 +505,18 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         RecyclerView recyclerView = root.findViewById(R.id.recyclerView);
         if (recyclerView == null) return;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        progressBar = root.findViewById(R.id.progressBar);
 
         View noRes = root.findViewById(R.id.llNoResults);
         if (noRes != null) noRes.setVisibility(View.GONE);
-        View netErr = root.findViewById(R.id.llNetworkError);
-        if (netErr != null) netErr.setVisibility(View.GONE);
 
         boolean isHome = currentCategory.equals("Home");
         View cvPromo = root.findViewById(R.id.cvPromoBanner);
         if (cvPromo != null) cvPromo.setVisibility(isHome ? View.VISIBLE : View.GONE);
 
-        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        if (layoutShimmer != null) {
+            layoutShimmer.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        }
         String selectedCity = SharedPrefManager.getCity(getContext());
         String apiCategory = currentCategory.equals("Home") ? null : currentCategory;
         
@@ -577,10 +524,11 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         apiService.getRestaurants(selectedCity, apiCategory).enqueue(new Callback<List<Restaurant>>() {
             @Override
             public void onResponse(@NonNull Call<List<Restaurant>> call, @NonNull Response<List<Restaurant>> response) {
-                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 if (!isAdded()) return;
                 
                 if (response.isSuccessful() && response.body() != null) {
+                    if (layoutShimmer != null) layoutShimmer.setVisibility(View.GONE);
+                    notifyActivitySuccess();
                     List<Restaurant> restaurants = response.body();
                     if (apiCategory == null) allRestaurantsInCity = new ArrayList<>(restaurants);
 
@@ -626,22 +574,30 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                         }
                         recyclerView.setAdapter(restaurantAdapter);
                     }
+                    View scroll = root.findViewById(R.id.nestedScrollView);
+                    if (scroll != null) scroll.setVisibility(View.VISIBLE);
                 } else {
-                    if (getView() != null) {
-                        View err = getView().findViewById(R.id.llNetworkError);
-                        if (err != null) err.setVisibility(View.VISIBLE);
-                    }
+                    notifyActivityFailure();
                 }
             }
             @Override
             public void onFailure(@NonNull Call<List<Restaurant>> call, @NonNull Throwable t) {
-                if (progressBar != null) progressBar.setVisibility(View.GONE);
-                if (isAdded() && getView() != null) {
-                    View err = getView().findViewById(R.id.llNetworkError);
-                    if (err != null) err.setVisibility(View.VISIBLE);
-                }
+                if (!isAdded()) return;
+                notifyActivityFailure();
             }
         });
+    }
+
+    private void notifyActivityFailure() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showErrorOverlay();
+        }
+    }
+
+    private void notifyActivitySuccess() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideErrorOverlay();
+        }
     }
 
     private void requestLocationPermission() {

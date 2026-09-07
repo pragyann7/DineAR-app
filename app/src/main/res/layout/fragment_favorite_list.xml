@@ -14,16 +14,26 @@
         android:paddingTop="8.dp"
         tools:listitem="@layout/item_restaurant" />
 
-    <ProgressBar
-        android:id="@+id/pbFav"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmerFav"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="24.dp"
+        android:paddingTop="8.dp"
         android:visibility="gone"
-        android:indeterminateTint="@color/orange_primary"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:shimmer_auto_start="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <include layout="@layout/skeleton_item_restaurant" />
+            <include layout="@layout/skeleton_item_restaurant" />
+            <include layout="@layout/skeleton_item_restaurant" />
+            <include layout="@layout/skeleton_item_restaurant" />
+        </LinearLayout>
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
     <LinearLayout
         android:id="@+id/llFavNoResults"

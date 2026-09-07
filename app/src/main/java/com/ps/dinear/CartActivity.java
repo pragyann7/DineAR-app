@@ -25,7 +25,7 @@ public class CartActivity extends AppCompatActivity {
     private OrdersAdapter ordersAdapter;
     private TextView tvTotal, tvNoOrders;
     private LinearLayout llEmptyCart;
-    private ProgressBar pbOrders;
+    private View shimmerOrders;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +37,7 @@ public class CartActivity extends AppCompatActivity {
         tvTotal = findViewById(R.id.tvCartTotal);
         llEmptyCart = findViewById(R.id.llEmptyCart);
         tvNoOrders = findViewById(R.id.tvNoOrders);
-        pbOrders = findViewById(R.id.pbOrders);
+        shimmerOrders = findViewById(R.id.shimmerOrders);
 
         rvCartItems.setLayoutManager(new LinearLayoutManager(this));
         rvOrders.setLayoutManager(new LinearLayoutManager(this));
@@ -45,7 +45,6 @@ public class CartActivity extends AppCompatActivity {
         findViewById(R.id.btnBackCart).setOnClickListener(v -> finish());
         findViewById(R.id.btnCheckout).setOnClickListener(v -> checkout());
 
-        // Handle navigation bar insets for checkout card
         View checkoutCard = findViewById(R.id.cvCheckout);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(checkoutCard, (v, insets) -> {
             androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
@@ -99,7 +98,7 @@ public class CartActivity extends AppCompatActivity {
             return;
         }
 
-        pbOrders.setVisibility(View.VISIBLE);
+        if (shimmerOrders != null) shimmerOrders.setVisibility(View.VISIBLE);
         rvOrders.setVisibility(View.GONE);
         tvNoOrders.setVisibility(View.GONE);
 
@@ -108,7 +107,7 @@ public class CartActivity extends AppCompatActivity {
         api.getOrders(token).enqueue(new Callback<List<Order>>() {
             @Override
             public void onResponse(Call<List<Order>> call, Response<List<Order>> response) {
-                pbOrders.setVisibility(View.GONE);
+                if (shimmerOrders != null) shimmerOrders.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
                     List<Order> orders = response.body();
                     if (orders.isEmpty()) {
@@ -126,7 +125,7 @@ public class CartActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Order>> call, Throwable t) {
-                pbOrders.setVisibility(View.GONE);
+                if (shimmerOrders != null) shimmerOrders.setVisibility(View.GONE);
                 tvNoOrders.setText("Network error");
                 tvNoOrders.setVisibility(View.VISIBLE);
             }
@@ -136,7 +135,6 @@ public class CartActivity extends AppCompatActivity {
     private void checkout() {
         if (!SharedPrefManager.isLoggedIn(this)) {
             Toast.makeText(this, "Please login to place an order", Toast.LENGTH_SHORT).show();
-            // Optional: Redirect to login
             return;
         }
 
@@ -148,8 +146,8 @@ public class CartActivity extends AppCompatActivity {
 
         OrderRequest request = new OrderRequest(
             CartManager.getInstance().getRestaurantId(),
-            "My Address (Placeholder)", // In real app, collect this from user
-            "9800000000", // In real app, collect this
+            "My Address (Placeholder)",
+            "9800000000",
             itemRequests
         );
 

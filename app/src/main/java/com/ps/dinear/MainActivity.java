@@ -1,12 +1,21 @@
 package com.ps.dinear;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
@@ -30,13 +39,30 @@ public class MainActivity extends AppCompatActivity {
     private ImageView ivHome, ivNearby, ivFavorites, ivProfile;
     private TextView tvHome, tvNearby, tvFavorites, tvProfile;
     
+    private View rlHeader, cvHomeProfile, llUserContext;
+    private TextView tvWelcome, tvCurrentLocation, tvCartBadge, tvPageTitle;
+    private ImageView ivHomeProfile;
+    
+    private View llGlobalNetworkError;
+    private View btnGlobalRetry;
+    private ProgressBar pbGlobalRetry;
+
     private MenuItem featuredDish;
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    private final CartManager.CartListener cartListener = this::updateCartBadge;
+
+    private final ActivityResultLauncher<Intent> discoverLauncher = registerForActivityResult(
+            new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+            result -> {}
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Set status bar color and light status bar
         getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
@@ -48,10 +74,120 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // Global Data Initialization
         FavoritesManager.getInstance().loadFavorites(this);
+        CartManager.getInstance().addListener(cartListener);
 
-        // Handle navigation bar insets for bottom navigation and AR button
+        initViews();
+        setupInsets();
+        setupNavigation();
+        setupFloatingARButton();
+        setupNetworkMonitoring();
+        
+        fetchFeaturedDish();
+        updateWelcomeText();
+        updateCartBadge();
+    }
+
+    private void initViews() {
+        rlHeader = findViewById(R.id.rlHeader);
+        cvHomeProfile = findViewById(R.id.cvHomeProfile);
+        llUserContext = findViewById(R.id.llUserContext);
+        tvWelcome = findViewById(R.id.tvWelcome);
+        tvCurrentLocation = findViewById(R.id.tvCurrentLocation);
+        tvCartBadge = findViewById(R.id.tvCartBadge);
+        tvPageTitle = findViewById(R.id.tvPageTitle);
+        ivHomeProfile = findViewById(R.id.ivHomeProfile);
+        llGlobalNetworkError = findViewById(R.id.llGlobalNetworkError);
+        btnGlobalRetry = findViewById(R.id.btnGlobalRetry);
+        pbGlobalRetry = findViewById(R.id.pbGlobalRetry);
+
+        findViewById(R.id.btnCart).setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
+        findViewById(R.id.btnChangeLocation).setOnClickListener(v -> startActivity(new Intent(this, LocationActivity.class)));
+        cvHomeProfile.setOnClickListener(v -> {
+            if (navController != null) navController.navigate(R.id.profileFragment);
+        });
+        
+        btnGlobalRetry.setOnClickListener(v -> {
+            if (isNetworkAvailable()) {
+                setOverlayLoading(true);
+                refreshActiveContent();
+                fetchFeaturedDish();
+            } else {
+                Toast.makeText(this, "Still no connection", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void setOverlayLoading(boolean loading) {
+        if (btnGlobalRetry != null) btnGlobalRetry.setVisibility(loading ? View.GONE : View.VISIBLE);
+        if (pbGlobalRetry != null) pbGlobalRetry.setVisibility(loading ? View.VISIBLE : View.GONE);
+    }
+
+    public void showErrorOverlay() {
+        showErrorOverlay(true);
+    }
+
+    public void showErrorOverlay(boolean withDelay) {
+        handler.removeCallbacksAndMessages(null);
+
+        Runnable showTask = () -> {
+            if (navController != null && navController.getCurrentDestination() != null 
+                    && navController.getCurrentDestination().getId() == R.id.profileFragment) {
+                return;
+            }
+
+            setOverlayLoading(false);
+            if (llGlobalNetworkError != null && llGlobalNetworkError.getVisibility() != View.VISIBLE) {
+                llGlobalNetworkError.setAlpha(0f);
+                llGlobalNetworkError.setVisibility(View.VISIBLE);
+                llGlobalNetworkError.animate().alpha(1f).setDuration(300).start();
+            }
+        };
+
+        if (withDelay) {
+            handler.postDelayed(showTask, 1500);
+        } else {
+            showTask.run();
+        }
+    }
+
+    public void hideErrorOverlay() {
+        hideErrorOverlay(true);
+    }
+
+    public void hideErrorOverlay(boolean animate) {
+        handler.removeCallbacksAndMessages(null);
+        setOverlayLoading(false);
+        if (llGlobalNetworkError == null || llGlobalNetworkError.getVisibility() == View.GONE) return;
+        
+        if (animate) {
+            llGlobalNetworkError.animate()
+                    .alpha(0f)
+                    .setDuration(400)
+                    .withEndAction(() -> {
+                        llGlobalNetworkError.setVisibility(View.GONE);
+                        llGlobalNetworkError.setAlpha(1f);
+                    });
+        } else {
+            llGlobalNetworkError.setVisibility(View.GONE);
+        }
+    }
+
+    private void refreshActiveContent() {
+        Fragment f = getActiveFragment();
+        if (f instanceof HomeFragment) {
+            ((HomeFragment) f).refreshData();
+        } else if (f instanceof FavoritesFragment) {
+            List<Fragment> children = f.getChildFragmentManager().getFragments();
+            for (Fragment child : children) {
+                if (child instanceof FavoriteListFragment && child.isAdded() && child.isVisible()) {
+                    ((FavoriteListFragment) child).refreshData();
+                }
+            }
+        }
+    }
+
+    private void setupInsets() {
         View statusBarSpacer = findViewById(R.id.statusBarSpacer);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
             androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
@@ -79,10 +215,6 @@ public class MainActivity extends AppCompatActivity {
             
             return insets;
         });
-
-        setupNavigation();
-        setupFloatingARButton();
-        fetchFeaturedDish();
     }
 
     private void setupNavigation() {
@@ -113,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navNearby.setOnClickListener(v -> {
-            startActivity(new Intent(this, DiscoverActivity.class));
+            discoverLauncher.launch(new Intent(this, DiscoverActivity.class));
         });
 
         navFavorites.setOnClickListener(v -> {
@@ -130,10 +262,66 @@ public class MainActivity extends AppCompatActivity {
 
         if (navController != null) {
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-                if (destination.getId() == R.id.homeFragment) updateNavUI(0);
-                else if (destination.getId() == R.id.favoritesFragment) updateNavUI(2);
-                else if (destination.getId() == R.id.profileFragment) updateNavUI(3);
+                int destId = destination.getId();
+                if (destId == R.id.homeFragment) {
+                    updateNavUI(0);
+                    rlHeader.setVisibility(View.VISIBLE);
+                    setHeaderState(null, true, true);
+                    checkAndRestoreErrorState();
+                } else if (destId == R.id.favoritesFragment) {
+                    updateNavUI(2);
+                    rlHeader.setVisibility(View.VISIBLE);
+                    setHeaderState("My Favorites", false, false);
+                    checkAndRestoreErrorState();
+                } else if (destId == R.id.profileFragment) {
+                    updateNavUI(3);
+                    rlHeader.setVisibility(View.GONE);
+                    hideErrorOverlay(false);
+                }
             });
+        }
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (navController != null && navController.getCurrentDestination() != null) {
+                    int currentId = navController.getCurrentDestination().getId();
+                    if (currentId != R.id.homeFragment) {
+                        navController.navigate(R.id.homeFragment);
+                    } else {
+                        finish();
+                    }
+                } else {
+                    finish();
+                }
+            }
+        });
+    }
+
+    private void checkAndRestoreErrorState() {
+        if (!isNetworkAvailable()) {
+            showErrorOverlay(false);
+        }
+    }
+
+    private void setHeaderState(String title, boolean showProfile, boolean showContext) {
+        if (rlHeader.getVisibility() == View.GONE) return;
+        
+        if (title != null) {
+            tvPageTitle.setText(title);
+            tvPageTitle.setVisibility(View.VISIBLE);
+        } else {
+            tvPageTitle.setVisibility(View.GONE);
+        }
+
+        cvHomeProfile.setVisibility(showProfile ? View.VISIBLE : View.GONE);
+        llUserContext.setVisibility(showContext ? View.VISIBLE : View.GONE);
+        
+        float density = getResources().getDisplayMetrics().density;
+        if (showProfile || showContext) {
+            rlHeader.setPadding(rlHeader.getPaddingLeft(), (int)(16 * density), rlHeader.getPaddingRight(), (int)(12 * density));
+        } else {
+            rlHeader.setPadding(rlHeader.getPaddingLeft(), (int)(24 * density), rlHeader.getPaddingRight(), (int)(16 * density));
         }
     }
 
@@ -156,14 +344,111 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupFloatingARButton() {
         findViewById(R.id.btnARScan).setOnClickListener(v -> {
+            if (!isNetworkAvailable() || (llGlobalNetworkError != null && llGlobalNetworkError.getVisibility() == View.VISIBLE)) {
+                showErrorOverlay();
+                Toast.makeText(this, "Something went wrong...", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (featuredDish != null) {
                 Intent intent = new Intent(this, ARActivity.class);
                 intent.putExtra("selectedItem", featuredDish);
                 startActivity(intent);
             } else {
                 Toast.makeText(this, "Finding a featured dish for you...", Toast.LENGTH_SHORT).show();
+                fetchFeaturedDish();
             }
         });
+    }
+
+    private void setupNetworkMonitoring() {
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                runOnUiThread(() -> {
+                    refreshActiveContent();
+                });
+            }
+
+            @Override
+            public void onLost(@NonNull Network network) {
+                runOnUiThread(() -> showErrorOverlay());
+            }
+        };
+        
+        NetworkRequest request = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
+        connectivityManager.registerNetworkCallback(request, networkCallback);
+        
+        if (!isNetworkAvailable()) {
+            showErrorOverlay();
+        }
+    }
+
+    private boolean isNetworkAvailable() {
+        if (connectivityManager == null) return true;
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
+        return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateWelcomeText();
+        updateCartBadge();
+        if (ivHomeProfile != null) ivHomeProfile.setImageResource(SharedPrefManager.getUserAvatar(this));
+        
+        if (tvCurrentLocation != null) {
+            String locationText = SharedPrefManager.getCity(this) + ", " + SharedPrefManager.getDistrict(this);
+            tvCurrentLocation.setText(locationText);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        CartManager.getInstance().removeListener(cartListener);
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        }
+    }
+
+    private void updateWelcomeText() {
+        String name = SharedPrefManager.getUserName(this);
+        String email = SharedPrefManager.getUserEmail(this);
+        if (SharedPrefManager.isGuest(this)) name = "Guest";
+        else if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
+            if (email != null && email.contains("@")) name = email.split("@")[0];
+            else name = "User";
+        }
+        if (name != null && tvWelcome != null) tvWelcome.setText(getString(R.string.hello_placeholder, name.toUpperCase()));
+    }
+
+    private void updateCartBadge() {
+        if (tvCartBadge == null) return;
+        int count = CartManager.getInstance().getItemCount();
+        if (count > 0) {
+            tvCartBadge.setText(String.valueOf(count));
+            tvCartBadge.setVisibility(View.VISIBLE);
+        } else {
+            tvCartBadge.setVisibility(View.GONE);
+        }
+    }
+
+    private Fragment getActiveFragment() {
+        NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        if (navHost != null) {
+            List<Fragment> fragments = navHost.getChildFragmentManager().getFragments();
+            if (!fragments.isEmpty()) {
+                for (int i = fragments.size() - 1; i >= 0; i--) {
+                    Fragment f = fragments.get(i);
+                    if (f.isVisible()) return f;
+                }
+            }
+        }
+        return null;
     }
 
     private void fetchFeaturedDish() {
@@ -176,15 +461,9 @@ public class MainActivity extends AppCompatActivity {
                     List<MenuItem> foods = response.body().getFoodItems();
                     if (foods != null && !foods.isEmpty()) {
                         featuredDish = foods.get(0);
-                        
-                        NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                        if (navHost != null) {
-                            for (Fragment f : navHost.getChildFragmentManager().getFragments()) {
-                                if (f instanceof HomeFragment && f.isAdded()) {
-                                    ((HomeFragment) f).setFeaturedDish(featuredDish, null, -1);
-                                    break;
-                                }
-                            }
+                        Fragment topFragment = getActiveFragment();
+                        if (topFragment instanceof HomeFragment && topFragment.isAdded()) {
+                            ((HomeFragment) topFragment).setFeaturedDish(featuredDish, null, -1);
                         }
                     }
                 }

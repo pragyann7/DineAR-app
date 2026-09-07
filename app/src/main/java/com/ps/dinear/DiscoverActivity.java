@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -42,10 +44,14 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
 
     private MapView mapView;
     private MapLibreMap map;
-    private ProgressBar progressBar;
+    private View shimmerDiscover;
     private RecyclerView rvRestaurants;
     private RestaurantAdapter adapter;
     private View fabToggleList;
+    private View llDiscoverError;
+    private View btnDiscoverRetry;
+    private ProgressBar pbDiscoverRetry;
+    
     private boolean isListVisible = true;
     private List<Restaurant> restaurantList = new java.util.ArrayList<>();
     private FusedLocationProviderClient fusedLocationClient;
@@ -53,6 +59,8 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     private int focusRestaurantId = -1;
     private static final String MAPTILER_API_KEY = "CqA49jSeY7aVGUdjsSmL";
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
+    
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +69,12 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         setContentView(R.layout.activity_discover);
 
         mapView = findViewById(R.id.mapView);
-        progressBar = findViewById(R.id.progressBarDiscover);
+        shimmerDiscover = findViewById(R.id.shimmerDiscover);
         rvRestaurants = findViewById(R.id.rvDiscoverRestaurants);
         fabToggleList = findViewById(R.id.fabToggleList);
+        llDiscoverError = findViewById(R.id.llDiscoverError);
+        btnDiscoverRetry = findViewById(R.id.btnDiscoverRetry);
+        pbDiscoverRetry = findViewById(R.id.pbDiscoverRetry);
 
         if (getIntent() != null) {
             focusRestaurantId = getIntent().getIntExtra("focusRestaurantId", -1);
@@ -75,17 +86,19 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         requestLocationPermission();
 
         fabToggleList.setOnClickListener(v -> toggleRestaurantList());
+        
+        btnDiscoverRetry.setOnClickListener(v -> {
+            setOverlayLoading(true);
+            fetchRestaurants();
+        });
 
-        // Handle navigation bar insets for restaurant list and FAB
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rvRestaurants, (v, insets) -> {
             androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
-            
             android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
             float density = getResources().getDisplayMetrics().density;
             mlp.bottomMargin = (int) (16 * density) + navBars.bottom;
             v.setLayoutParams(mlp);
             
-            // Adjust FAB margin too
             android.view.ViewGroup.MarginLayoutParams fabMlp = (android.view.ViewGroup.MarginLayoutParams) fabToggleList.getLayoutParams();
             fabMlp.bottomMargin = (int) (20 * density) + navBars.bottom;
             fabToggleList.setLayoutParams(fabMlp);
@@ -97,6 +110,40 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         mapView.getMapAsync(this);
 
         findViewById(R.id.btnBackDiscover).setOnClickListener(v -> finish());
+    }
+
+    private void setOverlayLoading(boolean loading) {
+        if (btnDiscoverRetry != null) btnDiscoverRetry.setVisibility(loading ? View.GONE : View.VISIBLE);
+        if (pbDiscoverRetry != null) pbDiscoverRetry.setVisibility(loading ? View.VISIBLE : View.GONE);
+    }
+
+    private void showErrorOverlay() {
+        handler.removeCallbacksAndMessages(null);
+
+        Runnable showTask = () -> {
+            setOverlayLoading(false);
+            if (llDiscoverError != null && llDiscoverError.getVisibility() != View.VISIBLE) {
+                llDiscoverError.setAlpha(0f);
+                llDiscoverError.setVisibility(View.VISIBLE);
+                llDiscoverError.animate().alpha(1f).setDuration(300).start();
+            }
+        };
+
+        showTask.run();
+    }
+
+    private void hideErrorOverlay() {
+        handler.removeCallbacksAndMessages(null);
+        setOverlayLoading(false);
+        if (llDiscoverError == null || llDiscoverError.getVisibility() == View.GONE) return;
+        
+        llDiscoverError.animate()
+                .alpha(0f)
+                .setDuration(400)
+                .withEndAction(() -> {
+                    llDiscoverError.setVisibility(View.GONE);
+                    llDiscoverError.setAlpha(1f);
+                });
     }
 
     @Override
@@ -115,17 +162,11 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         for (int i = 0; i < restaurantList.size(); i++) {
             Restaurant r = restaurantList.get(i);
             if (r.getId() == focusRestaurantId) {
-                // 1. Scroll to the restaurant in the horizontal list
                 rvRestaurants.smoothScrollToPosition(i);
-                
-                // 2. Center map on the restaurant
                 if (map != null && r.getLatitude() != 0) {
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         new LatLng(r.getLatitude(), r.getLongitude()), 16));
                 }
-                
-                // Reset to avoid re-focusing on configuration changes if not desired
-                // focusRestaurantId = -1; 
                 break;
             }
         }
@@ -154,7 +195,6 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         adapter = new RestaurantAdapter(this, restaurantList, R.layout.item_restaurant_discover, new RestaurantAdapter.OnRestaurantClickListener() {
             @Override
             public void onRestaurantClick(Restaurant restaurant) {
-                // When a card is clicked, move the map to it
                 if (restaurant.getLatitude() != 0) {
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         new LatLng(restaurant.getLatitude(), restaurant.getLongitude()), 16));
@@ -186,11 +226,8 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
             }
         });
         rvRestaurants.setAdapter(adapter);
-
-        // Snap effect to center the cards
         new PagerSnapHelper().attachToRecyclerView(rvRestaurants);
 
-        // Sync map when scrolling through cards
         rvRestaurants.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -216,14 +253,12 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     public void onMapReady(@NonNull MapLibreMap mapLibreMap) {
         this.map = mapLibreMap;
         
-        // Add error listener to debug the 403 Forbidden issue
         mapView.addOnDidFailLoadingMapListener(errorMessage -> {
             runOnUiThread(() -> {
-                Toast.makeText(this, "Map error: " + errorMessage, Toast.LENGTH_LONG).show();
+                showErrorOverlay();
             });
         });
 
-        // Trying basic style as a test
         String styleUrl = "https://api.maptiler.com/maps/basic-v2/style.json?key=" + MAPTILER_API_KEY;
         map.setStyle(new Style.Builder().fromUri(styleUrl), style -> {
             enableLocationComponent(style);
@@ -231,7 +266,6 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         });
 
         map.setOnMarkerClickListener(marker -> {
-            // Find restaurant by title and scroll to it in the list
             for (int i = 0; i < restaurantList.size(); i++) {
                 if (restaurantList.get(i).getName().equals(marker.getTitle())) {
                     rvRestaurants.smoothScrollToPosition(i);
@@ -257,19 +291,19 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     private void fetchRestaurants() {
-        progressBar.setVisibility(View.VISIBLE);
-        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        if (shimmerDiscover != null) shimmerDiscover.setVisibility(View.VISIBLE);
+        if (rvRestaurants != null) rvRestaurants.setVisibility(View.GONE);
         
+        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
         String selectedCity = SharedPrefManager.getCity(this);
-        Log.d("DiscoverActivity", "Fetching restaurants for city: " + selectedCity);
         
         apiService.getRestaurants(selectedCity, null).enqueue(new Callback<List<Restaurant>>() {
             @Override
             public void onResponse(Call<List<Restaurant>> call, Response<List<Restaurant>> response) {
-                progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
+                    hideErrorOverlay();
+                    if (shimmerDiscover != null) shimmerDiscover.setVisibility(View.GONE);
                     List<Restaurant> list = response.body();
-                    Log.d("DiscoverActivity", "Successfully fetched " + list.size() + " restaurants");
                     
                     if (userLocation != null) {
                         calculateDistances(list);
@@ -279,22 +313,20 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                     restaurantList.addAll(list);
                     adapter.notifyDataSetChanged();
                     
+                    if (rvRestaurants != null) rvRestaurants.setVisibility(View.VISIBLE);
                     displayRestaurantsOnMap(list);
 
                     if (focusRestaurantId != -1) {
                         handleFocusRestaurant();
                     }
                 } else {
-                    Log.e("DiscoverActivity", "Failed to fetch restaurants. Code: " + response.code());
-                    Toast.makeText(DiscoverActivity.this, "Failed to load restaurants", Toast.LENGTH_SHORT).show();
+                    showErrorOverlay();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Restaurant>> call, Throwable t) {
-                progressBar.setVisibility(View.GONE);
-                Log.e("DiscoverActivity", "Network error while fetching restaurants", t);
-                Toast.makeText(DiscoverActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                showErrorOverlay();
             }
         });
     }
@@ -327,11 +359,11 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
     private void calculateDistances(List<Restaurant> restaurants) {
         if (userLocation == null) return;
         for (Restaurant r : restaurants) {
-            if (r.getLatitude() != 0 && r.getLongitude() != 0) {
+            if (r != null && r.getLatitude() != 0 && r.getLongitude() != 0) {
                 float[] results = new float[1];
                 Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
                         r.getLatitude(), r.getLongitude(), results);
-                r.setDistance(results[0] / 1000.0); // Convert to km
+                r.setDistance(results[0] / 1000.0);
             }
         }
     }
@@ -340,7 +372,6 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         if (map == null) return;
         
         if (restaurants.isEmpty()) {
-            Log.d("DiscoverActivity", "No restaurants found in the response");
             return;
         }
 
@@ -348,7 +379,6 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         int pointsCount = 0;
 
         for (Restaurant restaurant : restaurants) {
-            Log.d("DiscoverActivity", "Restaurant: " + restaurant.getName() + " at " + restaurant.getLatitude() + ", " + restaurant.getLongitude());
             if (restaurant.getLatitude() != 0 && restaurant.getLongitude() != 0) {
                 LatLng position = new LatLng(restaurant.getLatitude(), restaurant.getLongitude());
                 map.addMarker(new MarkerOptions()
@@ -362,16 +392,12 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
         }
 
         if (pointsCount > 0) {
-            Log.d("DiscoverActivity", "Zooming to " + pointsCount + " points");
             LatLngBounds bounds = builder.build();
-            
-            // Restrict camera to this district/area to reduce tile usage
             map.setLatLngBoundsForCameraTarget(bounds);
-            map.setMinZoomPreference(11); // Prevent zooming out to see the whole world
-            map.setMaxZoomPreference(18); // Limit high-res tile requests
+            map.setMinZoomPreference(11);
+            map.setMaxZoomPreference(18);
             
             if (pointsCount == 1) {
-                // If only one point, find it and zoom manually to avoid Builder.build() exception
                 for (Restaurant r : restaurants) {
                     if (r.getLatitude() != 0 && r.getLongitude() != 0) {
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -383,7 +409,6 @@ public class DiscoverActivity extends AppCompatActivity implements OnMapReadyCal
                 map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 150));
             }
         } else {
-            Log.w("DiscoverActivity", "No valid restaurant points to zoom to. Defaulting to user location if available.");
             if (map.getLocationComponent().getLastKnownLocation() != null) {
                 android.location.Location lastLoc = map.getLocationComponent().getLastKnownLocation();
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(

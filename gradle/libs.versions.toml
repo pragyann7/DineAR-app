@@ -11,8 +11,10 @@ constraintlayout = "2.2.1"
 maplibre = "13.6.0"
 playServicesLocation = "21.3.0"
 navigation = "2.8.8"
+shimmer = "0.5.0"
 
 [libraries]
+shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
