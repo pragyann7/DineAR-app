@@ -28,6 +28,14 @@ public class OrdersActivity extends AppCompatActivity {
         llNoOrders = findViewById(R.id.llNoOrders);
 
         rvOrders.setLayoutManager(new LinearLayoutManager(this));
+
+        // Handle navigation bar insets for list
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rvOrders, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), (int) (40 * density) + navBars.bottom);
+            return insets;
+        });
         
         findViewById(R.id.btnBackOrders).setOnClickListener(v -> finish());
 

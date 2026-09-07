@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- Header Section -->
+    <View
+        android:id="@+id/headerBackground"
+        android:layout_width="match_parent"
+        android:layout_height="340dp"
+        android:background="@drawable/bg_profile_header"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvProfileTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24.dp"
+        android:layout_marginTop="32.dp"
+        android:text="Profile"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/btnMore"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="20dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_more_vert"
+        app:layout_constraintBottom_toBottomOf="@id/tvProfileTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvProfileTitle" />
+
+    <!-- Avatar Section -->
+    <RelativeLayout
+        android:id="@+id/avatarContainer"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:layout_marginTop="24.dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvProfileTitle">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivProfileImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="2dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/avatar_0"
+            app:shapeAppearanceOverlay="@style/CircleImageStyle"
+            app:strokeColor="@color/white"
+            app:strokeWidth="2dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnEditAvatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="2dp"
+            android:layout_marginBottom="2dp"
+            app:cardBackgroundColor="@color/orange_primary"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/white"
+            app:strokeWidth="2dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_edit_pencil" />
+        </com.google.android.material.card.MaterialCardView>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvProfileName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16.dp"
+        android:text="Md Abu Ubayda"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/avatarContainer" />
+
+    <TextView
+        android:id="@+id/tvProfileEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4.dp"
+        android:text="+88001712346789"
+        android:textColor="#E0E0E0"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvProfileName" />
+
+    <!-- Body Container -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollViewProfile"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="24.dp"
+        android:background="@drawable/bg_white_top_rounded"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvProfileEmail">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="24.dp"
+            android:paddingTop="32.dp"
+            android:paddingBottom="40dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20.dp"
+                android:text="Account Overview"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- My Profile -->
+            <RelativeLayout
+                android:id="@+id/btnPersonalInfo"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground">
+
+                <View
+                    android:id="@+id/iconProfileBg"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_icon_blue" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignStart="@id/iconProfileBg"
+                    android:layout_alignTop="@id/iconProfileBg"
+                    android:layout_alignEnd="@id/iconProfileBg"
+                    android:layout_alignBottom="@id/iconProfileBg"
+                    android:padding="2dp"
+                    android:src="@drawable/ic_person"
+                    app:tint="#2196F3" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="16.dp"
+                    android:layout_toEndOf="@id/iconProfileBg"
+                    android:text="My Profile"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/gray_text" />
+            </RelativeLayout>
+
+            <!-- My Orders -->
+            <RelativeLayout
+                android:id="@+id/btnProfileOrders"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground">
+
+                <View
+                    android:id="@+id/iconOrdersBg"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_icon_green" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignStart="@id/iconOrdersBg"
+                    android:layout_alignTop="@id/iconOrdersBg"
+                    android:layout_alignEnd="@id/iconOrdersBg"
+                    android:layout_alignBottom="@id/iconOrdersBg"
+                    android:padding="2dp"
+                    android:src="@drawable/ic_orders"
+                    app:tint="#4CAF50" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="16.dp"
+                    android:layout_toEndOf="@id/iconOrdersBg"
+                    android:text="My Orders"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/gray_text" />
+            </RelativeLayout>
+
+            <!-- Change Password -->
+            <RelativeLayout
+                android:id="@+id/btnChangePassword"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground">
+
+                <View
+                    android:id="@+id/iconPasswordBg"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_icon_orange" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignStart="@id/iconPasswordBg"
+                    android:layout_alignTop="@id/iconPasswordBg"
+                    android:layout_alignEnd="@id/iconPasswordBg"
+                    android:layout_alignBottom="@id/iconPasswordBg"
+                    android:padding="2dp"
+                    android:src="@drawable/ic_lock"
+                    app:tint="#FF9800" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="16.dp"
+                    android:layout_toEndOf="@id/iconPasswordBg"
+                    android:text="Change Password"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/gray_text" />
+            </RelativeLayout>
+
+            <!-- Settings -->
+            <RelativeLayout
+                android:id="@+id/btnSettings"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground">
+
+                <View
+                    android:id="@+id/iconSettingsBg"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_centerVertical="true"
+                    android:background="#F5F5F5" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignStart="@id/iconSettingsBg"
+                    android:layout_alignTop="@id/iconSettingsBg"
+                    android:layout_alignEnd="@id/iconSettingsBg"
+                    android:layout_alignBottom="@id/iconSettingsBg"
+                    android:padding="2dp"
+                    android:src="@drawable/ic_settings"
+                    app:tint="@color/gray_dark" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="16.dp"
+                    android:layout_toEndOf="@id/iconSettingsBg"
+                    android:text="Settings"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/gray_text" />
+            </RelativeLayout>
+
+            <!-- Logout -->
+            <RelativeLayout
+                android:id="@+id/btnProfileLogout"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground">
+
+                <View
+                    android:id="@+id/iconLogoutBg"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_centerVertical="true"
+                    android:background="#FFEBEE" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignStart="@id/iconLogoutBg"
+                    android:layout_alignTop="@id/iconLogoutBg"
+                    android:layout_alignEnd="@id/iconLogoutBg"
+                    android:layout_alignBottom="@id/iconLogoutBg"
+                    android:padding="2dp"
+                    android:src="@drawable/ic_logout"
+                    app:tint="#F44336" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="16.dp"
+                    android:layout_toEndOf="@id/iconLogoutBg"
+                    android:text="Logout"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/gray_text" />
+            </RelativeLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

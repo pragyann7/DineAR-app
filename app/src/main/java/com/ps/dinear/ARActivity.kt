@@ -729,7 +729,7 @@ private fun ARScreen(
              Spacer(modifier = Modifier.statusBarsPadding())
         }
 
-        Box(modifier = Modifier.fillMaxSize().padding(bottom = 32.dp), contentAlignment = Alignment.BottomCenter) {
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = 17.dp).navigationBarsPadding(), contentAlignment = Alignment.BottomCenter) {
             if (transform.selectedNodeId == null) {
                 ExtendedFloatingActionButton(
                     onClick = { isMenuOpen = true },
@@ -1179,7 +1179,10 @@ private fun MenuOverlay(
 
                 Surface(modifier = Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 16.dp) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp, top = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(bottom = 17.dp, top = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(
@@ -1587,7 +1590,7 @@ fun TransformPanel(
     onDelete: (() -> Unit)? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding()
+        modifier = Modifier.fillMaxWidth().padding(24.dp)
             .graphicsLayer { clip = true },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(28.dp),

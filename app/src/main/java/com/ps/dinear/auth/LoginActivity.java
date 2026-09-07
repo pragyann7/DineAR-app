@@ -23,6 +23,13 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         super.setContentView(R.layout.activity_login);
 
+        // Handle navigation bar insets
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), navBars.bottom);
+            return insets;
+        });
+
         EditText etEmail = findViewById(R.id.etLoginEmail);
         EditText etPassword = findViewById(R.id.etLoginPassword);
 

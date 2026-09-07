@@ -6,7 +6,9 @@ import android.util.Log;
 import com.ps.dinear.data.model.FavoriteIdsResponse;
 import com.ps.dinear.data.model.FavoriteRequest;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import retrofit2.Call;
@@ -19,6 +21,12 @@ public class FavoritesManager {
     private Set<Integer> favoriteRestaurantIds = new HashSet<>();
     private Set<Integer> favoriteFoodIds = new HashSet<>();
     private boolean isLoaded = false;
+    
+    private final List<FavoritesListener> listeners = new ArrayList<>();
+
+    public interface FavoritesListener {
+        void onFavoritesUpdated();
+    }
 
     private FavoritesManager() {}
 
@@ -28,10 +36,29 @@ public class FavoritesManager {
         }
         return instance;
     }
+    
+    public void addListener(FavoritesListener l) {
+        if (!listeners.contains(l)) listeners.add(l);
+    }
+    
+    public void removeListener(FavoritesListener l) {
+        listeners.remove(l);
+    }
+    
+    private void notifyListeners() {
+        for (FavoritesListener l : listeners) {
+            l.onFavoritesUpdated();
+        }
+    }
 
     public void loadFavorites(Context context) {
         String token = SharedPrefManager.getAccessToken(context);
-        if (token == null) return;
+        if (token == null) {
+            favoriteRestaurantIds.clear();
+            favoriteFoodIds.clear();
+            notifyListeners();
+            return;
+        }
 
         ApiService api = RetrofitClient.getClient(context).create(ApiService.class);
         api.getFavoriteIds("Bearer " + token).enqueue(new Callback<FavoriteIdsResponse>() {
@@ -43,7 +70,8 @@ public class FavoritesManager {
                     favoriteFoodIds.clear();
                     favoriteFoodIds.addAll(response.body().getFoodIds());
                     isLoaded = true;
-                    Log.d(TAG, "Favorites loaded successfully");
+                    Log.d(TAG, "Favorites loaded: Restaurants=" + favoriteRestaurantIds.size() + ", Foods=" + favoriteFoodIds.size());
+                    notifyListeners();
                 }
             }
 
@@ -65,18 +93,18 @@ public class FavoritesManager {
     public void toggleRestaurantFavorite(Context context, int id, ToggleCallback callback) {
         boolean isCurrentlyFav = isRestaurantFavorite(id);
         
-        // Optimistic UI update
         if (isCurrentlyFav) favoriteRestaurantIds.remove(id);
         else favoriteRestaurantIds.add(id);
         callback.onStateChanged(!isCurrentlyFav);
+        notifyListeners();
 
         String token = SharedPrefManager.getAccessToken(context);
         if (token == null) {
             callback.onError("Please login to favorite restaurants");
-            // Revert optimistic update
             if (isCurrentlyFav) favoriteRestaurantIds.add(id);
             else favoriteRestaurantIds.remove(id);
             callback.onStateChanged(isCurrentlyFav);
+            notifyListeners();
             return;
         }
 
@@ -89,14 +117,15 @@ public class FavoritesManager {
                         favoriteRestaurantIds.add(id);
                         callback.onStateChanged(true);
                         callback.onError("Failed to remove favorite");
+                        notifyListeners();
                     }
                 }
-
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
                     favoriteRestaurantIds.add(id);
                     callback.onStateChanged(true);
                     callback.onError("Network error");
+                    notifyListeners();
                 }
             });
         } else {
@@ -106,18 +135,16 @@ public class FavoritesManager {
                     if (!response.isSuccessful()) {
                         favoriteRestaurantIds.remove(id);
                         callback.onStateChanged(false);
-                        String errorMsg = "Failed to add favorite";
-                        if (response.code() == 401) errorMsg = "Session expired. Please login again.";
-                        else if (response.code() == 400) errorMsg = "Item not available for favorites";
-                        callback.onError(errorMsg);
+                        callback.onError("Failed to add favorite");
+                        notifyListeners();
                     }
                 }
-
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
                     favoriteRestaurantIds.remove(id);
                     callback.onStateChanged(false);
                     callback.onError("Network error");
+                    notifyListeners();
                 }
             });
         }
@@ -126,18 +153,18 @@ public class FavoritesManager {
     public void toggleFoodFavorite(Context context, int id, ToggleCallback callback) {
         boolean isCurrentlyFav = isFoodFavorite(id);
         
-        // Optimistic UI update
         if (isCurrentlyFav) favoriteFoodIds.remove(id);
         else favoriteFoodIds.add(id);
         callback.onStateChanged(!isCurrentlyFav);
+        notifyListeners();
 
         String token = SharedPrefManager.getAccessToken(context);
         if (token == null) {
             callback.onError("Please login to favorite foods");
-            // Revert optimistic update
             if (isCurrentlyFav) favoriteFoodIds.add(id);
             else favoriteFoodIds.remove(id);
             callback.onStateChanged(isCurrentlyFav);
+            notifyListeners();
             return;
         }
 
@@ -150,14 +177,15 @@ public class FavoritesManager {
                         favoriteFoodIds.add(id);
                         callback.onStateChanged(true);
                         callback.onError("Failed to remove favorite");
+                        notifyListeners();
                     }
                 }
-
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
                     favoriteFoodIds.add(id);
                     callback.onStateChanged(true);
                     callback.onError("Network error");
+                    notifyListeners();
                 }
             });
         } else {
@@ -167,18 +195,16 @@ public class FavoritesManager {
                     if (!response.isSuccessful()) {
                         favoriteFoodIds.remove(id);
                         callback.onStateChanged(false);
-                        String errorMsg = "Failed to add favorite";
-                        if (response.code() == 401) errorMsg = "Session expired. Please login again.";
-                        else if (response.code() == 400) errorMsg = "Item not available for favorites";
-                        callback.onError(errorMsg);
+                        callback.onError("Failed to add favorite");
+                        notifyListeners();
                     }
                 }
-
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
                     favoriteFoodIds.remove(id);
                     callback.onStateChanged(false);
                     callback.onError("Network error");
+                    notifyListeners();
                 }
             });
         }

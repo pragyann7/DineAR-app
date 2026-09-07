@@ -146,13 +146,22 @@
                 android:textColor="@color/gray_text"
                 android:visibility="gone" />
 
-            <ProgressBar
-                android:id="@+id/pbOrders"
-                android:layout_width="wrap_content"
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/shimmerOrders"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="24.dp"
-                android:visibility="gone" />
+                android:paddingHorizontal="16.dp"
+                android:paddingTop="8.dp"
+                android:visibility="gone"
+                app:shimmer_auto_start="true">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <include layout="@layout/skeleton_item_order" />
+                    <include layout="@layout/skeleton_item_order" />
+                </LinearLayout>
+            </com.facebook.shimmer.ShimmerFrameLayout>
 
         </LinearLayout>
 

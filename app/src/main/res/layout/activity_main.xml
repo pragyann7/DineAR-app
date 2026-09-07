@@ -12,7 +12,7 @@
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Top Bar -->
+    <!-- Global Top Bar -->
     <RelativeLayout
         android:id="@+id/rlHeader"
         android:layout_width="match_parent"
@@ -21,8 +21,22 @@
         android:clipToPadding="false"
         android:paddingHorizontal="24.dp"
         android:paddingTop="16.dp"
+        android:paddingBottom="12.dp"
         app:layout_constraintTop_toBottomOf="@id/statusBarSpacer">
 
+        <!-- Page Title (Favorites / Profile) -->
+        <TextView
+            android:id="@+id/tvPageTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="My Favorites"
+            android:textColor="@color/black"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Profile Avatar (Home only) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cvHomeProfile"
             android:layout_width="50dp"
@@ -43,7 +57,9 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Welcome + Location (Home only) -->
         <LinearLayout
+            android:id="@+id/llUserContext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
@@ -93,6 +109,7 @@
 
         </LinearLayout>
 
+        <!-- Global Cart -->
         <RelativeLayout
             android:id="@+id/btnCart"
             android:layout_width="40dp"
@@ -125,390 +142,28 @@
 
     </RelativeLayout>
 
-    <!-- Search and Filter Bar -->
-    <LinearLayout
-        android:id="@+id/llSearchContainer"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginHorizontal="24.dp"
-        android:layout_marginTop="4.dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/rlHeader">
-
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/searchViewHome"
-            android:layout_width="0.dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_search"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:theme="@style/SearchViewTheme"
-            app:iconifiedByDefault="false"
-            app:queryBackground="@android:color/transparent"
-            app:queryHint="Search food, restaurants..." />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/btnFilter"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="12.dp"
-            app:cardBackgroundColor="@color/white"
-            app:strokeColor="#FFA672"
-            app:cardCornerRadius="12.dp"
-            app:cardElevation="0dp">
-
-            <ImageView
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:layout_gravity="center"
-                android:src="@drawable/icon_filter" />
-
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
-
-    <!-- Search Tabs -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayoutSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/llSearchContainer"
-        app:tabIndicatorColor="@color/orange_primary"
-        app:tabSelectedTextColor="@color/orange_primary"
-        app:tabTextColor="@color/gray_text"
-        app:tabRippleColor="@null">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Restaurants" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Foods" />
-
-    </com.google.android.material.tabs.TabLayout>
-
-    <!-- Main Content -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nestedScrollView"
-        android:layout_width="match_parent"
-        android:layout_height="0.dp"
-        android:layout_marginTop="16.dp"
+        android:layout_height="0dp"
+        app:defaultNavHost="true"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/tabLayoutSearch">
+        app:layout_constraintTop_toBottomOf="@id/rlHeader"
+        app:navGraph="@navigation/nav_graph" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Promo Banner -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cvPromoBanner"
-                android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:layout_marginHorizontal="24.dp"
-                app:cardCornerRadius="20.dp"
-                app:cardElevation="0dp"
-                android:backgroundTint="#85FF5B00">
-
-                <ImageView
-                    android:id="@+id/ivPromoBannerImage"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/burger" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#66000000"
-                    android:gravity="center_vertical"
-                    android:orientation="vertical"
-                    android:padding="24.dp">
-
-                    <TextView
-                        android:id="@+id/tvPromoBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@color/orange_primary"
-                        android:paddingHorizontal="8.dp"
-                        android:paddingVertical="4.dp"
-                        android:text="LIMITED OFFER"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvPromoBannerTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12.dp"
-                        android:text="30% Off Fine Dining\nTonight"
-                        android:textColor="@color/white"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Category Header -->
-            <RelativeLayout
-                android:id="@+id/rlCategoriesHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Explore Categories"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-            </RelativeLayout>
-
-            <!-- Category Filter -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvFilters"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12.dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_filter" />
-
-            <!-- Explore Restaurants Header -->
-            <RelativeLayout
-                android:id="@+id/rlExploreHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/explore_restaurants"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="See All"
-                    android:textColor="@color/orange_primary"
-                    android:textStyle="bold" />
-
-            </RelativeLayout>
-
-            <!-- Explore Restaurants List -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16.dp"
-                    android:paddingHorizontal="24.dp"
-                    tools:listitem="@layout/item_restaurant" />
-
-                <!-- No Results Placeholder (Inline) -->
-                <LinearLayout
-                    android:id="@+id/llNoResults"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    android:padding="40.dp">
-
-                    <ImageView
-                        android:id="@+id/ivNoResults"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:src="@drawable/icon_foodcart"
-                        app:tint="@color/gray_text"
-                        android:alpha="0.4" />
-
-                    <TextView
-                        android:id="@+id/tvNoResultsMessage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16.dp"
-                        android:text="No treats found here!"
-                        android:textColor="@color/black"
-                        android:textSize="17sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvNoResultsDescription"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8.dp"
-                        android:text="Try exploring other delicious categories!"
-                        android:textColor="@color/gray_text"
-                        android:textSize="13sp"
-                        android:textAlignment="center"
-                        android:gravity="center" />
-
-                </LinearLayout>
-
-            </FrameLayout>
-
-            <!-- Section Divider -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp"
-                android:background="@color/divider" />
-
-            <RelativeLayout
-                android:id="@+id/rlFeaturedFoodsHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Trending Dishes"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="View All"
-                    android:textColor="@color/orange_primary"
-                    android:textStyle="bold" />
-
-            </RelativeLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvFeaturedFoods"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16.dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_featured_food" />
-
-            <!-- Section Divider -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="24.dp"
-                android:background="@color/divider" />
-
-            <!-- Register Restaurant Info -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardRegisterInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="24.dp"
-                android:layout_marginBottom="16.dp"
-                app:cardCornerRadius="16.dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/divider"
-                app:cardBackgroundColor="@color/white">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20.dp"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        app:tint="@color/orange_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0.dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="16.dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/own_a_restaurant"
-                            android:textColor="@color/black"
-                            android:textStyle="bold"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2.dp"
-                            android:text="@string/register_info"
-                            android:textColor="@color/gray_dark"
-                            android:textSize="12sp"
-                            android:lineSpacingExtra="2dp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Footer Spacer for FAB -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="80.dp" />
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:indeterminateTint="@color/orange_primary"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabLayoutSearch" />
-
-    <!-- Network Error Placeholder (Full Screen Overlay) -->
+    <!-- Network Error Placeholder (Global Overlay) -->
     <LinearLayout
-        android:id="@+id/llNetworkError"
+        android:id="@+id/llGlobalNetworkError"
         android:layout_width="match_parent"
-        android:layout_height="0.dp"
+        android:layout_height="0dp"
         android:background="@color/app_bg"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="32.dp"
         android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintTop_toBottomOf="@id/rlHeader">
 
@@ -539,7 +194,7 @@
             android:textSize="14sp" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnRetry"
+            android:id="@+id/btnGlobalRetry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32.dp"
@@ -549,6 +204,14 @@
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/pbGlobalRetry"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="32.dp"
+            android:indeterminateTint="@color/orange_primary"
+            android:visibility="gone" />
 
     </LinearLayout>
 
@@ -569,13 +232,17 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true">
             <ImageView
+                android:id="@+id/ivNavHome"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/icon_home"
                 app:tint="@color/orange_primary" />
             <TextView
+                android:id="@+id/tvNavHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Home"
@@ -589,13 +256,17 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true">
             <ImageView
+                android:id="@+id/ivNavNearby"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@android:drawable/ic_menu_directions"
                 app:tint="@color/gray_text" />
             <TextView
+                android:id="@+id/tvNavNearby"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/discover"
@@ -613,13 +284,17 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true">
             <ImageView
+                android:id="@+id/ivNavFavorites"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@android:drawable/btn_star_big_off"
                 app:tint="@color/gray_text" />
             <TextView
+                android:id="@+id/tvNavFavorites"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Favorites"
@@ -633,13 +308,17 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true">
             <ImageView
+                android:id="@+id/ivNavProfile"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_person"
                 app:tint="@color/gray_text" />
             <TextView
+                android:id="@+id/tvNavProfile"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Profile"

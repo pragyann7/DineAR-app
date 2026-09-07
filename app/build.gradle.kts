@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.maplibre)
     implementation(libs.play.services.location)
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
@@ -79,6 +81,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation("androidx.core:core-splashscreen:1.2.0")
+    implementation(libs.shimmer)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)

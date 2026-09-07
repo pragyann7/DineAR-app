@@ -209,6 +209,14 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        View bottomAction = findViewById(R.id.llBottomAction);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(bottomAction, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), (int) (9 * density), v.getPaddingRight(), (int) (9 * density) + navBars.bottom);
+            return insets;
+        });
+
         TextView tvDescription = findViewById(R.id.tvRestDescriptionDetails);
         if (description != null && description.length() > 150) {
             String truncated = description.substring(0, 150) + "... ";

@@ -181,6 +181,15 @@ public class FoodDetailsActivity extends AppCompatActivity {
             intent.putExtra("imageUrl", item.getImageUrl());
             startActivity(intent);
         });
+
+        // Handle navigation bar insets for bottom action bar
+        View bottomActions = findViewById(R.id.llBottomActions);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(bottomActions, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), (int) (9 * density), v.getPaddingRight(), (int) (9 * density) + navBars.bottom);
+            return insets;
+        });
     }
 
     @Override
