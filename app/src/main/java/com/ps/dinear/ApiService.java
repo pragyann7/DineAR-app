@@ -138,7 +138,7 @@ public interface ApiService {
     @GET("api/orders/{id}/")
     Call<Order> getOrderDetails(@Header("Authorization") String token, @Path("id") int id);
 
-    @GET("api/reviews/reviews/")
+    @GET("api/reviews/")
     Call<ReviewListResponse> getReviews(
         @Header("Authorization") String token,
         @Query("restaurant_id") Integer restaurantId,
@@ -149,13 +149,13 @@ public interface ApiService {
         @Query("filter") String filter
     );
 
-    @POST("api/reviews/reviews/")
+    @POST("api/reviews/")
     Call<Review> postReview(
         @Header("Authorization") String token,
         @Body Review review
     );
 
-    @POST("api/reviews/reviews/{id}/helpful/")
+    @POST("api/reviews/{id}/helpful/")
     Call<java.util.Map<String, Object>> toggleHelpful(
         @Header("Authorization") String token,
         @Path("id") int reviewId

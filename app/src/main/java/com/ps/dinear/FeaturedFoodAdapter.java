@@ -61,6 +61,8 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
             intent.putExtra("selectedItem", item);
             if (item.getRestaurantId() != null) {
                 intent.putExtra("restaurantId", item.getRestaurantId());
+                intent.putExtra("restaurantName", item.getRestaurantName());
+                intent.putExtra("restaurantSlug", item.getRestaurantSlug());
             }
             context.startActivity(intent);
         });

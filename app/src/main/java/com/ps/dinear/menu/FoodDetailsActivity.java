@@ -61,6 +61,46 @@ public class FoodDetailsActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvFoodCategoryDetails)).setText(item.getCategory() != null ? item.getCategory() : "Food");
         ((TextView) findViewById(R.id.tvFoodNameDetails)).setText(item.getName());
 
+        String restaurantName = getIntent().getStringExtra("restaurantName");
+        if (restaurantName == null && item.getRestaurantName() != null) {
+            restaurantName = item.getRestaurantName();
+        }
+        
+        String restaurantSlug = getIntent().getStringExtra("restaurantSlug");
+        if (restaurantSlug == null && item.getRestaurantSlug() != null) {
+            restaurantSlug = item.getRestaurantSlug();
+        }
+
+        final String finalResName = restaurantName;
+        final String finalResSlug = restaurantSlug;
+        final int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+        final double deliveryCharge = getIntent().getDoubleExtra("deliveryCharge", 50.0);
+
+        TextView tvRestaurantLink = findViewById(R.id.tvRestaurantNameDetails);
+        if (tvRestaurantLink != null && finalResName != null) {
+            tvRestaurantLink.setText(finalResName);
+            findViewById(R.id.llRestaurantLink).setOnClickListener(v -> {
+                Intent intent = new Intent(this, com.ps.dinear.RestaurantDetailsActivity.class);
+                intent.putExtra("restaurantId", restaurantId);
+                intent.putExtra("restaurantSlug", finalResSlug);
+                intent.putExtra("restaurantName", finalResName);
+                intent.putExtra("deliveryCharge", deliveryCharge);
+                
+                // Pass all available restaurant info to avoid empty details
+                intent.putExtra("cuisine", getIntent().getStringExtra("cuisine"));
+                intent.putExtra("rating", getIntent().getDoubleExtra("rating", 0.0));
+                intent.putExtra("description", getIntent().getStringExtra("description"));
+                intent.putExtra("deliveryTime", getIntent().getStringExtra("deliveryTime"));
+                intent.putExtra("imageUrl", getIntent().getStringExtra("imageUrl"));
+                intent.putExtra("bannerImage", getIntent().getStringExtra("bannerImage"));
+                intent.putExtra("address", getIntent().getStringExtra("address"));
+                intent.putExtra("latitude", getIntent().getDoubleExtra("latitude", 0.0));
+                intent.putExtra("longitude", getIntent().getDoubleExtra("longitude", 0.0));
+                
+                startActivity(intent);
+            });
+        }
+
         TextView tvPrice = findViewById(R.id.tvFoodPriceDetails);
         TextView tvOldPrice = findViewById(R.id.tvFoodOldPriceDetails);
 
@@ -152,17 +192,14 @@ public class FoodDetailsActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnAddToCart).setOnClickListener(v -> {
-            int restaurantId = getIntent().getIntExtra("restaurantId", -1);
-            String restaurantName = getIntent().getStringExtra("restaurantName");
-            double deliveryCharge = getIntent().getDoubleExtra("deliveryCharge", 50.0);
-
-            if (restaurantId == -1 && item.getRestaurantId() != null) {
-                restaurantId = item.getRestaurantId();
+            int finalRestaurantId = restaurantId;
+            if (finalRestaurantId == -1 && item.getRestaurantId() != null) {
+                finalRestaurantId = item.getRestaurantId();
             }
 
-            if (restaurantId != -1) {
+            if (finalRestaurantId != -1) {
                 for (int i = 0; i < quantity; i++) {
-                    CartManager.getInstance().addItem(item, restaurantId, restaurantName, deliveryCharge);
+                    CartManager.getInstance().addItem(item, finalRestaurantId, finalResName, deliveryCharge);
                 }
                 Toast.makeText(this, "Added " + quantity + " to cart!", Toast.LENGTH_SHORT).show();
             } else {

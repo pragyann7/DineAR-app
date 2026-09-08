@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import com.bumptech.glide.Glide;
@@ -31,9 +32,10 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
 
     private int restaurantId;
     private String restaurantSlug;
-    private String name;
-    private double latitude, longitude;
+    private String name, description, cuisine, deliveryTime, imageUrl, bannerImage, address, city, district;
+    private double latitude, longitude, rating, distance;
     private double deliveryCharge;
+    private boolean isFeatured;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,26 +52,108 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         restaurantId = getIntent().getIntExtra("restaurantId", -1);
         restaurantSlug = getIntent().getStringExtra("restaurantSlug");
         name = getIntent().getStringExtra("restaurantName");
-        String cuisine = getIntent().getStringExtra("cuisine");
-        double rating = getIntent().getDoubleExtra("rating", 0.0);
-        String description = getIntent().getStringExtra("description");
-        String deliveryTime = getIntent().getStringExtra("deliveryTime");
-        double distance = getIntent().getDoubleExtra("distance", 0.0);
-        String imageUrl = getIntent().getStringExtra("imageUrl");
-        String bannerImage = getIntent().getStringExtra("bannerImage");
-        String address = getIntent().getStringExtra("address");
-        String city = getIntent().getStringExtra("city");
-        String district = getIntent().getStringExtra("district");
-        boolean isFeatured = getIntent().getBooleanExtra("isFeatured", false);
+        cuisine = getIntent().getStringExtra("cuisine");
+        rating = getIntent().getDoubleExtra("rating", 0.0);
+        description = getIntent().getStringExtra("description");
+        deliveryTime = getIntent().getStringExtra("deliveryTime");
+        distance = getIntent().getDoubleExtra("distance", 0.0);
+        imageUrl = getIntent().getStringExtra("imageUrl");
+        bannerImage = getIntent().getStringExtra("bannerImage");
+        address = getIntent().getStringExtra("address");
+        city = getIntent().getStringExtra("city");
+        district = getIntent().getStringExtra("district");
+        isFeatured = getIntent().getBooleanExtra("isFeatured", false);
         latitude = getIntent().getDoubleExtra("latitude", 0.0);
         longitude = getIntent().getDoubleExtra("longitude", 0.0);
         deliveryCharge = getIntent().getDoubleExtra("deliveryCharge", 50.0);
 
+        refreshUI();
+
+        findViewById(R.id.btnBackRestDetails).setOnClickListener(v -> finish());
+
+        findViewById(R.id.cvAddressCard).setOnClickListener(v -> {
+            if (latitude != 0 && longitude != 0) {
+                Intent discoverIntent = new Intent(this, DiscoverActivity.class);
+                discoverIntent.putExtra("focusRestaurantId", restaurantId);
+                discoverIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(discoverIntent);
+            } else {
+                Toast.makeText(this, "Coordinates not available for this restaurant", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        ImageView btnFavorite = findViewById(R.id.btnFavoriteRest);
+        if (FavoritesManager.getInstance().isRestaurantFavorite(restaurantId)) {
+            btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
+            btnFavorite.setColorFilter(getResources().getColor(R.color.red_600));
+        }
+
+        btnFavorite.setOnClickListener(v -> {
+            FavoritesManager.getInstance().toggleRestaurantFavorite(this, restaurantId, new FavoritesManager.ToggleCallback() {
+                @Override
+                public void onStateChanged(boolean isFavorite) {
+                    if (isFavorite) {
+                        btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
+                        btnFavorite.setColorFilter(getResources().getColor(R.color.red_600));
+                    } else {
+                        btnFavorite.setImageResource(R.drawable.icon_favorite);
+                        btnFavorite.setColorFilter(getResources().getColor(R.color.black));
+                    }
+                }
+                @Override
+                public void onError(String message) {
+                    Toast.makeText(RestaurantDetailsActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        findViewById(R.id.btnViewMenu).setOnClickListener(v -> {
+            Intent intent = new Intent(this, MenuActivity.class);
+            passRestaurantExtras(intent);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.cvARExplore).setOnClickListener(v -> {
+            Intent intent = new Intent(this, MenuActivity.class);
+            passRestaurantExtras(intent);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnWriteReviewRest).setOnClickListener(v -> {
+            Intent intent = new Intent(this, WriteReviewActivity.class);
+            intent.putExtra("restaurantId", restaurantId);
+            intent.putExtra("restaurantName", name);
+            intent.putExtra("restaurantImage", imageUrl);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnSeeAllReviewsRest).setOnClickListener(v -> {
+            Intent intent = new Intent(this, ReviewsListingActivity.class);
+            intent.putExtra("restaurantId", restaurantId);
+            intent.putExtra("restaurantName", name);
+            intent.putExtra("imageUrl", imageUrl);
+            startActivity(intent);
+        });
+
+        View bottomAction = findViewById(R.id.llBottomAction);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(bottomAction, (v, insets) -> {
+            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            float density = getResources().getDisplayMetrics().density;
+            v.setPadding(v.getPaddingLeft(), (int) (9 * density), v.getPaddingRight(), (int) (9 * density) + navBars.bottom);
+            return insets;
+        });
+
+        if (description == null || description.isEmpty() || cuisine == null || cuisine.isEmpty()) {
+            fetchRestaurantDetails();
+        }
+    }
+
+    private void refreshUI() {
         ((TextView) findViewById(R.id.tvRestNameDetails)).setText(name);
         
         if (rating > 0) {
-            ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.valueOf(rating));
-            ((TextView) findViewById(R.id.tvAvgRatingRest)).setText(String.valueOf(rating));
+            ((TextView) findViewById(R.id.tvRestRatingDetails)).setText(String.format(Locale.US, "%.1f", rating));
+            ((TextView) findViewById(R.id.tvAvgRatingRest)).setText(String.format(Locale.US, "%.1f", rating));
             ((android.widget.RatingBar) findViewById(R.id.rbRestDetails)).setRating((float) rating);
             ((TextView) findViewById(R.id.tvAvgRatingRestSubtext)).setText("out of 5");
         } else {
@@ -80,12 +164,28 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         }
 
         ((TextView) findViewById(R.id.tvRestTimeDetails)).setText(deliveryTime != null ? deliveryTime : "20-30 min");
-        ((TextView) findViewById(R.id.tvRestDescriptionDetails)).setText(description);
+        
+        TextView tvDesc = findViewById(R.id.tvRestDescriptionDetails);
+        if (description != null && !description.isEmpty()) {
+            if (description.length() > 150) {
+                String truncated = description.substring(0, 150) + "... ";
+                android.text.SpannableString ss = new android.text.SpannableString(truncated + "Read more");
+                android.text.style.ForegroundColorSpan fcs = new android.text.style.ForegroundColorSpan(getResources().getColor(R.color.orange_primary));
+                android.text.style.StyleSpan bold = new android.text.style.StyleSpan(android.graphics.Typeface.BOLD);
+                ss.setSpan(fcs, truncated.length(), ss.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ss.setSpan(bold, truncated.length(), ss.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                tvDesc.setText(ss);
+                tvDesc.setOnClickListener(v -> tvDesc.setText(description));
+            } else {
+                tvDesc.setText(description);
+            }
+        }
         
         findViewById(R.id.tvPromoBadgeDetails).setVisibility(isFeatured ? View.VISIBLE : View.GONE);
 
         com.google.android.material.chip.ChipGroup cgCuisines = findViewById(R.id.cgCuisines);
         if (cuisine != null && !cuisine.isEmpty()) {
+            cgCuisines.removeAllViews();
             String[] parts = cuisine.split(", ");
             for (String part : parts) {
                 com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
@@ -117,6 +217,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         TextView tvAddress = findViewById(R.id.tvRestAddressDetails);
         if (fullAddress.length() > 0) {
             tvAddress.setText(fullAddress.toString());
+            ((ImageView) findViewById(R.id.ivMapIcon)).setImageResource(R.drawable.icon_location);
         } else {
             tvAddress.setText("Location details unavailable");
             ((ImageView) findViewById(R.id.ivMapIcon)).setImageResource(R.drawable.icon_nolocation);
@@ -124,10 +225,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         
         if (distance > 0) {
             ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText(String.format(Locale.US, "%.1f km", distance));
-            ((ImageView) findViewById(R.id.ivDistanceIcon)).setImageResource(R.drawable.icon_walk);
-        } else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ((TextView) findViewById(R.id.tvRestDistanceDetails)).setText("No GPS");
-            ((ImageView) findViewById(R.id.ivDistanceIcon)).setImageResource(R.drawable.icon_nolocation);
+            findViewById(R.id.llDistanceDetails).setVisibility(View.VISIBLE);
         } else {
             findViewById(R.id.llDistanceDetails).setVisibility(View.GONE);
         }
@@ -138,102 +236,67 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
 
         String fullLogoUrl = RetrofitClient.getFullUrl(this, imageUrl);
         Glide.with(this).load(fullLogoUrl).into((ImageView) findViewById(R.id.ivRestLogoDetails));
+    }
 
-        findViewById(R.id.btnBackRestDetails).setOnClickListener(v -> finish());
+    private void fetchRestaurantDetails() {
+        if (restaurantSlug == null || restaurantSlug.isEmpty()) return;
 
-        findViewById(R.id.cvAddressCard).setOnClickListener(v -> {
-            if (latitude != 0 && longitude != 0) {
-                Intent discoverIntent = new Intent(this, DiscoverActivity.class);
-                discoverIntent.putExtra("focusRestaurantId", restaurantId);
-                discoverIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(discoverIntent);
-            } else {
-                Toast.makeText(this, "Coordinates not available for this restaurant", Toast.LENGTH_SHORT).show();
+        ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        apiService.getRestaurantDetails(restaurantSlug).enqueue(new Callback<com.ps.dinear.data.model.Restaurant>() {
+            @Override
+            public void onResponse(@NonNull Call<com.ps.dinear.data.model.Restaurant> call, @NonNull Response<com.ps.dinear.data.model.Restaurant> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    com.ps.dinear.data.model.Restaurant r = response.body();
+                    updateDataFromObject(r);
+                    refreshUI();
+                    fetchReviews(restaurantId);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<com.ps.dinear.data.model.Restaurant> call, @NonNull Throwable t) {
             }
         });
+    }
 
-        ImageView btnFavorite = findViewById(R.id.btnFavoriteRest);
-        
-        if (FavoritesManager.getInstance().isRestaurantFavorite(restaurantId)) {
-            btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
-            btnFavorite.setColorFilter(getResources().getColor(R.color.red_600));
+    private void updateDataFromObject(com.ps.dinear.data.model.Restaurant r) {
+        restaurantId = r.getId();
+        name = r.getName();
+        description = r.getDescription();
+        cuisine = r.getCuisine();
+        deliveryTime = r.getDeliveryTime();
+        imageUrl = r.getImageUrl();
+        bannerImage = r.getBannerImage();
+        address = r.getAddress();
+        isFeatured = r.isFeatured();
+        latitude = r.getLatitude();
+        longitude = r.getLongitude();
+        deliveryCharge = r.getDeliveryCharge();
+        rating = r.getRating();
+        if (r.getLocation() != null) {
+            city = r.getLocation().getCity();
+            district = r.getLocation().getDistrict();
         }
+    }
 
-        btnFavorite.setOnClickListener(v -> {
-            FavoritesManager.getInstance().toggleRestaurantFavorite(this, restaurantId, new FavoritesManager.ToggleCallback() {
-                @Override
-                public void onStateChanged(boolean isFavorite) {
-                    if (isFavorite) {
-                        btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
-                        btnFavorite.setColorFilter(getResources().getColor(R.color.red_600));
-                    } else {
-                        btnFavorite.setImageResource(R.drawable.icon_favorite);
-                        btnFavorite.setColorFilter(getResources().getColor(R.color.black));
-                    }
-                }
-
-                @Override
-                public void onError(String message) {
-                    Toast.makeText(RestaurantDetailsActivity.this, message, Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-
-        findViewById(R.id.btnViewMenu).setOnClickListener(v -> {
-            Intent intent = new Intent(this, MenuActivity.class);
-            intent.putExtra("restaurantId", restaurantId);
-            intent.putExtra("restaurantSlug", restaurantSlug);
-            intent.putExtra("restaurantName", name);
-            intent.putExtra("deliveryCharge", deliveryCharge);
-            startActivity(intent);
-        });
-
-        findViewById(R.id.cvARExplore).setOnClickListener(v -> {
-            Intent intent = new Intent(this, MenuActivity.class);
-            intent.putExtra("restaurantId", restaurantId);
-            intent.putExtra("restaurantSlug", restaurantSlug);
-            intent.putExtra("restaurantName", name);
-            intent.putExtra("deliveryCharge", deliveryCharge);
-            startActivity(intent);
-        });
-
-        findViewById(R.id.btnWriteReviewRest).setOnClickListener(v -> {
-            Intent intent = new Intent(this, WriteReviewActivity.class);
-            intent.putExtra("restaurantId", restaurantId);
-            intent.putExtra("restaurantName", name);
-            intent.putExtra("restaurantImage", imageUrl);
-            startActivity(intent);
-        });
-
-        findViewById(R.id.btnSeeAllReviewsRest).setOnClickListener(v -> {
-            Intent intent = new Intent(this, ReviewsListingActivity.class);
-            intent.putExtra("restaurantId", restaurantId);
-            intent.putExtra("restaurantName", name);
-            intent.putExtra("imageUrl", imageUrl);
-            startActivity(intent);
-        });
-
-        View bottomAction = findViewById(R.id.llBottomAction);
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(bottomAction, (v, insets) -> {
-            androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
-            float density = getResources().getDisplayMetrics().density;
-            v.setPadding(v.getPaddingLeft(), (int) (9 * density), v.getPaddingRight(), (int) (9 * density) + navBars.bottom);
-            return insets;
-        });
-
-        TextView tvDescription = findViewById(R.id.tvRestDescriptionDetails);
-        if (description != null && description.length() > 150) {
-            String truncated = description.substring(0, 150) + "... ";
-            android.text.SpannableString ss = new android.text.SpannableString(truncated + "Read more");
-            android.text.style.ForegroundColorSpan fcs = new android.text.style.ForegroundColorSpan(getResources().getColor(R.color.orange_primary));
-            android.text.style.StyleSpan bold = new android.text.style.StyleSpan(android.graphics.Typeface.BOLD);
-            ss.setSpan(fcs, truncated.length(), ss.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            ss.setSpan(bold, truncated.length(), ss.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            tvDescription.setText(ss);
-            tvDescription.setOnClickListener(v -> tvDescription.setText(description));
-        } else {
-            tvDescription.setText(description);
-        }
+    private void passRestaurantExtras(Intent intent) {
+        intent.putExtra("restaurantId", restaurantId);
+        intent.putExtra("restaurantSlug", restaurantSlug);
+        intent.putExtra("restaurantName", name);
+        intent.putExtra("cuisine", cuisine);
+        intent.putExtra("rating", rating);
+        intent.putExtra("description", description);
+        intent.putExtra("deliveryTime", deliveryTime);
+        intent.putExtra("distance", distance);
+        intent.putExtra("imageUrl", imageUrl);
+        intent.putExtra("bannerImage", bannerImage);
+        intent.putExtra("address", address);
+        intent.putExtra("city", city);
+        intent.putExtra("district", district);
+        intent.putExtra("isFeatured", isFeatured);
+        intent.putExtra("latitude", latitude);
+        intent.putExtra("longitude", longitude);
+        intent.putExtra("deliveryCharge", deliveryCharge);
     }
 
     @Override
@@ -243,13 +306,14 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
     }
 
     private void fetchReviews(int restaurantId) {
+        if (restaurantId == -1) return;
         String token = SharedPrefManager.getAccessToken(this);
         String authHeader = token != null ? "Bearer " + token : null;
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
         apiService.getReviews(authHeader, restaurantId, null, true, 1, "-helpful", null).enqueue(new Callback<ReviewListResponse>() {
             @Override
-            public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
+            public void onResponse(@NonNull Call<ReviewListResponse> call, @NonNull Response<ReviewListResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     ReviewListResponse listResponse = response.body();
                     if (listResponse.getSummary() != null) {
@@ -268,7 +332,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<ReviewListResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<ReviewListResponse> call, @NonNull Throwable t) {
             }
         });
     }
@@ -393,7 +457,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
         apiService.toggleHelpful("Bearer " + token, review.getId()).enqueue(new Callback<Map<String, Object>>() {
             @Override
-            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+            public void onResponse(@NonNull Call<Map<String, Object>> call, @NonNull Response<Map<String, Object>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     boolean isHelpful = (boolean) response.body().get("is_helpful");
                     int count = ((Double) response.body().get("helpful_count")).intValue();
@@ -403,7 +467,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
                 }
             }
             @Override
-            public void onFailure(Call<Map<String, Object>> call, Throwable t) {}
+            public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {}
         });
     }
 
