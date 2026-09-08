@@ -115,6 +115,20 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         setupRestaurants(view);
         setupTabs(view);
         setupFeaturedFoods(view);
+
+        // Professional Standard: Dynamically adjust to Activity Header height
+        view.post(() -> {
+            if (getActivity() instanceof MainActivity) {
+                int totalHeaderHeight = ((MainActivity) getActivity()).getHeaderTotalHeight();
+                View search = view.findViewById(R.id.llSearchContainer);
+                if (search != null && totalHeaderHeight > 0) {
+                    androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = 
+                        (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) search.getLayoutParams();
+                    lp.topMargin = totalHeaderHeight;
+                    search.setLayoutParams(lp);
+                }
+            }
+        });
         
         try {
             fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(requireActivity());

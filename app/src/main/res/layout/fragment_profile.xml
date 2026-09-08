@@ -4,13 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:fitsSystemWindows="false">
 
     <!-- Header Section -->
     <View
         android:id="@+id/headerBackground"
         android:layout_width="match_parent"
-        android:layout_height="340dp"
+        android:layout_height="360dp"
         android:background="@drawable/bg_profile_header"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -18,8 +19,8 @@
         android:id="@+id/tvProfileTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24.dp"
-        android:layout_marginTop="32.dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="56dp"
         android:text="Profile"
         android:textColor="@color/white"
         android:textSize="22sp"
@@ -136,7 +137,7 @@
                 android:textStyle="bold" />
 
             <!-- My Profile -->
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/btnPersonalInfo"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
@@ -146,42 +147,47 @@
                     android:id="@+id/iconProfileBg"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_icon_blue" />
+                    android:background="@drawable/bg_icon_blue"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignStart="@id/iconProfileBg"
-                    android:layout_alignTop="@id/iconProfileBg"
-                    android:layout_alignEnd="@id/iconProfileBg"
-                    android:layout_alignBottom="@id/iconProfileBg"
-                    android:padding="2dp"
                     android:src="@drawable/ic_person"
+                    app:layout_constraintBottom_toBottomOf="@id/iconProfileBg"
+                    app:layout_constraintEnd_toEndOf="@id/iconProfileBg"
+                    app:layout_constraintStart_toStartOf="@id/iconProfileBg"
+                    app:layout_constraintTop_toTopOf="@id/iconProfileBg"
                     app:tint="#2196F3" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="16.dp"
-                    android:layout_toEndOf="@id/iconProfileBg"
+                    android:layout_marginStart="16dp"
                     android:text="My Profile"
                     android:textColor="@color/black"
                     android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/ivChevron1"
+                    app:layout_constraintStart_toEndOf="@id/iconProfileBg"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
+                    android:id="@+id/ivChevron1"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
                     android:src="@drawable/ic_chevron_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:tint="@color/gray_text" />
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- My Orders -->
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/btnProfileOrders"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
@@ -191,87 +197,47 @@
                     android:id="@+id/iconOrdersBg"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_icon_green" />
+                    android:background="@drawable/bg_icon_green"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignStart="@id/iconOrdersBg"
-                    android:layout_alignTop="@id/iconOrdersBg"
-                    android:layout_alignEnd="@id/iconOrdersBg"
-                    android:layout_alignBottom="@id/iconOrdersBg"
-                    android:padding="2dp"
                     android:src="@drawable/ic_orders"
+                    app:layout_constraintBottom_toBottomOf="@id/iconOrdersBg"
+                    app:layout_constraintEnd_toEndOf="@id/iconOrdersBg"
+                    app:layout_constraintStart_toStartOf="@id/iconOrdersBg"
+                    app:layout_constraintTop_toTopOf="@id/iconOrdersBg"
                     app:tint="#4CAF50" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="16.dp"
-                    android:layout_toEndOf="@id/iconOrdersBg"
+                    android:layout_marginStart="16dp"
                     android:text="My Orders"
                     android:textColor="@color/black"
                     android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/ivChevron2"
+                    app:layout_constraintStart_toEndOf="@id/iconOrdersBg"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
+                    android:id="@+id/ivChevron2"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
                     android:src="@drawable/ic_chevron_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:tint="@color/gray_text" />
-            </RelativeLayout>
-
-            <!-- Saved Addresses -->
-            <RelativeLayout
-                android:id="@+id/btnProfileAddresses"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:background="?attr/selectableItemBackground">
-
-                <View
-                    android:id="@+id/iconAddressesBg"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:background="#E1F5FE" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_alignStart="@id/iconAddressesBg"
-                    android:layout_alignTop="@id/iconAddressesBg"
-                    android:layout_alignEnd="@id/iconAddressesBg"
-                    android:layout_alignBottom="@id/iconAddressesBg"
-                    android:padding="2dp"
-                    android:src="@drawable/ic_addresses"
-                    app:tint="#03A9F4" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="16.dp"
-                    android:layout_toEndOf="@id/iconAddressesBg"
-                    android:text="Saved Addresses"
-                    android:textColor="@color/black"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:src="@drawable/ic_chevron_right"
-                    app:tint="@color/gray_text" />
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- Change Password -->
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/btnChangePassword"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
@@ -281,42 +247,47 @@
                     android:id="@+id/iconPasswordBg"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_icon_orange" />
+                    android:background="@drawable/bg_icon_orange"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignStart="@id/iconPasswordBg"
-                    android:layout_alignTop="@id/iconPasswordBg"
-                    android:layout_alignEnd="@id/iconPasswordBg"
-                    android:layout_alignBottom="@id/iconPasswordBg"
-                    android:padding="2dp"
                     android:src="@drawable/ic_lock"
+                    app:layout_constraintBottom_toBottomOf="@id/iconPasswordBg"
+                    app:layout_constraintEnd_toEndOf="@id/iconPasswordBg"
+                    app:layout_constraintStart_toStartOf="@id/iconPasswordBg"
+                    app:layout_constraintTop_toTopOf="@id/iconPasswordBg"
                     app:tint="#FF9800" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="16.dp"
-                    android:layout_toEndOf="@id/iconPasswordBg"
+                    android:layout_marginStart="16dp"
                     android:text="Change Password"
                     android:textColor="@color/black"
                     android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/ivChevron3"
+                    app:layout_constraintStart_toEndOf="@id/iconPasswordBg"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
+                    android:id="@+id/ivChevron3"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
                     android:src="@drawable/ic_chevron_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:tint="@color/gray_text" />
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- Settings -->
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/btnSettings"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
@@ -326,42 +297,47 @@
                     android:id="@+id/iconSettingsBg"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:background="#F5F5F5" />
+                    android:background="#F5F5F5"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignStart="@id/iconSettingsBg"
-                    android:layout_alignTop="@id/iconSettingsBg"
-                    android:layout_alignEnd="@id/iconSettingsBg"
-                    android:layout_alignBottom="@id/iconSettingsBg"
-                    android:padding="2dp"
                     android:src="@drawable/ic_settings"
+                    app:layout_constraintBottom_toBottomOf="@id/iconSettingsBg"
+                    app:layout_constraintEnd_toEndOf="@id/iconSettingsBg"
+                    app:layout_constraintStart_toStartOf="@id/iconSettingsBg"
+                    app:layout_constraintTop_toTopOf="@id/iconSettingsBg"
                     app:tint="@color/gray_dark" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="16.dp"
-                    android:layout_toEndOf="@id/iconSettingsBg"
+                    android:layout_marginStart="16dp"
                     android:text="Settings"
                     android:textColor="@color/black"
                     android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/ivChevron4"
+                    app:layout_constraintStart_toEndOf="@id/iconSettingsBg"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
+                    android:id="@+id/ivChevron4"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
                     android:src="@drawable/ic_chevron_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:tint="@color/gray_text" />
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- Logout -->
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/btnProfileLogout"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
@@ -371,39 +347,44 @@
                     android:id="@+id/iconLogoutBg"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:background="#FFEBEE" />
+                    android:background="#FFEBEE"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignStart="@id/iconLogoutBg"
-                    android:layout_alignTop="@id/iconLogoutBg"
-                    android:layout_alignEnd="@id/iconLogoutBg"
-                    android:layout_alignBottom="@id/iconLogoutBg"
-                    android:padding="2dp"
                     android:src="@drawable/ic_logout"
+                    app:layout_constraintBottom_toBottomOf="@id/iconLogoutBg"
+                    app:layout_constraintEnd_toEndOf="@id/iconLogoutBg"
+                    app:layout_constraintStart_toStartOf="@id/iconLogoutBg"
+                    app:layout_constraintTop_toTopOf="@id/iconLogoutBg"
                     app:tint="#F44336" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="16.dp"
-                    android:layout_toEndOf="@id/iconLogoutBg"
+                    android:layout_marginStart="16dp"
                     android:text="Logout"
                     android:textColor="@color/black"
                     android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/ivChevron5"
+                    app:layout_constraintStart_toEndOf="@id/iconLogoutBg"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageView
+                    android:id="@+id/ivChevron5"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
                     android:src="@drawable/ic_chevron_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:tint="@color/gray_text" />
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <View
                 android:layout_width="match_parent"

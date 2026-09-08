@@ -6,4 +6,5 @@
     <string name="register_info">Want to list your restaurant? Contact our administrative head for registration and AR setup.</string>
     <string name="hello_placeholder">HELLO, %1$s!</string>
     <string name="special_offer_placeholder">Special Offer:\n%1$s</string>
+    <string name="view_in_ar">VIEW IN AR</string>
 </resources>

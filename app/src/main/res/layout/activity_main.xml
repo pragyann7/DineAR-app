@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_mainactivity">
+    android:background="@color/white">
 
     <View
         android:id="@+id/statusBarSpacer"
@@ -12,7 +12,7 @@
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Global Top Bar -->
+    <!-- Global Top Bar (Overlaid on Fragments) -->
     <RelativeLayout
         android:id="@+id/rlHeader"
         android:layout_width="match_parent"
@@ -149,7 +149,7 @@
         android:layout_height="0dp"
         app:defaultNavHost="true"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/rlHeader"
+        app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/nav_graph" />
 
     <!-- Network Error Placeholder (Global Overlay) -->
@@ -165,7 +165,7 @@
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/rlHeader">
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:layout_width="120dp"

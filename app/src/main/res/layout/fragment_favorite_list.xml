@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingHorizontal="24.dp"
-        android:paddingTop="8.dp"
+        android:paddingTop="4.dp"
         tools:listitem="@layout/item_restaurant" />
 
     <com.facebook.shimmer.ShimmerFrameLayout
