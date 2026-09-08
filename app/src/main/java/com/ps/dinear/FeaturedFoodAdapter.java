@@ -49,11 +49,17 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
         } else {
             holder.tvPrice.setText(item.getCurrency() + " " + (int)item.getPrice());
         }
+
+        // AR Badge Support
+        if (holder.flArBadge != null) {
+            holder.flArBadge.setVisibility(item.has3d() ? View.VISIBLE : View.GONE);
+        }
         
         String fullImageUrl = RetrofitClient.getFullUrl(context, item.getImageUrl());
         Glide.with(context)
                 .load(fullImageUrl)
                 .placeholder(android.R.drawable.ic_menu_gallery)
+                .centerCrop()
                 .into(holder.ivFood);
                 
         holder.itemView.setOnClickListener(v -> {
@@ -76,12 +82,14 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivFood;
         TextView tvName, tvPrice;
+        View flArBadge;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivFood = itemView.findViewById(R.id.ivFood);
             tvName = itemView.findViewById(R.id.tvFoodName);
             tvPrice = itemView.findViewById(R.id.tvFoodPrice);
+            flArBadge = itemView.findViewById(R.id.flArBadge);
         }
     }
 }
