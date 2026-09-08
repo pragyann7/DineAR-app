@@ -92,8 +92,32 @@ public interface ApiService {
     @POST("api/auth/reset-password/")
     Call<Void> resetPassword(@Body ResetPasswordRequest request);
 
+    @GET("api/auth/addresses/")
+    Call<List<com.ps.dinear.data.model.UserAddress>> getAddresses(@Header("Authorization") String token);
+
+    @POST("api/auth/addresses/")
+    Call<com.ps.dinear.data.model.UserAddress> addAddress(
+        @Header("Authorization") String token, 
+        @Body com.ps.dinear.data.model.UserAddress address
+    );
+
+    @DELETE("api/auth/addresses/{id}/")
+    Call<Void> deleteAddress(@Header("Authorization") String token, @Path("id") int id);
+
     @POST("api/orders/")
     Call<Order> placeOrder(@Header("Authorization") String token, @Body OrderRequest request);
+
+    @POST("api/payments/create/")
+    Call<com.ps.dinear.data.model.EsewaInitiateResponse> initiateEsewaPayment(
+        @Header("Authorization") String token, 
+        @Body com.ps.dinear.data.model.PaymentRequest request
+    );
+
+    @POST("api/payments/esewa/verify/")
+    Call<Void> verifyEsewaPayment(
+        @Header("Authorization") String token,
+        @Body java.util.Map<String, String> data
+    );
 
     @GET("api/orders/")
     Call<List<Order>> getOrders(@Header("Authorization") String token);

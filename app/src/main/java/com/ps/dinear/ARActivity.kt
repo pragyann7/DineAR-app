@@ -272,6 +272,7 @@ class ARActivity : ComponentActivity() {
 
         val selectedItem = intent.getSerializableExtra("selectedItem") as? MenuItem
         val restaurantSlug = intent.getStringExtra("restaurantSlug")
+        val restaurantName = intent.getStringExtra("restaurantName")
         var restaurantId = intent.getIntExtra("restaurantId", -1)
 
         if (selectedItem == null) {
@@ -279,9 +280,9 @@ class ARActivity : ComponentActivity() {
             finish()
             return
         }
-        
+
         viewModel.addMenuItemIfMissing(selectedItem)
-        
+
         // Fallback: Try to get restaurant ID from the selected item if not in intent
         if (restaurantId == -1) {
             restaurantId = selectedItem.restaurantId ?: -1
@@ -298,11 +299,13 @@ class ARActivity : ComponentActivity() {
         val isArSupported = ArCoreHelper.isArCoreSupported(this)
         val initialViewMode = if (isArSupported) ViewMode.PLANE else ViewMode.STUDIO
 
+        // Pass restaurantName to the UI components
         setContent {
             ARScreen(
                 initialMenuItem = selectedItem,
                 menuList = viewModel.menuItems,
                 restaurantId = restaurantId,
+                restaurantName = restaurantName,
                 activity = this,
                 viewModel = viewModel,
                 isArSupported = isArSupported,
@@ -332,6 +335,7 @@ private fun ARScreen(
     initialMenuItem: MenuItem,
     menuList: List<MenuItem>,
     restaurantId: Int,
+    restaurantName: String?,
     activity: ARActivity,
     viewModel: ARViewModel,
     isArSupported: Boolean,
@@ -794,6 +798,7 @@ private fun ARScreen(
             MenuOverlay(
                 menuList = menuList,
                 restaurantId = restaurantId,
+                restaurantName = restaurantName,
                 downloadStates = viewModel.downloadStates,
                 viewModel = viewModel,
                 onClose = { isMenuOpen = false },
@@ -1082,6 +1087,7 @@ private fun NonArSceneContent(
 private fun MenuOverlay(
     menuList: List<MenuItem>,
     restaurantId: Int,
+    restaurantName: String?,
     downloadStates: Map<String, DownloadState>,
     viewModel: ARViewModel,
     onClose: () -> Unit,
@@ -1171,7 +1177,7 @@ private fun MenuOverlay(
 
                 Box(modifier = Modifier.weight(1f)) {
                     when (activeTab) {
-                        "MENU" -> MenuTabContent(menuList, restaurantId, downloadStates, onItemSelected)
+                        "MENU" -> MenuTabContent(menuList, restaurantId, restaurantName, downloadStates, onItemSelected)
                         "FAVORITES" -> FavoritesTabContent(viewModel.favoriteFoods, downloadStates, onItemSelected)
                         "CART" -> CartOrdersTabContent(viewModel, viewModel.orders, onClose)
                     }
@@ -1235,6 +1241,7 @@ private fun MenuOverlay(
 private fun MenuTabContent(
     menuList: List<MenuItem>,
     restaurantId: Int,
+    restaurantName: String?,
     downloadStates: Map<String, DownloadState>,
     onItemSelected: (MenuItem) -> Unit
 ) {
@@ -1343,6 +1350,7 @@ private fun MenuTabContent(
                     VerticalMenuItemRow(
                         item = item,
                         restaurantId = restaurantId,
+                        restaurantName = restaurantName,
                         downloadState = downloadStates[modelUrl] ?: DownloadState.Idle,
                         onClick = { onItemSelected(item) }
                     )
@@ -1373,6 +1381,7 @@ private fun MenuTabContent(
 fun VerticalMenuItemRow(
     item: MenuItem,
     restaurantId: Int,
+    restaurantName: String?,
     downloadState: DownloadState,
     onClick: () -> Unit
 ) {
@@ -1434,7 +1443,7 @@ fun VerticalMenuItemRow(
                 onClick = {
                     val finalResId = if (restaurantId != -1) restaurantId else (item.restaurantId ?: -1)
                     if (finalResId != -1) {
-                        CartManager.getInstance().addItem(item, finalResId)
+                        CartManager.getInstance().addItem(item, finalResId, restaurantName)
                         Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, "Error: Restaurant ID unknown", Toast.LENGTH_SHORT).show()
@@ -1468,6 +1477,7 @@ private fun FavoritesTabContent(
                 VerticalMenuItemRow(
                     item = item,
                     restaurantId = item.restaurantId ?: -1,
+                    restaurantName = null, // In favorites we might not have the name easily
                     downloadState = downloadStates[RetrofitClient.getFullUrl(context, item.modelUrl)] ?: DownloadState.Idle,
                     onClick = { onItemSelected(item) }
                 )

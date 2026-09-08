@@ -21,7 +21,10 @@ public class Order implements Serializable {
     
     @SerializedName("contact_number")
     private String contactNumber;
-    
+
+    @SerializedName("delivery_option")
+    private String deliveryOption;
+
     private List<OrderItem> items;
     
     @SerializedName("created_at")
@@ -33,6 +36,7 @@ public class Order implements Serializable {
     public double getTotalPrice() { return totalPrice; }
     public String getDeliveryAddress() { return deliveryAddress; }
     public String getContactNumber() { return contactNumber; }
+    public String getDeliveryOption() { return deliveryOption; }
     public List<OrderItem> getItems() { return items; }
     public String getCreatedAt() { return createdAt; }
 

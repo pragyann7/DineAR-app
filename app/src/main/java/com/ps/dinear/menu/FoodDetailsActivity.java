@@ -131,6 +131,7 @@ public class FoodDetailsActivity extends AppCompatActivity {
                 intent.putExtra("selectedItem", item);
                 intent.putExtra("restaurantId", getIntent().getIntExtra("restaurantId", -1));
                 intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
+                intent.putExtra("restaurantName", getIntent().getStringExtra("restaurantName"));
                 startActivity(intent);
             });
         } else {
@@ -152,13 +153,14 @@ public class FoodDetailsActivity extends AppCompatActivity {
 
         findViewById(R.id.btnAddToCart).setOnClickListener(v -> {
             int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+            String restaurantName = getIntent().getStringExtra("restaurantName");
             if (restaurantId == -1 && item.getRestaurantId() != null) {
                 restaurantId = item.getRestaurantId();
             }
 
             if (restaurantId != -1) {
                 for (int i = 0; i < quantity; i++) {
-                    CartManager.getInstance().addItem(item, restaurantId);
+                    CartManager.getInstance().addItem(item, restaurantId, restaurantName);
                 }
                 Toast.makeText(this, "Added " + quantity + " to cart!", Toast.LENGTH_SHORT).show();
             } else {

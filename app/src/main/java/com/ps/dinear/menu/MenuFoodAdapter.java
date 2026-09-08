@@ -26,6 +26,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
     private List<MenuItem> list;
     private OnFoodClickListener listener;
     private int restaurantId;
+    private String restaurantName;
 
     public interface OnFoodClickListener {
         void onFoodClick(MenuItem item);
@@ -39,6 +40,10 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
     
     public void setRestaurantId(int restaurantId) {
         this.restaurantId = restaurantId;
+    }
+
+    public void setRestaurantName(String restaurantName) {
+        this.restaurantName = restaurantName;
     }
 
     public void updateList(List<MenuItem> newList) {
@@ -85,7 +90,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
 
         holder.btnAddToCart.setOnClickListener(v -> {
             if (restaurantId != -1) {
-                CartManager.getInstance().addItem(item, restaurantId);
+                CartManager.getInstance().addItem(item, restaurantId, restaurantName);
                 Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show();
             }
         });

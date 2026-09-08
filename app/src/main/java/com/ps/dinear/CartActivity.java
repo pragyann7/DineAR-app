@@ -138,38 +138,7 @@ public class CartActivity extends AppCompatActivity {
             return;
         }
 
-        List<CartItem> items = CartManager.getInstance().getItems();
-        List<OrderRequest.OrderItemRequest> itemRequests = new ArrayList<>();
-        for (CartItem item : items) {
-            itemRequests.add(new OrderRequest.OrderItemRequest(item.getMenuItem().getId(), item.getQuantity()));
-        }
-
-        OrderRequest request = new OrderRequest(
-            CartManager.getInstance().getRestaurantId(),
-            "My Address (Placeholder)",
-            "9800000000",
-            itemRequests
-        );
-
-        String token = "Bearer " + SharedPrefManager.getAccessToken(this);
-        ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
-        api.placeOrder(token, request).enqueue(new Callback<Order>() {
-            @Override
-            public void onResponse(Call<Order> call, Response<Order> response) {
-                if (response.isSuccessful()) {
-                    CartManager.getInstance().clear();
-                    Toast.makeText(CartActivity.this, "Order placed successfully!", Toast.LENGTH_LONG).show();
-                    updateCartUI();
-                    loadOrderHistory();
-                } else {
-                    Toast.makeText(CartActivity.this, "Failed to place order: " + response.code(), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Order> call, Throwable t) {
-                Toast.makeText(CartActivity.this, "Network error", Toast.LENGTH_SHORT).show();
-            }
-        });
+        Intent intent = new Intent(this, CheckoutActivity.class);
+        startActivity(intent);
     }
 }

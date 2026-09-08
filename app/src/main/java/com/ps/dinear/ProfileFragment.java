@@ -67,6 +67,10 @@ public class ProfileFragment extends Fragment {
         
         View btnOrders = view.findViewById(R.id.btnProfileOrders);
         if (btnOrders != null) btnOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), OrdersActivity.class)));
+
+        // Removed Saved Addresses option as requested
+        View btnAddresses = view.findViewById(R.id.btnProfileAddresses);
+        if (btnAddresses != null) btnAddresses.setVisibility(View.GONE);
         
         View btnChangePassword = view.findViewById(R.id.btnChangePassword);
         if (btnChangePassword != null) btnChangePassword.setOnClickListener(v -> Toast.makeText(getContext(), "Change Password coming soon", Toast.LENGTH_SHORT).show());

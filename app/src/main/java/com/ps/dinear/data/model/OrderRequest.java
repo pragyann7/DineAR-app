@@ -9,16 +9,31 @@ public class OrderRequest implements Serializable {
     
     @SerializedName("delivery_address")
     private String deliveryAddress;
+
+    private Double latitude;
+    private Double longitude;
     
     @SerializedName("contact_number")
     private String contactNumber;
     
+    @SerializedName("payment_method")
+    private String paymentMethod;
+
+    @SerializedName("delivery_option")
+    private String deliveryOption;
+    
     private List<OrderItemRequest> items;
 
-    public OrderRequest(int restaurant, String deliveryAddress, String contactNumber, List<OrderItemRequest> items) {
+    public OrderRequest(int restaurant, String deliveryAddress, Double latitude, Double longitude, 
+                        String contactNumber, String paymentMethod, String deliveryOption, 
+                        List<OrderItemRequest> items) {
         this.restaurant = restaurant;
         this.deliveryAddress = deliveryAddress;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.contactNumber = contactNumber;
+        this.paymentMethod = paymentMethod;
+        this.deliveryOption = deliveryOption;
         this.items = items;
     }
 

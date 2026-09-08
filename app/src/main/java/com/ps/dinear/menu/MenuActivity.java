@@ -193,12 +193,15 @@ public class MenuActivity extends AppCompatActivity {
     private void displayMenuItems(List<MenuItem> items) {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
         int restaurantId = getIntent().getIntExtra("restaurantId", -1);
+        String restaurantName = getIntent().getStringExtra("restaurantName");
         if (foodAdapter == null) {
             foodAdapter = new MenuFoodAdapter(this, new ArrayList<>(items), item -> openFoodDetails(item));
             foodAdapter.setRestaurantId(restaurantId);
+            foodAdapter.setRestaurantName(restaurantName);
             rvMenu.setAdapter(foodAdapter);
         } else {
             foodAdapter.setRestaurantId(restaurantId);
+            foodAdapter.setRestaurantName(restaurantName);
             foodAdapter.updateList(items);
         }
     }

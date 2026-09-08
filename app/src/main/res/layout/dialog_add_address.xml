@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/etAddressTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Title (e.g. Home, Work)"
+        android:inputType="textCapWords" />
+
+    <EditText
+        android:id="@+id/etAddressLine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Address Line"
+        android:inputType="textPostalAddress" />
+
+    <EditText
+        android:id="@+id/etAddressCity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="City"
+        android:inputType="textCapWords" />
+
+    <EditText
+        android:id="@+id/etAddressDistrict"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="District"
+        android:inputType="textCapWords" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPickOnMap"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Pick from Map"
+        android:textAllCaps="false"
+        app:icon="@drawable/icon_location" />
+
+</LinearLayout>
