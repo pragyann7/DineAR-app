@@ -60,7 +60,7 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_centerInParent="true"
-                android:src="@drawable/ic_cart_premium"
+                android:src="@drawable/icon_cart"
                 app:tint="@color/black" />
 
             <TextView

@@ -129,6 +129,22 @@
                 android:textColor="@color/gray_text"
                 android:textSize="11sp" />
 
+            <View
+                android:id="@+id/vDotDelivery"
+                android:layout_width="3dp"
+                android:layout_height="3dp"
+                android:layout_marginHorizontal="6.dp"
+                android:background="@drawable/bg_dot" />
+
+            <TextView
+                android:id="@+id/tvDeliveryChargeInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FREE"
+                android:textColor="#4CAF50"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
         </LinearLayout>
 
         <LinearLayout

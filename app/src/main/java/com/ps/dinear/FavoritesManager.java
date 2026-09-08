@@ -54,9 +54,7 @@ public class FavoritesManager {
     public void loadFavorites(Context context) {
         String token = SharedPrefManager.getAccessToken(context);
         if (token == null) {
-            favoriteRestaurantIds.clear();
-            favoriteFoodIds.clear();
-            notifyListeners();
+            clear();
             return;
         }
 
@@ -80,6 +78,13 @@ public class FavoritesManager {
                 Log.e(TAG, "Failed to load favorites", t);
             }
         });
+    }
+
+    public void clear() {
+        favoriteRestaurantIds.clear();
+        favoriteFoodIds.clear();
+        isLoaded = false;
+        notifyListeners();
     }
 
     public boolean isRestaurantFavorite(int id) {

@@ -13,7 +13,9 @@
     <color name="orange_border">#FFB74D</color>
     <color name="michelin_red">#A63A17</color>
     <color name="status_bar">#FFD6AF</color>
-    <color name="auth_primary">#F45905</color>A03C08
+    <color name="auth_primary">#F45905</color>
+    <color name="green_delivery">#15B11A</color>
+    <color name="paid_delivery">#59AF5C</color>
     <color name="auth_bg">#FDF9F6</color>
     <color name="auth_input_bg">#F2F2F2</color>
     <color name="auth_text_header">#1A1A1A</color>

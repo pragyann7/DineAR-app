@@ -394,14 +394,14 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void processPayment() {
-        if (selectedDeliveryOption.equals("DELIVERY")) {
-            if (currentLat == 0 || currentLng == 0 || currentGpsAddress.equals("Locating...")) {
+        if ("DELIVERY".equals(selectedDeliveryOption)) {
+            if (currentLat == 0 || currentLng == 0 || currentGpsAddress == null || "Locating...".equals(currentGpsAddress)) {
                 Toast.makeText(this, "Please select a valid delivery address", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
 
-        if (selectedPaymentMethod.equals("eSewa")) {
+        if ("eSewa".equals(selectedPaymentMethod)) {
             initiateEsewaPayment();
         } else {
             placeOrder();
@@ -441,7 +441,14 @@ public class CheckoutActivity extends AppCompatActivity {
                 } else {
                     btnPay.setEnabled(true);
                     btnPay.setText(String.format(Locale.getDefault(), "Pay Rs. %d", calculateFinalTotal()));
-                    Toast.makeText(CheckoutActivity.this, "Failed to create order", Toast.LENGTH_SHORT).show();
+                    
+                    String error = "Order failed";
+                    try {
+                        if (response.errorBody() != null) {
+                            error += ": " + response.errorBody().string();
+                        }
+                    } catch (Exception ignored) {}
+                    Toast.makeText(CheckoutActivity.this, error, Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -470,7 +477,13 @@ public class CheckoutActivity extends AppCompatActivity {
                     intent.putExtra("method", "eSewa");
                     startActivity(intent);
                 } else {
-                    Toast.makeText(CheckoutActivity.this, "Failed to initiate eSewa payment", Toast.LENGTH_SHORT).show();
+                    String error = "Failed to initiate eSewa payment";
+                    try {
+                        if (response.errorBody() != null) {
+                            error += ": " + response.errorBody().string();
+                        }
+                    } catch (IOException ignored) {}
+                    Toast.makeText(CheckoutActivity.this, error, Toast.LENGTH_LONG).show();
                 }
             }
 

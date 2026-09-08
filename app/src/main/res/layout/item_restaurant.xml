@@ -130,12 +130,14 @@
                 android:textSize="12sp" />
 
             <View
+                android:id="@+id/vDotDelivery"
                 android:layout_width="4dp"
                 android:layout_height="4dp"
                 android:layout_marginHorizontal="8.dp"
                 android:background="@drawable/bg_dot" />
 
             <TextView
+                android:id="@+id/tvDeliveryChargeInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="FREE DELIVERY"
