@@ -563,6 +563,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                                 intent.putExtra("isFeatured", restaurant.isFeatured());
                                 intent.putExtra("latitude", restaurant.getLatitude());
                                 intent.putExtra("longitude", restaurant.getLongitude());
+                                intent.putExtra("deliveryCharge", restaurant.getDeliveryCharge());
                                 if (restaurant.getLocation() != null) {
                                     intent.putExtra("city", restaurant.getLocation().getCity());
                                     intent.putExtra("district", restaurant.getLocation().getDistrict());

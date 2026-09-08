@@ -1442,11 +1442,12 @@ fun VerticalMenuItemRow(
             IconButton(
                 onClick = {
                     val finalResId = if (restaurantId != -1) restaurantId else (item.restaurantId ?: -1)
+                    val deliveryCharge = (context as? android.app.Activity)?.intent?.getDoubleExtra("deliveryCharge", 50.0) ?: 50.0
                     if (finalResId != -1) {
-                        CartManager.getInstance().addItem(item, finalResId, restaurantName)
-                        Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show()
+                        CartManager.getInstance().addItem(item, finalResId, restaurantName, deliveryCharge)
+                        Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(context, "Error: Restaurant ID unknown", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Error: Restaurant ID unknown", Toast.LENGTH_SHORT).show();
                     }
                 },
                 modifier = Modifier.size(40.dp).background(Color(0xFFFF863F), CircleShape)

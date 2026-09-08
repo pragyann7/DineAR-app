@@ -27,6 +27,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
     private OnFoodClickListener listener;
     private int restaurantId;
     private String restaurantName;
+    private double deliveryCharge = 50.00;
 
     public interface OnFoodClickListener {
         void onFoodClick(MenuItem item);
@@ -44,6 +45,10 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
 
     public void setRestaurantName(String restaurantName) {
         this.restaurantName = restaurantName;
+    }
+
+    public void setDeliveryCharge(double deliveryCharge) {
+        this.deliveryCharge = deliveryCharge;
     }
 
     public void updateList(List<MenuItem> newList) {
@@ -90,7 +95,7 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
 
         holder.btnAddToCart.setOnClickListener(v -> {
             if (restaurantId != -1) {
-                CartManager.getInstance().addItem(item, restaurantId, restaurantName);
+                CartManager.getInstance().addItem(item, restaurantId, restaurantName, deliveryCharge);
                 Toast.makeText(context, "Added to cart!", Toast.LENGTH_SHORT).show();
             }
         });
