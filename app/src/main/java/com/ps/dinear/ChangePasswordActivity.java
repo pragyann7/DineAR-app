@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,14 +75,20 @@ public class ChangePasswordActivity extends AppCompatActivity {
                     Toast.makeText(ChangePasswordActivity.this, "Password updated successfully", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Toast.makeText(ChangePasswordActivity.this, "Failed to update password. Check current password.", Toast.LENGTH_SHORT).show();
+                    String errorDetail = "Failed to update password";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorDetail += ": " + response.errorBody().string();
+                        }
+                    } catch (IOException ignored) {}
+                    Toast.makeText(ChangePasswordActivity.this, errorDetail, Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 setLoading(false);
-                Toast.makeText(ChangePasswordActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChangePasswordActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
