@@ -146,6 +146,16 @@ public class SharedPrefManager {
                 .apply();
     }
 
+    public static void saveUserName(Context context, String name) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(KEY_USER_NAME, name).apply();
+    }
+
+    public static void saveUserEmail(Context context, String email) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(KEY_USER_EMAIL, email).apply();
+    }
+
     public static String getUserName(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         return prefs.getString(KEY_USER_NAME, "Guest");
@@ -174,7 +184,11 @@ public class SharedPrefManager {
                 .remove(KEY_REFRESH_TOKEN)
                 .remove(KEY_USER_NAME)
                 .remove(KEY_USER_EMAIL)
+                .remove(KEY_USER_AVATAR)
+                .remove(KEY_DISTRICT)
+                .remove(KEY_CITY)
                 .putBoolean(KEY_IS_LOGGED_IN, false)
+                .putBoolean(KEY_IS_GUEST, false)
                 .apply();
     }
 }

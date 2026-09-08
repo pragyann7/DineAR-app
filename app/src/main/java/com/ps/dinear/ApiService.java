@@ -25,6 +25,7 @@ import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -91,6 +92,18 @@ public interface ApiService {
 
     @POST("api/auth/reset-password/")
     Call<Void> resetPassword(@Body ResetPasswordRequest request);
+
+    @GET("api/auth/me/")
+    Call<com.ps.dinear.auth.ProfileResponse> getProfile(@Header("Authorization") String token);
+
+    @PATCH("api/auth/me/")
+    Call<com.ps.dinear.auth.ProfileResponse> updateProfile(@Header("Authorization") String token, @Body java.util.Map<String, Object> fields);
+
+    @DELETE("api/auth/me/")
+    Call<Void> deleteAccount(@Header("Authorization") String token);
+
+    @POST("api/auth/change-password/")
+    Call<Void> changePassword(@Header("Authorization") String token, @Body java.util.Map<String, String> data);
 
     @GET("api/auth/addresses/")
     Call<List<com.ps.dinear.data.model.UserAddress>> getAddresses(@Header("Authorization") String token);

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.ps.dinear.auth.AuthActivity;
 
+import android.widget.PopupMenu;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,30 +57,62 @@ public class ProfileFragment extends Fragment {
         }
         
         if (ivProfile != null) {
-            View.OnClickListener avatarTrigger = v -> showChangeAvatarSheet(ivProfile);
+            View.OnClickListener avatarTrigger = v -> {
+                if (SharedPrefManager.isGuest(requireContext())) {
+                    Toast.makeText(getContext(), "Please login to change avatar", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                showChangeAvatarSheet(ivProfile);
+            };
             ivProfile.setOnClickListener(avatarTrigger);
             View btnEditAvatar = view.findViewById(R.id.btnEditAvatar);
             if (btnEditAvatar != null) btnEditAvatar.setOnClickListener(avatarTrigger);
         }
 
         View btnPersonal = view.findViewById(R.id.btnPersonalInfo);
-        if (btnPersonal != null) btnPersonal.setOnClickListener(v -> Toast.makeText(getContext(), "Personal Information coming soon", Toast.LENGTH_SHORT).show());
+        if (btnPersonal != null) {
+            btnPersonal.setOnClickListener(v -> {
+                if (SharedPrefManager.isGuest(requireContext())) {
+                    Toast.makeText(getContext(), "Please login to edit profile", Toast.LENGTH_SHORT).show();
+                } else {
+                    startActivity(new Intent(getContext(), EditProfileActivity.class));
+                }
+            });
+        }
         
         View btnOrders = view.findViewById(R.id.btnProfileOrders);
-        if (btnOrders != null) btnOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), OrdersActivity.class)));
+        if (btnOrders != null) {
+            btnOrders.setOnClickListener(v -> {
+                if (SharedPrefManager.isGuest(requireContext())) {
+                    Toast.makeText(getContext(), "Please login to view orders", Toast.LENGTH_SHORT).show();
+                } else {
+                    startActivity(new Intent(getContext(), OrdersActivity.class));
+                }
+            });
+        }
 
         // Removed Saved Addresses option as requested
         View btnAddresses = view.findViewById(R.id.btnProfileAddresses);
         if (btnAddresses != null) btnAddresses.setVisibility(View.GONE);
         
         View btnChangePassword = view.findViewById(R.id.btnChangePassword);
-        if (btnChangePassword != null) btnChangePassword.setOnClickListener(v -> Toast.makeText(getContext(), "Change Password coming soon", Toast.LENGTH_SHORT).show());
+        if (btnChangePassword != null) {
+            btnChangePassword.setOnClickListener(v -> {
+                if (SharedPrefManager.isGuest(requireContext())) {
+                    Toast.makeText(getContext(), "Please login to change password", Toast.LENGTH_SHORT).show();
+                } else {
+                    startActivity(new Intent(getContext(), ChangePasswordActivity.class));
+                }
+            });
+        }
 
         View btnSettings = view.findViewById(R.id.btnSettings);
         if (btnSettings != null) btnSettings.setOnClickListener(v -> startActivity(new Intent(getContext(), ServerConfigActivity.class)));
 
         View btnMore = view.findViewById(R.id.btnMore);
-        if (btnMore != null) btnMore.setOnClickListener(v -> Toast.makeText(getContext(), "More options coming soon", Toast.LENGTH_SHORT).show());
+        if (btnMore != null) {
+            btnMore.setOnClickListener(this::showMainOverflowMenu);
+        }
 
         View btnLogout = view.findViewById(R.id.btnProfileLogout);
         if (btnLogout != null) {
@@ -96,6 +129,17 @@ public class ProfileFragment extends Fragment {
                     performLogout();
                 });
                 dialog.show();
+            });
+        }
+
+        View btnRegister = view.findViewById(R.id.btnProfileRegister);
+        if (btnRegister != null) {
+            btnRegister.setOnClickListener(v -> {
+                new AlertDialog.Builder(requireContext())
+                    .setTitle("Restaurant Registration")
+                    .setMessage("To register your restaurant, please contact our support team at business@dinear.com or call +977-9800000000.")
+                    .setPositiveButton("Close", null)
+                    .show();
             });
         }
     }
@@ -130,6 +174,39 @@ public class ProfileFragment extends Fragment {
         
         if (tvName != null) tvName.setText(name);
         if (tvEmail != null) tvEmail.setText(email);
+    }
+
+    private void showMainOverflowMenu(View v) {
+        if (getContext() == null) return;
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), v);
+        popup.getMenuInflater().inflate(R.menu.menu_main_profile, popup.getMenu());
+
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.menu_help) {
+                Toast.makeText(getContext(), "Support: support@dinear.com", Toast.LENGTH_LONG).show();
+                return true;
+            } else if (id == R.id.menu_privacy) {
+                Toast.makeText(getContext(), "Privacy Policy coming soon", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_about) {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("About DineAR")
+                        .setMessage("DineAR v1.0\nAugmented Reality Food Platform\n\nBuilt for the future of dining.")
+                        .setPositiveButton("Close", null)
+                        .show();
+                return true;
+            } else if (id == R.id.menu_share) {
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, "Experience the future of dining with DineAR! Download now: https://dinear.com");
+                sendIntent.setType("text/plain");
+                startActivity(Intent.createChooser(sendIntent, "Share DineAR via"));
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private void performLogout() {
@@ -172,6 +249,12 @@ public class ProfileFragment extends Fragment {
             if (getContext() != null) {
                 SharedPrefManager.saveUserAvatar(getContext(), tempSelectedAvatar);
                 ivProfile.setImageResource(tempSelectedAvatar);
+                
+                // Notify MainActivity to update its header image
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).updateProfileUI();
+                }
+                
                 Toast.makeText(getContext(), "Avatar updated!", Toast.LENGTH_SHORT).show();
             }
             dialog.dismiss();
