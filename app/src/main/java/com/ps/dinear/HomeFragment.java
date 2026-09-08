@@ -233,7 +233,6 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         View exploreHeader = root.findViewById(R.id.rlExploreHeader);
         View featuredHeader = root.findViewById(R.id.rlFeaturedFoodsHeader);
         View featuredList = root.findViewById(R.id.rvFeaturedFoods);
-        View registerCard = root.findViewById(R.id.cardRegisterInfo);
         
         if (promoBanner != null) promoBanner.setVisibility(visibility);
         if (catHeader != null) catHeader.setVisibility(visibility);
@@ -241,7 +240,6 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (exploreHeader != null) exploreHeader.setVisibility(visibility);
         if (featuredHeader != null) featuredHeader.setVisibility(visibility);
         if (featuredList != null) featuredList.setVisibility(visibility);
-        if (registerCard != null) registerCard.setVisibility(visibility);
 
         if (show) {
             View noRes = root.findViewById(R.id.llNoResults);

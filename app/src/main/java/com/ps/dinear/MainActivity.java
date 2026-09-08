@@ -269,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
                     updateNavUI(0);
                     rlHeader.setVisibility(View.VISIBLE);
                     setHeaderState(null, true, true);
+                    updateProfileUI();
                     checkAndRestoreErrorState();
                     
                     getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
@@ -410,13 +411,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        updateWelcomeText();
+        updateProfileUI();
         updateCartBadge();
-        if (ivHomeProfile != null) ivHomeProfile.setImageResource(SharedPrefManager.getUserAvatar(this));
         
         if (tvCurrentLocation != null) {
             String locationText = SharedPrefManager.getCity(this) + ", " + SharedPrefManager.getDistrict(this);
             tvCurrentLocation.setText(locationText);
+        }
+    }
+
+    public void updateProfileUI() {
+        updateWelcomeText();
+        if (ivHomeProfile != null) {
+            ivHomeProfile.setImageResource(SharedPrefManager.getUserAvatar(this));
         }
     }
 

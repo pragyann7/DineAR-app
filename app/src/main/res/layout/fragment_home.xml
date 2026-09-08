@@ -297,69 +297,6 @@
                 tools:listitem="@layout/item_featured_food" />
 
             <!-- Section Divider -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="24.dp"
-                android:background="@color/divider" />
-
-            <!-- Register Restaurant Info -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardRegisterInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="24.dp"
-                android:layout_marginBottom="16.dp"
-                app:cardCornerRadius="16.dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/divider"
-                app:cardBackgroundColor="@color/white">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20.dp"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        app:tint="@color/orange_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0.dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="16.dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/own_a_restaurant"
-                            android:textColor="@color/black"
-                            android:textStyle="bold"
-                            android:textSize="15sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2.dp"
-                            android:text="@string/register_info"
-                            android:textColor="@color/gray_dark"
-                            android:textSize="12sp"
-                            android:lineSpacingExtra="2dp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
             <!-- Footer Spacer for FAB -->
             <View
                 android:layout_width="match_parent"
