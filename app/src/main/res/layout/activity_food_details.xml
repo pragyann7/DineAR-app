@@ -85,11 +85,48 @@
                     android:textStyle="bold"
                     tools:text="Starters" />
 
+                <LinearLayout
+                    android:id="@+id/llRestaurantLink"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingVertical="4dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/icon_home"
+                        app:tint="@color/orange_primary" />
+
+                    <TextView
+                        android:id="@+id/tvRestaurantNameDetails"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:text="The Italian Kitchen" />
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="2dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/orange_primary" />
+
+                </LinearLayout>
+
                 <TextView
                     android:id="@+id/tvFoodNameDetails"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8.dp"
+                    android:layout_marginTop="8dp"
                     android:textColor="@color/black"
                     android:textSize="32sp"
                     android:textStyle="bold"

@@ -13,6 +13,12 @@ public class MenuItem implements Serializable {
     @SerializedName("restaurant_ids")
     private List<Integer> restaurantIds;
 
+    @SerializedName("restaurant_name")
+    private String restaurantName;
+
+    @SerializedName("restaurant_slug")
+    private String restaurantSlug;
+
     @SerializedName("name")
     private String name;
 
@@ -71,7 +77,11 @@ public class MenuItem implements Serializable {
     }
 
     public String getRestaurantName() {
-        return null; // Fallback to lookup in Adapter
+        return restaurantName;
+    }
+
+    public String getRestaurantSlug() {
+        return restaurantSlug;
     }
 
     public String getName() { return name; }

@@ -2,9 +2,10 @@ package com.ps.dinear.data.model;
 
 import com.google.gson.annotations.SerializedName;
 import com.ps.dinear.MenuItem;
+import java.io.Serializable;
 import java.util.List;
 
-public class Restaurant {
+public class Restaurant implements Serializable {
     private int id;
     private String name;
     private String slug;
@@ -93,7 +94,7 @@ public class Restaurant {
     public double getLongitude() { return longitude; }
     public List<MenuItem> getMenuItems() { return menuItems; }
 
-    public static class Category {
+    public static class Category implements Serializable {
         private int id;
         private String name;
         private String icon;
@@ -103,7 +104,7 @@ public class Restaurant {
         public String getIcon() { return icon; }
     }
 
-    public static class Location {
+    public static class Location implements Serializable {
         private int id;
         private String district;
         private String city;

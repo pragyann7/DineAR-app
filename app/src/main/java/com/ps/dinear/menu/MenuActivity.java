@@ -213,11 +213,22 @@ public class MenuActivity extends AppCompatActivity {
     private void openFoodDetails(MenuItem item) {
         Intent intent = new Intent(this, FoodDetailsActivity.class);
         intent.putExtra("selectedItem", item);
+        
+        // Pass all restaurant info that this activity received
         intent.putExtra("restaurantId", getIntent().getIntExtra("restaurantId", -1));
         intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
         intent.putExtra("restaurantName", getIntent().getStringExtra("restaurantName"));
+        intent.putExtra("cuisine", getIntent().getStringExtra("cuisine"));
+        intent.putExtra("rating", getIntent().getDoubleExtra("rating", 0.0));
+        intent.putExtra("description", getIntent().getStringExtra("description"));
+        intent.putExtra("deliveryTime", getIntent().getStringExtra("deliveryTime"));
+        intent.putExtra("imageUrl", getIntent().getStringExtra("imageUrl"));
+        intent.putExtra("bannerImage", getIntent().getStringExtra("bannerImage"));
+        intent.putExtra("address", getIntent().getStringExtra("address"));
+        intent.putExtra("latitude", getIntent().getDoubleExtra("latitude", 0.0));
+        intent.putExtra("longitude", getIntent().getDoubleExtra("longitude", 0.0));
         intent.putExtra("deliveryCharge", getIntent().getDoubleExtra("deliveryCharge", 50.0));
-        // No longer passing fullMenuList to avoid Intent size limits
+        
         startActivity(intent);
     }
 }

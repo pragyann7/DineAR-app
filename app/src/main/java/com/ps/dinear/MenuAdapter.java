@@ -100,9 +100,37 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FoodDetailsActivity.class);
             intent.putExtra("selectedItem", item);
-            if (item.getRestaurantId() != null) {
-                intent.putExtra("restaurantId", item.getRestaurantId());
+            
+            Restaurant foundRes = null;
+            if (item.getRestaurantId() != null && restaurants != null) {
+                for (Restaurant r : restaurants) {
+                    if (r.getId() == item.getRestaurantId().intValue()) {
+                        foundRes = r;
+                        break;
+                    }
+                }
             }
+            
+            if (foundRes != null) {
+                intent.putExtra("restaurantId", foundRes.getId());
+                intent.putExtra("restaurantSlug", foundRes.getSlug());
+                intent.putExtra("restaurantName", foundRes.getName());
+                intent.putExtra("cuisine", foundRes.getCuisine());
+                intent.putExtra("rating", foundRes.getRating());
+                intent.putExtra("description", foundRes.getDescription());
+                intent.putExtra("deliveryTime", foundRes.getDeliveryTime());
+                intent.putExtra("imageUrl", foundRes.getImageUrl());
+                intent.putExtra("bannerImage", foundRes.getBannerImage());
+                intent.putExtra("address", foundRes.getAddress());
+                intent.putExtra("latitude", foundRes.getLatitude());
+                intent.putExtra("longitude", foundRes.getLongitude());
+                intent.putExtra("deliveryCharge", foundRes.getDeliveryCharge());
+            } else if (item.getRestaurantId() != null) {
+                intent.putExtra("restaurantId", item.getRestaurantId());
+                intent.putExtra("restaurantName", item.getRestaurantName());
+                intent.putExtra("restaurantSlug", item.getRestaurantSlug());
+            }
+            
             context.startActivity(intent);
         });
     }
