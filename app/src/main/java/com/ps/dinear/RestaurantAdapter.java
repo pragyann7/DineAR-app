@@ -64,7 +64,14 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Restaurant restaurant = list.get(position);
         holder.tvName.setText(restaurant.getName());
-        holder.tvRating.setText(String.valueOf(restaurant.getRating()));
+
+        if (restaurant.getRating() > 0) {
+            holder.tvRating.setText(String.format(Locale.US, "%.1f", restaurant.getRating()));
+            if (holder.llRating != null) holder.llRating.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvRating.setText("N/A");
+            // Optionally hide or show "New"
+        }
         
         // Cleaner cuisine and price info
         String info = restaurant.getCuisine();
@@ -74,6 +81,20 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         holder.tvCuisine.setText(info);
         
         holder.tvTime.setText(restaurant.getDeliveryTime());
+
+        if (holder.tvDeliveryChargeInfo != null) {
+            if (restaurant.getDeliveryCharge() == 0) {
+                holder.tvDeliveryChargeInfo.setText("FREE DELIVERY");
+                holder.tvDeliveryChargeInfo.setTextColor(ContextCompat.getColor(context, R.color.green_delivery));
+                if (holder.vDotDelivery != null) holder.vDotDelivery.setVisibility(View.VISIBLE);
+                holder.tvDeliveryChargeInfo.setVisibility(View.VISIBLE);
+            } else {
+                holder.tvDeliveryChargeInfo.setText("DELIVERY");
+                holder.tvDeliveryChargeInfo.setTextColor(ContextCompat.getColor(context, R.color.paid_delivery));
+                if (holder.vDotDelivery != null) holder.vDotDelivery.setVisibility(View.VISIBLE);
+                holder.tvDeliveryChargeInfo.setVisibility(View.VISIBLE);
+            }
+        }
         
         if (holder.llDistance != null) {
             if (restaurant.getDistance() > 0) {
@@ -122,8 +143,8 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
     public static class ViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
         ImageView ivRestaurant, ivFavorite, ivDistanceIcon;
-        TextView tvName, tvRating, tvCuisine, tvTime, tvDistance;
-        View llDistance;
+        TextView tvName, tvRating, tvCuisine, tvTime, tvDistance, tvDeliveryChargeInfo;
+        View llDistance, llRating, vDotDelivery;
         MaterialButton btnViewDetails;
 
         public ViewHolder(@NonNull View itemView) {
@@ -133,8 +154,11 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
             ivFavorite = itemView.findViewById(R.id.ivFavoriteRestItem);
             tvName = itemView.findViewById(R.id.tvRestaurantName);
             tvRating = itemView.findViewById(R.id.tvRating);
+            llRating = itemView.findViewById(R.id.llRating);
             tvCuisine = itemView.findViewById(R.id.tvCuisine);
             tvTime = itemView.findViewById(R.id.tvTime);
+            tvDeliveryChargeInfo = itemView.findViewById(R.id.tvDeliveryChargeInfo);
+            vDotDelivery = itemView.findViewById(R.id.vDotDelivery);
             tvDistance = itemView.findViewById(R.id.tvDistance);
             ivDistanceIcon = itemView.findViewById(R.id.ivDistanceIcon);
             llDistance = itemView.findViewById(R.id.llDistance);

@@ -1149,7 +1149,7 @@ private fun MenuOverlay(
                             )
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_cart_premium),
+                                painter = painterResource(id = R.drawable.icon_cart),
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp)
                             )

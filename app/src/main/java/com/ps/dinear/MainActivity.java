@@ -27,6 +27,7 @@ import com.ps.dinear.data.model.SearchResponse;
 import com.ps.dinear.location.LocationActivity;
 
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -439,12 +440,25 @@ public class MainActivity extends AppCompatActivity {
     private void updateWelcomeText() {
         String name = SharedPrefManager.getUserName(this);
         String email = SharedPrefManager.getUserEmail(this);
-        if (SharedPrefManager.isGuest(this)) name = "Guest";
-        else if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
-            if (email != null && email.contains("@")) name = email.split("@")[0];
-            else name = "User";
+        if (SharedPrefManager.isGuest(this)) {
+            name = "Guest";
+        } else if (name == null || name.trim().isEmpty() || name.equalsIgnoreCase("Guest")) {
+            if (email != null && email.contains("@")) {
+                name = email.split("@")[0];
+            } else {
+                name = "User";
+            }
         }
-        if (name != null && tvWelcome != null) tvWelcome.setText(getString(R.string.hello_placeholder, name.toUpperCase()));
+        
+        // Only show the first name in the greeting
+        if (name != null && name.contains(" ")) {
+            name = name.split(" ")[0];
+        }
+        
+        if (tvWelcome != null) {
+            String displayName = (name != null) ? name.toUpperCase(Locale.getDefault()) : "USER";
+            tvWelcome.setText(getString(R.string.hello_placeholder, displayName));
+        }
     }
 
     private void updateCartBadge() {

@@ -193,6 +193,10 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void performLogout() {
+        // Clear all managers
+        CartManager.getInstance().clear();
+        FavoritesManager.getInstance().clear();
+        
         SharedPrefManager.clearAuth(this);
         
         android.content.Intent intent = new android.content.Intent(this, com.ps.dinear.auth.AuthActivity.class);

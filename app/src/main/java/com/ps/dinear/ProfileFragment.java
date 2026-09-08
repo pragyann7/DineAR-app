@@ -211,9 +211,12 @@ public class ProfileFragment extends Fragment {
 
     private void performLogout() {
         if (getContext() == null) return;
+        
+        // Clear all managers
+        CartManager.getInstance().clear();
+        FavoritesManager.getInstance().clear();
+        
         SharedPrefManager.clearAuth(getContext());
-        SharedPrefManager.setIsLoggedIn(getContext(), false);
-        SharedPrefManager.setIsGuest(getContext(), false);
         Toast.makeText(getContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(getContext(), AuthActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

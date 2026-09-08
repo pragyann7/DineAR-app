@@ -28,6 +28,9 @@ public class Order implements Serializable {
     @SerializedName("delivery_charge")
     private double deliveryCharge;
 
+    @SerializedName("service_charge")
+    private double serviceCharge;
+
     private List<OrderItem> items;
     
     @SerializedName("created_at")
@@ -41,6 +44,7 @@ public class Order implements Serializable {
     public String getContactNumber() { return contactNumber; }
     public String getDeliveryOption() { return deliveryOption; }
     public double getDeliveryCharge() { return deliveryCharge; }
+    public double getServiceCharge() { return serviceCharge; }
     public List<OrderItem> getItems() { return items; }
     public String getCreatedAt() { return createdAt; }
 
