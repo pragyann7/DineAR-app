@@ -33,6 +33,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
     private String restaurantSlug;
     private String name;
     private double latitude, longitude;
+    private double deliveryCharge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +63,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         boolean isFeatured = getIntent().getBooleanExtra("isFeatured", false);
         latitude = getIntent().getDoubleExtra("latitude", 0.0);
         longitude = getIntent().getDoubleExtra("longitude", 0.0);
+        deliveryCharge = getIntent().getDoubleExtra("deliveryCharge", 50.0);
 
         ((TextView) findViewById(R.id.tvRestNameDetails)).setText(name);
         
@@ -182,6 +184,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             intent.putExtra("restaurantId", restaurantId);
             intent.putExtra("restaurantSlug", restaurantSlug);
             intent.putExtra("restaurantName", name);
+            intent.putExtra("deliveryCharge", deliveryCharge);
             startActivity(intent);
         });
 
@@ -190,6 +193,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             intent.putExtra("restaurantId", restaurantId);
             intent.putExtra("restaurantSlug", restaurantSlug);
             intent.putExtra("restaurantName", name);
+            intent.putExtra("deliveryCharge", deliveryCharge);
             startActivity(intent);
         });
 

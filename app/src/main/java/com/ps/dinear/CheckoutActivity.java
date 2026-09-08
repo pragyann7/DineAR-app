@@ -49,7 +49,8 @@ public class CheckoutActivity extends AppCompatActivity {
     private RecyclerView rvItems;
     private CheckoutItemsAdapter adapter;
     private TextView tvRestaurantName, tvOrderSummaryInfo, tvPaymentVia, tvPayAmount;
-    private TextView tvSubtotal, tvServiceCharge, tvTotalPayable;
+    private TextView tvSubtotal, tvServiceCharge, tvDeliveryCharge, tvTotalPayable;
+    private View rlDeliveryCharge;
     private TextView tvCheckoutAddress;
     private MaterialButton btnPay;
     private RadioButton rbEsewa, rbKhalti, rbCash;
@@ -94,6 +95,8 @@ public class CheckoutActivity extends AppCompatActivity {
         tvPayAmount = findViewById(R.id.tvPayAmount);
         tvSubtotal = findViewById(R.id.tvSubtotal);
         tvServiceCharge = findViewById(R.id.tvServiceCharge);
+        tvDeliveryCharge = findViewById(R.id.tvDeliveryCharge);
+        rlDeliveryCharge = findViewById(R.id.rlDeliveryCharge);
         tvTotalPayable = findViewById(R.id.tvTotalPayable);
         btnPay = findViewById(R.id.btnPay);
         
@@ -241,6 +244,11 @@ public class CheckoutActivity extends AppCompatActivity {
         int orangePrimary = getResources().getColor(R.color.orange_primary);
 
         llAddressPicker.setVisibility(option.equals("DELIVERY") ? View.VISIBLE : View.GONE);
+        
+        // Show/Hide delivery charge in bill details
+        if (rlDeliveryCharge != null) {
+            rlDeliveryCharge.setVisibility(option.equals("DELIVERY") ? View.VISIBLE : View.GONE);
+        }
 
         switch (option) {
             case "DELIVERY":
@@ -259,6 +267,29 @@ public class CheckoutActivity extends AppCompatActivity {
                 cvOptionDineIn.setStrokeWidth(convertDpToPx(2));
                 break;
         }
+        
+        calculateFinalTotal();
+    }
+
+    private int calculateFinalTotal() {
+        int subtotal = (int) CartManager.getInstance().getTotalPrice();
+        int serviceCharge = 10;
+        double charge = CartManager.getInstance().getDeliveryCharge();
+        int deliveryCharge = selectedDeliveryOption.equals("DELIVERY") ? (int) charge : 0;
+        int total = subtotal + serviceCharge + deliveryCharge;
+
+        tvSubtotal.setText(String.format(Locale.getDefault(), "Rs. %d", subtotal));
+        tvServiceCharge.setText(String.format(Locale.getDefault(), "Rs. %d", serviceCharge));
+        if (tvDeliveryCharge != null) {
+            tvDeliveryCharge.setText(String.format(Locale.getDefault(), "Rs. %d", deliveryCharge));
+        }
+        tvTotalPayable.setText(String.format(Locale.getDefault(), "Rs. %d", total));
+        
+        tvPayAmount.setText(String.format(Locale.getDefault(), "Rs. %d", total));
+        if (btnPay.isEnabled()) {
+            btnPay.setText(String.format(Locale.getDefault(), "Pay Rs. %d", total));
+        }
+        return total;
     }
 
     @Override
@@ -292,25 +323,16 @@ public class CheckoutActivity extends AppCompatActivity {
 
     private void setupOrderSummary() {
         List<CartItem> items = CartManager.getInstance().getItems();
-        String restaurantName = CartManager.getInstance().getRestaurantName();
-        if (restaurantName == null) restaurantName = "DineAR Restaurant";
+        String name = CartManager.getInstance().getRestaurantName();
+        if (name == null) name = "DineAR Restaurant";
 
-        tvRestaurantName.setText(restaurantName);
-        tvOrderSummaryInfo.setText(items.size() + " items in cart");
+        tvRestaurantName.setText(name);
+        tvOrderSummaryInfo.setText(String.format(Locale.getDefault(), "%d items in cart", items.size()));
 
         adapter = new CheckoutItemsAdapter(this, items);
         rvItems.setAdapter(adapter);
 
-        int subtotal = (int) CartManager.getInstance().getTotalPrice();
-        int serviceCharge = 10;
-        int total = subtotal + serviceCharge;
-        
-        tvSubtotal.setText("Rs. " + subtotal);
-        tvServiceCharge.setText("Rs. " + serviceCharge);
-        tvTotalPayable.setText("Rs. " + total);
-        
-        tvPayAmount.setText("Rs. " + total);
-        btnPay.setText("Pay Rs. " + total);
+        calculateFinalTotal();
     }
 
     private void setupPaymentMethods() {
@@ -363,7 +385,7 @@ public class CheckoutActivity extends AppCompatActivity {
                 cvCash.setStrokeWidth(convertDpToPx(2));
                 break;
         }
-        tvPaymentVia.setText("Payment via: " + selectedPaymentMethod);
+        tvPaymentVia.setText(String.format("Payment via: %s", selectedPaymentMethod));
     }
 
     private int convertDpToPx(int dp) {
@@ -382,7 +404,7 @@ public class CheckoutActivity extends AppCompatActivity {
         if (selectedPaymentMethod.equals("eSewa")) {
             initiateEsewaPayment();
         } else {
-            placeOrder(selectedPaymentMethod);
+            placeOrder();
         }
     }
 
@@ -412,13 +434,13 @@ public class CheckoutActivity extends AppCompatActivity {
         
         api.placeOrder(token, request).enqueue(new Callback<Order>() {
             @Override
-            public void onResponse(Call<Order> call, Response<Order> response) {
+            public void onResponse(@NonNull Call<Order> call, @NonNull Response<Order> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     int orderId = response.body().getId();
                     getEsewaFormData(orderId);
                 } else {
                     btnPay.setEnabled(true);
-                    btnPay.setText("Pay Rs. " + (int)CartManager.getInstance().getTotalPrice());
+                    btnPay.setText(String.format(Locale.getDefault(), "Pay Rs. %d", calculateFinalTotal()));
                     Toast.makeText(CheckoutActivity.this, "Failed to create order", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -438,9 +460,9 @@ public class CheckoutActivity extends AppCompatActivity {
         ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
         api.initiateEsewaPayment(token, request).enqueue(new Callback<com.ps.dinear.data.model.EsewaInitiateResponse>() {
             @Override
-            public void onResponse(Call<com.ps.dinear.data.model.EsewaInitiateResponse> call, Response<com.ps.dinear.data.model.EsewaInitiateResponse> response) {
+            public void onResponse(@NonNull Call<com.ps.dinear.data.model.EsewaInitiateResponse> call, @NonNull Response<com.ps.dinear.data.model.EsewaInitiateResponse> response) {
                 btnPay.setEnabled(true);
-                btnPay.setText("Pay Rs. " + (int)CartManager.getInstance().getTotalPrice());
+                btnPay.setText(String.format(Locale.getDefault(), "Pay Rs. %d", calculateFinalTotal()));
                 
                 if (response.isSuccessful() && response.body() != null) {
                     Intent intent = new Intent(CheckoutActivity.this, PaymentWebViewActivity.class);
@@ -460,7 +482,7 @@ public class CheckoutActivity extends AppCompatActivity {
         });
     }
 
-    private void placeOrder(String method) {
+    private void placeOrder() {
         btnPay.setEnabled(false);
         btnPay.setText("Processing...");
 
@@ -485,7 +507,7 @@ public class CheckoutActivity extends AppCompatActivity {
         ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
         api.placeOrder(token, request).enqueue(new Callback<Order>() {
             @Override
-            public void onResponse(Call<Order> call, Response<Order> response) {
+            public void onResponse(@NonNull Call<Order> call, @NonNull Response<Order> response) {
                 if (response.isSuccessful()) {
                     CartManager.getInstance().clear();
                     Toast.makeText(CheckoutActivity.this, "Order placed successfully!", Toast.LENGTH_LONG).show();
@@ -496,7 +518,7 @@ public class CheckoutActivity extends AppCompatActivity {
                     finish();
                 } else {
                     btnPay.setEnabled(true);
-                    btnPay.setText("Pay Rs. " + (int)CartManager.getInstance().getTotalPrice());
+                    btnPay.setText(String.format(Locale.getDefault(), "Pay Rs. %d", calculateFinalTotal()));
                     Toast.makeText(CheckoutActivity.this, "Failed to place order: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }

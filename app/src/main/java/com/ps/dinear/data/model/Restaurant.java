@@ -47,6 +47,9 @@ public class Restaurant {
     @SerializedName("is_featured")
     private boolean isFeatured;
 
+    @SerializedName("delivery_charge")
+    private double deliveryCharge;
+
     private double latitude;
     private double longitude;
 
@@ -85,6 +88,7 @@ public class Restaurant {
     public String getOpeningTime() { return openingTime; }
     public String getClosingTime() { return closingTime; }
     public boolean isFeatured() { return isFeatured; }
+    public double getDeliveryCharge() { return deliveryCharge; }
     public double getLatitude() { return latitude; }
     public double getLongitude() { return longitude; }
     public List<MenuItem> getMenuItems() { return menuItems; }

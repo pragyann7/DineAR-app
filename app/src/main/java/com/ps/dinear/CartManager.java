@@ -8,6 +8,7 @@ public class CartManager {
     private static CartManager instance;
     private List<CartItem> cartItems = new ArrayList<>();
     private String restaurantName;
+    private double deliveryCharge = 50.00; // Default
     private List<CartListener> listeners = new ArrayList<>();
 
     public interface CartListener {
@@ -39,13 +40,14 @@ public class CartManager {
         }
     }
 
-    public void addItem(MenuItem item, int restaurantId, String restaurantName) {
+    public void addItem(MenuItem item, int restaurantId, String restaurantName, double deliveryCharge) {
         // If adding from a different restaurant, clear cart first (standard food delivery rule)
         if (!cartItems.isEmpty() && cartItems.get(0).getRestaurantId() != restaurantId) {
             cartItems.clear();
         }
         
         this.restaurantName = restaurantName;
+        this.deliveryCharge = deliveryCharge;
 
         boolean found = false;
         for (CartItem cartItem : cartItems) {
@@ -113,6 +115,10 @@ public class CartManager {
     
     public String getRestaurantName() {
         return restaurantName;
+    }
+
+    public double getDeliveryCharge() {
+        return deliveryCharge;
     }
 
     public int getItemCount() {

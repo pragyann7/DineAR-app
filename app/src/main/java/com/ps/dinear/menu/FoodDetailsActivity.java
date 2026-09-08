@@ -154,13 +154,15 @@ public class FoodDetailsActivity extends AppCompatActivity {
         findViewById(R.id.btnAddToCart).setOnClickListener(v -> {
             int restaurantId = getIntent().getIntExtra("restaurantId", -1);
             String restaurantName = getIntent().getStringExtra("restaurantName");
+            double deliveryCharge = getIntent().getDoubleExtra("deliveryCharge", 50.0);
+
             if (restaurantId == -1 && item.getRestaurantId() != null) {
                 restaurantId = item.getRestaurantId();
             }
 
             if (restaurantId != -1) {
                 for (int i = 0; i < quantity; i++) {
-                    CartManager.getInstance().addItem(item, restaurantId, restaurantName);
+                    CartManager.getInstance().addItem(item, restaurantId, restaurantName, deliveryCharge);
                 }
                 Toast.makeText(this, "Added " + quantity + " to cart!", Toast.LENGTH_SHORT).show();
             } else {

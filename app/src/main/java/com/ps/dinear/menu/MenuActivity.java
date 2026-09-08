@@ -194,14 +194,18 @@ public class MenuActivity extends AppCompatActivity {
         RecyclerView rvMenu = findViewById(R.id.rvMenuItems);
         int restaurantId = getIntent().getIntExtra("restaurantId", -1);
         String restaurantName = getIntent().getStringExtra("restaurantName");
+        double deliveryCharge = getIntent().getDoubleExtra("deliveryCharge", 50.0);
+
         if (foodAdapter == null) {
             foodAdapter = new MenuFoodAdapter(this, new ArrayList<>(items), item -> openFoodDetails(item));
             foodAdapter.setRestaurantId(restaurantId);
             foodAdapter.setRestaurantName(restaurantName);
+            foodAdapter.setDeliveryCharge(deliveryCharge);
             rvMenu.setAdapter(foodAdapter);
         } else {
             foodAdapter.setRestaurantId(restaurantId);
             foodAdapter.setRestaurantName(restaurantName);
+            foodAdapter.setDeliveryCharge(deliveryCharge);
             foodAdapter.updateList(items);
         }
     }
@@ -211,6 +215,8 @@ public class MenuActivity extends AppCompatActivity {
         intent.putExtra("selectedItem", item);
         intent.putExtra("restaurantId", getIntent().getIntExtra("restaurantId", -1));
         intent.putExtra("restaurantSlug", getIntent().getStringExtra("restaurantSlug"));
+        intent.putExtra("restaurantName", getIntent().getStringExtra("restaurantName"));
+        intent.putExtra("deliveryCharge", getIntent().getDoubleExtra("deliveryCharge", 50.0));
         // No longer passing fullMenuList to avoid Intent size limits
         startActivity(intent);
     }
