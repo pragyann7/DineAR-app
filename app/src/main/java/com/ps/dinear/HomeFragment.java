@@ -147,6 +147,17 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         });
 
         FavoritesManager.getInstance().addListener(this);
+
+        View btnViewAllTrending = view.findViewById(R.id.tvViewAllFeatured);
+        if (btnViewAllTrending != null) {
+            btnViewAllTrending.setOnClickListener(v -> {
+                if (tabLayoutSearch != null && tabLayoutSearch.getTabAt(1) != null) {
+                    tabLayoutSearch.getTabAt(1).select();
+                    currentSearchQuery = "";
+                    performSearch(view);
+                }
+            });
+        }
     }
 
     @Override
@@ -245,15 +256,13 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         View catHeader = root.findViewById(R.id.rlCategoriesHeader);
         View filters = root.findViewById(R.id.rvFilters);
         View exploreHeader = root.findViewById(R.id.rlExploreHeader);
-        View featuredHeader = root.findViewById(R.id.rlFeaturedFoodsHeader);
-        View featuredList = root.findViewById(R.id.rvFeaturedFoods);
+        View trendingContainer = root.findViewById(R.id.llTrendingContainer);
         
         if (promoBanner != null) promoBanner.setVisibility(visibility);
         if (catHeader != null) catHeader.setVisibility(visibility);
         if (filters != null) filters.setVisibility(visibility);
         if (exploreHeader != null) exploreHeader.setVisibility(visibility);
-        if (featuredHeader != null) featuredHeader.setVisibility(visibility);
-        if (featuredList != null) featuredList.setVisibility(visibility);
+        if (trendingContainer != null) trendingContainer.setVisibility(visibility);
 
         if (show) {
             View noRes = root.findViewById(R.id.llNoResults);
