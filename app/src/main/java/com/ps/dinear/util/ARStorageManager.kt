@@ -14,10 +14,20 @@ object ARStorageManager {
     }
 
     fun clearCache(context: Context) {
-        val dir = context.getExternalFilesDir("models") ?: return
-        if (dir.exists()) {
-            dir.listFiles()?.forEach { it.delete() }
+        val modelsDir = context.getExternalFilesDir("models")
+        if (modelsDir?.exists() == true) {
+            modelsDir.listFiles()?.forEach { it.delete() }
         }
+        val markersDir = context.getExternalFilesDir("markers")
+        if (markersDir?.exists() == true) {
+            markersDir.listFiles()?.forEach { it.delete() }
+        }
+    }
+
+    fun getMarkerFile(context: Context, restaurantId: Int): File {
+        val dir = context.getExternalFilesDir("markers") ?: File(context.filesDir, "markers")
+        if (!dir.exists()) dir.mkdirs()
+        return File(dir, "marker_${restaurantId}.imgdb")
     }
 
     fun checkAndCleanup(context: Context) {

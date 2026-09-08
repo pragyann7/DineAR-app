@@ -10,10 +10,15 @@ public class RestaurantMenuResponse implements Serializable {
     private String restaurantName;
     
     private String slug;
+    
+    @SerializedName("marker_database")
+    private String markerDatabase;
+    
     private List<CategoryGroup> categories;
 
     public String getRestaurantName() { return restaurantName; }
     public String getSlug() { return slug; }
+    public String getMarkerDatabase() { return markerDatabase; }
     public List<CategoryGroup> getCategories() { return categories; }
 
     public static class CategoryGroup implements Serializable {

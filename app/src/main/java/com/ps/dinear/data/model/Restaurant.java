@@ -51,6 +51,12 @@ public class Restaurant implements Serializable {
     @SerializedName("delivery_charge")
     private double deliveryCharge;
 
+    @SerializedName("marker_image")
+    private String markerImage;
+
+    @SerializedName("marker_database")
+    private String markerDatabase;
+
     private double latitude;
     private double longitude;
 
@@ -90,6 +96,8 @@ public class Restaurant implements Serializable {
     public String getClosingTime() { return closingTime; }
     public boolean isFeatured() { return isFeatured; }
     public double getDeliveryCharge() { return deliveryCharge; }
+    public String getMarkerImage() { return markerImage; }
+    public String getMarkerDatabase() { return markerDatabase; }
     public double getLatitude() { return latitude; }
     public double getLongitude() { return longitude; }
     public List<MenuItem> getMenuItems() { return menuItems; }

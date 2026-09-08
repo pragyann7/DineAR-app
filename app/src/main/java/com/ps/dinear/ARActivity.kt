@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import com.ps.dinear.data.model.CartItem
 import com.ps.dinear.data.model.Order
 import com.ps.dinear.data.model.OrderRequest
+import com.ps.dinear.data.model.Restaurant
 import com.ps.dinear.data.model.RestaurantMenuResponse
 import com.ps.dinear.data.model.SearchResponse
 import com.google.ar.core.*
@@ -117,6 +118,12 @@ class ARViewModel : ViewModel() {
     private val _downloadStates = mutableStateMapOf<String, DownloadState>()
     val downloadStates: Map<String, DownloadState> = _downloadStates
 
+    var restaurantMarkerUrl by mutableStateOf<String?>(null)
+        private set
+    
+    var markerDownloadState by mutableStateOf<DownloadState>(DownloadState.Idle)
+        private set
+
     private val _menuItems = mutableStateListOf<MenuItem>()
     val menuItems: List<MenuItem> = _menuItems
 
@@ -151,10 +158,23 @@ class ARViewModel : ViewModel() {
     fun fetchMenu(context: android.content.Context, restaurantSlug: String) {
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
         Log.d("ARActivity", "Fetching menu for slug: $restaurantSlug")
+        
+        // Also fetch restaurant details for marker
+        api.getRestaurantDetails(restaurantSlug).enqueue(object : retrofit2.Callback<Restaurant> {
+            override fun onResponse(call: retrofit2.Call<Restaurant>, response: retrofit2.Response<Restaurant>) {
+                if (response.isSuccessful && response.body() != null) {
+                    restaurantMarkerUrl = response.body()!!.markerDatabase
+                }
+            }
+            override fun onFailure(call: retrofit2.Call<Restaurant>, t: Throwable) {}
+        })
+
         api.getMenu(restaurantSlug).enqueue(object : retrofit2.Callback<RestaurantMenuResponse> {
             override fun onResponse(call: retrofit2.Call<RestaurantMenuResponse>, response: retrofit2.Response<RestaurantMenuResponse>) {
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
+                    restaurantMarkerUrl = body.markerDatabase
+
                     val flattenedList = mutableListOf<MenuItem>()
                     Log.d("ARActivity", "Menu fetch success. Categories: ${body.categories?.size ?: 0}")
                     body.categories?.forEach { group ->
@@ -226,6 +246,18 @@ class ARViewModel : ViewModel() {
             override fun onFailure(call: retrofit2.Call<SearchResponse>, t: Throwable) {
             }
         })
+    }
+
+    fun setMarkerDownloading() {
+        markerDownloadState = DownloadState.Downloading
+    }
+
+    fun setMarkerReady() {
+        markerDownloadState = DownloadState.Ready
+    }
+
+    fun setMarkerError(msg: String) {
+        markerDownloadState = DownloadState.Error(msg)
     }
 
     fun setModelReady(url: String, model: Model) {
@@ -359,6 +391,39 @@ private fun ARScreen(
     var currentMenuItem by remember { mutableStateOf(initialMenuItem) }
     var isMenuOpen by remember { mutableStateOf(false) }
 
+    fun downloadMarkerDatabase(id: Int, rawUrl: String) {
+        if (viewModel.markerDownloadState is DownloadState.Downloading || viewModel.markerDownloadState is DownloadState.Ready) return
+        
+        val url = RetrofitClient.getFullUrl(context, rawUrl) ?: return
+        val markerFile = ARStorageManager.getMarkerFile(context, id)
+        
+        if (markerFile.exists()) {
+            viewModel.setMarkerReady()
+            return
+        }
+
+        viewModel.setMarkerDownloading()
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = viewModel.httpClient.newCall(request).execute()
+                if (!response.isSuccessful || response.body == null) throw Exception("Server error ${response.code}")
+
+                FileOutputStream(markerFile).use { output ->
+                    response.body!!.byteStream().use { input -> input.copyTo(output) }
+                }
+                
+                withContext(Dispatchers.Main) {
+                    viewModel.setMarkerReady()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    viewModel.setMarkerError("Marker download failed: ${e.message}")
+                }
+            }
+        }
+    }
+
     LaunchedEffect(currentMenuItem) {
         transform.reset()
     }
@@ -428,27 +493,28 @@ private fun ARScreen(
         downloadModel(currentMenuItem)
     }
 
-    LaunchedEffect(session) {
+    LaunchedEffect(viewMode, viewModel.restaurantMarkerUrl) {
+        if (viewMode == ViewMode.MARKER) {
+            viewModel.restaurantMarkerUrl?.let { downloadMarkerDatabase(restaurantId, it) }
+        }
+    }
+
+    LaunchedEffect(session, viewModel.markerDownloadState) {
         val s = session ?: return@LaunchedEffect
-        withContext(Dispatchers.IO) {
-            val dbFile = File(context.getExternalFilesDir(null), "marker_database.imgdb")
-            val db = try {
+        if (viewMode != ViewMode.MARKER) return@LaunchedEffect
+        
+        if (viewModel.markerDownloadState is DownloadState.Ready) {
+            withContext(Dispatchers.IO) {
+                val dbFile = ARStorageManager.getMarkerFile(context, restaurantId)
                 if (dbFile.exists()) {
-                    dbFile.inputStream().use { AugmentedImageDatabase.deserialize(s, it) }
-                } else {
-                    val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ar_marker)
-                    val newDb = AugmentedImageDatabase(s)
-                    newDb.addImage("universal_marker", bitmap, 0.15f)
-                    dbFile.outputStream().use { newDb.serialize(it) }
-                    newDb
+                    try {
+                        val db = dbFile.inputStream().use { AugmentedImageDatabase.deserialize(s, it) }
+                        withContext(Dispatchers.Main) { markerDatabase = db }
+                    } catch (e: Exception) {
+                        Log.e("DineAR", "Failed to load restaurant marker database: ${e.message}")
+                    }
                 }
-            } catch (_: Exception) {
-                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.ar_marker)
-                val newDb = AugmentedImageDatabase(s)
-                newDb.addImage("universal_marker", bitmap, 0.15f)
-                newDb
             }
-            withContext(Dispatchers.Main) { markerDatabase = db }
         }
     }
 
@@ -566,6 +632,24 @@ private fun ARScreen(
                             }
                         }
                     )
+                }
+            }
+        }
+
+        if (viewMode == ViewMode.MARKER && viewModel.markerDownloadState is DownloadState.Downloading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Surface(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(color = Color.White)
+                        Spacer(Modifier.height(16.dp))
+                        Text("Setting up restaurant marker...", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -853,12 +937,13 @@ private fun ArSceneContent(
         { s: Session, frame: Frame ->
             if (isMarkerMode) {
                 val images = s.getAllTrackables(AugmentedImage::class.java)
-                val marker = images.find { it.name == "universal_marker" && it.trackingState == TrackingState.TRACKING }
+                // In restaurant mode, we find the first image being tracked from the database
+                val marker = images.find { it.trackingState == TrackingState.TRACKING }
 
                 if (marker != null) {
                     val currentAnchor = markerAnchor
                     if (currentAnchor == null || currentAnchor.trackingState == TrackingState.STOPPED) {
-                        Log.d("DineAR", "Marker found! Creating anchor at: ${marker.centerPose}")
+                        Log.d("DineAR", "Restaurant marker found! Name: ${marker.name}")
                         stableOnMarkerAnchorFound.value(marker.createAnchor(marker.centerPose))
                     }
                 }
