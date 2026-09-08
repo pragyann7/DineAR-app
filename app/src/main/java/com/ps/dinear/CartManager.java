@@ -7,6 +7,7 @@ import java.util.List;
 public class CartManager {
     private static CartManager instance;
     private List<CartItem> cartItems = new ArrayList<>();
+    private String restaurantName;
     private List<CartListener> listeners = new ArrayList<>();
 
     public interface CartListener {
@@ -38,11 +39,13 @@ public class CartManager {
         }
     }
 
-    public void addItem(MenuItem item, int restaurantId) {
+    public void addItem(MenuItem item, int restaurantId, String restaurantName) {
         // If adding from a different restaurant, clear cart first (standard food delivery rule)
         if (!cartItems.isEmpty() && cartItems.get(0).getRestaurantId() != restaurantId) {
             cartItems.clear();
         }
+        
+        this.restaurantName = restaurantName;
 
         boolean found = false;
         for (CartItem cartItem : cartItems) {
@@ -108,6 +111,10 @@ public class CartManager {
         return cartItems.get(0).getRestaurantId();
     }
     
+    public String getRestaurantName() {
+        return restaurantName;
+    }
+
     public int getItemCount() {
         int count = 0;
         for (CartItem item : cartItems) {

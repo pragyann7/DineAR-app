@@ -95,6 +95,18 @@ public interface ApiService {
     @POST("api/orders/")
     Call<Order> placeOrder(@Header("Authorization") String token, @Body OrderRequest request);
 
+    @POST("api/payments/create/")
+    Call<com.ps.dinear.data.model.EsewaInitiateResponse> initiateEsewaPayment(
+        @Header("Authorization") String token, 
+        @Body com.ps.dinear.data.model.PaymentRequest request
+    );
+
+    @POST("api/payments/esewa/verify/")
+    Call<Void> verifyEsewaPayment(
+        @Header("Authorization") String token,
+        @Body java.util.Map<String, String> data
+    );
+
     @GET("api/orders/")
     Call<List<Order>> getOrders(@Header("Authorization") String token);
 

@@ -13,12 +13,16 @@ public class OrderRequest implements Serializable {
     @SerializedName("contact_number")
     private String contactNumber;
     
+    @SerializedName("payment_method")
+    private String paymentMethod;
+    
     private List<OrderItemRequest> items;
 
-    public OrderRequest(int restaurant, String deliveryAddress, String contactNumber, List<OrderItemRequest> items) {
+    public OrderRequest(int restaurant, String deliveryAddress, String contactNumber, String paymentMethod, List<OrderItemRequest> items) {
         this.restaurant = restaurant;
         this.deliveryAddress = deliveryAddress;
         this.contactNumber = contactNumber;
+        this.paymentMethod = paymentMethod;
         this.items = items;
     }
 
