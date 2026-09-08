@@ -1,25 +1,41 @@
 package com.ps.dinear;
 
+import android.Manifest;
 import android.content.Intent;
-import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
+import android.os.Looper;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.ps.dinear.data.model.CartItem;
 import com.ps.dinear.data.model.Order;
 import com.ps.dinear.data.model.OrderRequest;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -34,22 +50,40 @@ public class CheckoutActivity extends AppCompatActivity {
     private CheckoutItemsAdapter adapter;
     private TextView tvRestaurantName, tvOrderSummaryInfo, tvPaymentVia, tvPayAmount;
     private TextView tvSubtotal, tvServiceCharge, tvTotalPayable;
+    private TextView tvCheckoutAddress;
     private MaterialButton btnPay;
     private RadioButton rbEsewa, rbKhalti, rbCash;
+    private RadioButton rbOptionDelivery, rbOptionTakeaway, rbOptionDineIn;
     private MaterialCardView cvEsewa, cvKhalti, cvCash;
+    private MaterialCardView cvOptionDelivery, cvOptionTakeaway, cvOptionDineIn, cvPickAddress;
+    private LinearLayout llAddressPicker;
+    
     private String selectedPaymentMethod = "eSewa";
+    private String selectedDeliveryOption = "DELIVERY";
+    private String currentGpsAddress = "Locating...";
+    private double currentLat = 0, currentLng = 0;
+
+    private FusedLocationProviderClient fusedLocationClient;
+    private static final int REQ_MAP_PICKER = 102;
+    private static final int REQ_LOCATION_PERMISSION = 1001;
+    private static final int REQ_CHECK_SETTINGS = 1002;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checkout);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         initViews();
         setupOrderSummary();
         setupPaymentMethods();
+        setupDeliveryOptions();
 
         findViewById(R.id.btnBackCheckout).setOnClickListener(v -> finish());
         btnPay.setOnClickListener(v -> processPayment());
+        
+        checkLocationPermission();
     }
 
     private void initViews() {
@@ -62,14 +96,198 @@ public class CheckoutActivity extends AppCompatActivity {
         tvServiceCharge = findViewById(R.id.tvServiceCharge);
         tvTotalPayable = findViewById(R.id.tvTotalPayable);
         btnPay = findViewById(R.id.btnPay);
+        
         rbEsewa = findViewById(R.id.rbEsewa);
         rbKhalti = findViewById(R.id.rbKhalti);
         rbCash = findViewById(R.id.rbCash);
         cvEsewa = findViewById(R.id.cvEsewa);
         cvKhalti = findViewById(R.id.cvKhalti);
         cvCash = findViewById(R.id.cvCash);
+        
+        rbOptionDelivery = findViewById(R.id.rbOptionDelivery);
+        rbOptionTakeaway = findViewById(R.id.rbOptionTakeaway);
+        rbOptionDineIn = findViewById(R.id.rbOptionDineIn);
+        cvOptionDelivery = findViewById(R.id.cvOptionDelivery);
+        cvOptionTakeaway = findViewById(R.id.cvOptionTakeaway);
+        cvOptionDineIn = findViewById(R.id.cvOptionDineIn);
+        
+        cvPickAddress = findViewById(R.id.cvPickAddress);
+        tvCheckoutAddress = findViewById(R.id.tvCheckoutAddress);
+        llAddressPicker = findViewById(R.id.llAddressPicker);
 
         rvItems.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void checkLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCATION_PERMISSION);
+        } else {
+            checkLocationSettings();
+        }
+    }
+
+    private void checkLocationSettings() {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true);
+
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+
+        task.addOnSuccessListener(this, locationSettingsResponse -> fetchGpsLocation());
+
+        task.addOnFailureListener(this, e -> {
+            if (e instanceof ResolvableApiException) {
+                try {
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(CheckoutActivity.this, REQ_CHECK_SETTINGS);
+                } catch (android.content.IntentSender.SendIntentException sendEx) {
+                    // Ignore the error.
+                }
+            }
+        });
+    }
+
+    private void fetchGpsLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null) {
+                    updateLocationData(location.getLatitude(), location.getLongitude());
+                } else {
+                    // Try to get a fresh location if last location is null
+                    LocationRequest singleRequest = LocationRequest.create()
+                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                            .setNumUpdates(1)
+                            .setInterval(0);
+                    
+                    fusedLocationClient.requestLocationUpdates(singleRequest, new com.google.android.gms.location.LocationCallback() {
+                        @Override
+                        public void onLocationResult(@NonNull com.google.android.gms.location.LocationResult locationResult) {
+                            if (locationResult.getLastLocation() != null) {
+                                updateLocationData(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
+                            } else {
+                                tvCheckoutAddress.setText("Location not found. Tap to pick.");
+                            }
+                        }
+                    }, Looper.getMainLooper());
+                }
+            });
+        }
+    }
+
+    private void updateLocationData(double lat, double lng) {
+        currentLat = lat;
+        currentLng = lng;
+        reverseGeocode(currentLat, currentLng);
+    }
+
+    private void reverseGeocode(double lat, double lng) {
+        if (!Geocoder.isPresent()) return;
+        
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                currentGpsAddress = address.getAddressLine(0);
+                tvCheckoutAddress.setText(currentGpsAddress);
+            }
+        } catch (IOException e) {
+            tvCheckoutAddress.setText("Location found (tap to view)");
+        }
+    }
+
+    private void setupDeliveryOptions() {
+        View.OnClickListener selectDelivery = v -> updateDeliverySelection("DELIVERY");
+        View.OnClickListener selectTakeaway = v -> updateDeliverySelection("TAKEAWAY");
+        View.OnClickListener selectDineIn = v -> updateDeliverySelection("DINE_IN");
+
+        cvOptionDelivery.setOnClickListener(selectDelivery);
+        rbOptionDelivery.setOnClickListener(selectDelivery);
+
+        cvOptionTakeaway.setOnClickListener(selectTakeaway);
+        rbOptionTakeaway.setOnClickListener(selectTakeaway);
+
+        cvOptionDineIn.setOnClickListener(selectDineIn);
+        rbOptionDineIn.setOnClickListener(selectDineIn);
+
+        cvPickAddress.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MapAddressPickerActivity.class);
+            startActivityForResult(intent, REQ_MAP_PICKER);
+        });
+
+        findViewById(R.id.ivRefreshLocation).setOnClickListener(v -> fetchGpsLocation());
+
+        updateDeliverySelection("DELIVERY");
+    }
+
+    private void updateDeliverySelection(String option) {
+        selectedDeliveryOption = option;
+
+        rbOptionDelivery.setChecked(false);
+        rbOptionTakeaway.setChecked(false);
+        rbOptionDineIn.setChecked(false);
+
+        cvOptionDelivery.setStrokeColor(Color.parseColor("#E0E0E0"));
+        cvOptionDelivery.setStrokeWidth(convertDpToPx(1));
+        cvOptionTakeaway.setStrokeColor(Color.parseColor("#E0E0E0"));
+        cvOptionTakeaway.setStrokeWidth(convertDpToPx(1));
+        cvOptionDineIn.setStrokeColor(Color.parseColor("#E0E0E0"));
+        cvOptionDineIn.setStrokeWidth(convertDpToPx(1));
+
+        int orangePrimary = getResources().getColor(R.color.orange_primary);
+
+        llAddressPicker.setVisibility(option.equals("DELIVERY") ? View.VISIBLE : View.GONE);
+
+        switch (option) {
+            case "DELIVERY":
+                rbOptionDelivery.setChecked(true);
+                cvOptionDelivery.setStrokeColor(orangePrimary);
+                cvOptionDelivery.setStrokeWidth(convertDpToPx(2));
+                break;
+            case "TAKEAWAY":
+                rbOptionTakeaway.setChecked(true);
+                cvOptionTakeaway.setStrokeColor(orangePrimary);
+                cvOptionTakeaway.setStrokeWidth(convertDpToPx(2));
+                break;
+            case "DINE_IN":
+                rbOptionDineIn.setChecked(true);
+                cvOptionDineIn.setStrokeColor(orangePrimary);
+                cvOptionDineIn.setStrokeWidth(convertDpToPx(2));
+                break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_MAP_PICKER && resultCode == RESULT_OK && data != null) {
+            currentGpsAddress = data.getStringExtra("addressLine");
+            currentLat = data.getDoubleExtra("latitude", 0);
+            currentLng = data.getDoubleExtra("longitude", 0);
+            if (currentGpsAddress != null && !currentGpsAddress.isEmpty()) {
+                tvCheckoutAddress.setText(currentGpsAddress);
+            } else {
+                tvCheckoutAddress.setText("Custom location on map");
+            }
+        } else if (requestCode == REQ_CHECK_SETTINGS) {
+            if (resultCode == RESULT_OK) {
+                fetchGpsLocation();
+            } else {
+                Toast.makeText(this, "Location services are required for delivery", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_LOCATION_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            checkLocationSettings();
+        }
     }
 
     private void setupOrderSummary() {
@@ -84,7 +302,7 @@ public class CheckoutActivity extends AppCompatActivity {
         rvItems.setAdapter(adapter);
 
         int subtotal = (int) CartManager.getInstance().getTotalPrice();
-        int serviceCharge = 10; // Placeholder as in screenshot
+        int serviceCharge = 10;
         int total = subtotal + serviceCharge;
         
         tvSubtotal.setText("Rs. " + subtotal);
@@ -109,14 +327,12 @@ public class CheckoutActivity extends AppCompatActivity {
         cvCash.setOnClickListener(selectCash);
         rbCash.setOnClickListener(selectCash);
         
-        // Set initial state
         updatePaymentSelection("eSewa");
     }
 
     private void updatePaymentSelection(String method) {
         selectedPaymentMethod = method;
         
-        // Reset all
         rbEsewa.setChecked(false);
         rbKhalti.setChecked(false);
         rbCash.setChecked(false);
@@ -156,10 +372,16 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void processPayment() {
+        if (selectedDeliveryOption.equals("DELIVERY")) {
+            if (currentLat == 0 || currentLng == 0 || currentGpsAddress.equals("Locating...")) {
+                Toast.makeText(this, "Please select a valid delivery address", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
         if (selectedPaymentMethod.equals("eSewa")) {
             initiateEsewaPayment();
         } else {
-            // For Cash/Demo, we use the old logic or a simplified version
             placeOrder(selectedPaymentMethod);
         }
     }
@@ -168,7 +390,6 @@ public class CheckoutActivity extends AppCompatActivity {
         btnPay.setEnabled(false);
         btnPay.setText("Initiating eSewa...");
 
-        // 1. First place the order
         List<CartItem> items = CartManager.getInstance().getItems();
         List<OrderRequest.OrderItemRequest> itemRequests = new ArrayList<>();
         for (CartItem item : items) {
@@ -177,9 +398,12 @@ public class CheckoutActivity extends AppCompatActivity {
 
         OrderRequest request = new OrderRequest(
                 CartManager.getInstance().getRestaurantId(),
-                "My Address (Placeholder)",
+                currentGpsAddress != null ? currentGpsAddress : "No Address",
+                currentLat != 0 ? currentLat : null,
+                currentLng != 0 ? currentLng : null,
                 "9800000000",
                 "ESEWA",
+                selectedDeliveryOption,
                 itemRequests
         );
 
@@ -248,9 +472,12 @@ public class CheckoutActivity extends AppCompatActivity {
 
         OrderRequest request = new OrderRequest(
                 CartManager.getInstance().getRestaurantId(),
-                "My Address (Placeholder)",
+                currentGpsAddress != null ? currentGpsAddress : "No Address",
+                currentLat != 0 ? currentLat : null,
+                currentLng != 0 ? currentLng : null,
                 "9800000000",
-                selectedPaymentMethod,
+                selectedPaymentMethod.toUpperCase(),
+                selectedDeliveryOption,
                 itemRequests
         );
 
