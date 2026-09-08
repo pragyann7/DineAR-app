@@ -78,9 +78,13 @@ public class FavoriteListFragment extends Fragment implements FavoritesManager.F
             rvFavItems.setLayoutManager(new LinearLayoutManager(getContext()));
             androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rvFavItems, (v, insets) -> {
                 androidx.core.graphics.Insets navBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+                
                 if (isAdded() && getContext() != null) {
                     float density = v.getResources().getDisplayMetrics().density;
-                    v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), (int) (40 * density) + navBars.bottom);
+                    // Keep a small standard list padding from tabs (8dp)
+                    int topPadding = (int)(8 * density);
+                    v.setPadding(v.getPaddingLeft(), topPadding, 
+                               v.getPaddingRight(), (int) (40 * density) + navBars.bottom);
                 }
                 return insets;
             });

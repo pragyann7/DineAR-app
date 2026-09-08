@@ -33,6 +33,19 @@ public class FavoritesFragment extends Fragment {
         tabLayout = view.findViewById(R.id.tabLayoutFav);
         viewPager = view.findViewById(R.id.viewPagerFav);
 
+        // Professional Standard: Dynamically adjust to Activity Header height
+        view.post(() -> {
+            if (getActivity() instanceof MainActivity) {
+                int totalHeaderHeight = ((MainActivity) getActivity()).getHeaderTotalHeight();
+                if (tabLayout != null && totalHeaderHeight > 0) {
+                    androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = 
+                        (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) tabLayout.getLayoutParams();
+                    lp.topMargin = totalHeaderHeight;
+                    tabLayout.setLayoutParams(lp);
+                }
+            }
+        });
+
         if (viewPager != null && tabLayout != null) {
             FavoritesPagerAdapter pagerAdapter = new FavoritesPagerAdapter(this);
             viewPager.setAdapter(pagerAdapter);

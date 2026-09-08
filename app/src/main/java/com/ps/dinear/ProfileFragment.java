@@ -36,16 +36,28 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Pre-fetch views
         TextView tvName = view.findViewById(R.id.tvProfileName);
         TextView tvEmail = view.findViewById(R.id.tvProfileEmail);
         ImageView ivProfile = view.findViewById(R.id.ivProfileImage);
         
-        if (ivProfile != null && getContext() != null) {
-            ivProfile.setImageResource(SharedPrefManager.getUserAvatar(getContext()));
+        // Quick initial update from cache
+        if (getContext() != null) {
+            if (ivProfile != null) {
+                ivProfile.setImageResource(SharedPrefManager.getUserAvatar(getContext()));
+            }
+            updateProfileInfo(tvName, tvEmail);
         }
 
-        updateProfileInfo(tvName, tvEmail);
+        // Delay non-critical setup to let fragment transition finish smoothly
+        view.post(() -> {
+            if (!isAdded()) return;
+            setupListeners(view, ivProfile);
+            setupInsets(view);
+        });
+    }
 
+    private void setupInsets(View view) {
         View nestedScroll = view.findViewById(R.id.nestedScrollViewProfile);
         if (nestedScroll != null) {
             androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(nestedScroll, (v, insets) -> {
@@ -55,7 +67,9 @@ public class ProfileFragment extends Fragment {
                 return insets;
             });
         }
-        
+    }
+
+    private void setupListeners(View view, ImageView ivProfile) {
         if (ivProfile != null) {
             View.OnClickListener avatarTrigger = v -> {
                 if (SharedPrefManager.isGuest(requireContext())) {
@@ -91,10 +105,6 @@ public class ProfileFragment extends Fragment {
             });
         }
 
-        // Removed Saved Addresses option as requested
-        View btnAddresses = view.findViewById(R.id.btnProfileAddresses);
-        if (btnAddresses != null) btnAddresses.setVisibility(View.GONE);
-        
         View btnChangePassword = view.findViewById(R.id.btnChangePassword);
         if (btnChangePassword != null) {
             btnChangePassword.setOnClickListener(v -> {
@@ -146,7 +156,7 @@ public class ProfileFragment extends Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
+        super.onResume() ;
         if (getView() != null && isAdded()) {
             updateProfileInfo(getView().findViewById(R.id.tvProfileName), getView().findViewById(R.id.tvProfileEmail));
             ImageView ivProfile = getView().findViewById(R.id.ivProfileImage);
@@ -154,22 +164,38 @@ public class ProfileFragment extends Fragment {
                 ivProfile.setImageResource(SharedPrefManager.getUserAvatar(getContext()));
             }
         }
+        
+        // Ensure status bar icons are white on the orange header
+        if (getActivity() != null) {
+            androidx.core.view.WindowInsetsControllerCompat controller = 
+                androidx.core.view.WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView());
+            controller.setAppearanceLightStatusBars(false);
+        }
     }
 
     private void updateProfileInfo(TextView tvName, TextView tvEmail) {
         if (!isAdded() || getContext() == null) return;
-        String name = SharedPrefManager.getUserName(getContext());
-        String email = SharedPrefManager.getUserEmail(getContext());
+        
+        final String name;
+        final String email;
         
         if (SharedPrefManager.isGuest(getContext())) {
             name = "Guest";
             email = "Not logged in";
-        } else if (name == null || name.isEmpty() || name.equalsIgnoreCase("Guest")) {
-            if (email != null && !email.isEmpty() && email.contains("@")) {
-                name = email.split("@")[0];
+        } else {
+            String savedName = SharedPrefManager.getUserName(getContext());
+            String savedEmail = SharedPrefManager.getUserEmail(getContext());
+            
+            if (savedName == null || savedName.isEmpty() || "Guest".equalsIgnoreCase(savedName)) {
+                if (savedEmail != null && savedEmail.contains("@")) {
+                    name = savedEmail.split("@")[0];
+                } else {
+                    name = "User";
+                }
             } else {
-                name = "User";
+                name = savedName;
             }
+            email = savedEmail != null ? savedEmail : "";
         }
         
         if (tvName != null) tvName.setText(name);

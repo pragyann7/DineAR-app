@@ -76,14 +76,25 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
                 .load(fullImageUrl)
                 .into(holder.image);
 
-        holder.btnViewAR.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ARActivity.class);
-            intent.putExtra("selectedItem", item);
-            if (item.getRestaurantId() != null) {
-                intent.putExtra("restaurantId", item.getRestaurantId());
-            }
-            context.startActivity(intent);
-        });
+        // AR Support Display
+        if (item.has3d()) {
+            holder.btnViewAR.setVisibility(View.VISIBLE);
+            if (holder.vArBadgeBg != null) holder.vArBadgeBg.setVisibility(View.VISIBLE);
+            if (holder.ivArBadgeIcon != null) holder.ivArBadgeIcon.setVisibility(View.VISIBLE);
+            
+            holder.btnViewAR.setOnClickListener(v -> {
+                Intent intent = new Intent(context, ARActivity.class);
+                intent.putExtra("selectedItem", item);
+                if (item.getRestaurantId() != null) {
+                    intent.putExtra("restaurantId", item.getRestaurantId());
+                }
+                context.startActivity(intent);
+            });
+        } else {
+            holder.btnViewAR.setVisibility(View.GONE);
+            if (holder.vArBadgeBg != null) holder.vArBadgeBg.setVisibility(View.GONE);
+            if (holder.ivArBadgeIcon != null) holder.ivArBadgeIcon.setVisibility(View.GONE);
+        }
 
         // Favorite Logic (Premium Glow Effect)
         boolean isFav = FavoritesManager.getInstance().isFoodFavorite(item.getId());
@@ -142,8 +153,8 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
     public static class ViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
         TextView name, price, tvRestaurantName;
-        View btnViewAR;
-        ImageView image, ivFavoriteFood;
+        View btnViewAR, vArBadgeBg;
+        ImageView image, ivFavoriteFood, ivArBadgeIcon;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -152,6 +163,8 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
             price = itemView.findViewById(R.id.price);
             tvRestaurantName = itemView.findViewById(R.id.tvRestaurantName);
             btnViewAR = itemView.findViewById(R.id.btnViewAR);
+            vArBadgeBg = itemView.findViewById(R.id.vArBadgeBg);
+            ivArBadgeIcon = itemView.findViewById(R.id.ivArBadgeIcon);
 
             image = itemView.findViewById(R.id.image);
             ivFavoriteFood = itemView.findViewById(R.id.ivFavoriteFood);

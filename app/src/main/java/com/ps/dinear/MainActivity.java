@@ -2,6 +2,7 @@ package com.ps.dinear;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -57,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final ActivityResultLauncher<Intent> discoverLauncher = registerForActivityResult(
             new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
-            result -> {}
+            result -> { }
     );
 
     @Override
@@ -192,8 +193,10 @@ public class MainActivity extends AppCompatActivity {
         View statusBarSpacer = findViewById(R.id.statusBarSpacer);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
             androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
-            v.getLayoutParams().height = statusBars.top;
-            v.requestLayout();
+            if (v.getLayoutParams().height != statusBars.top) {
+                v.getLayoutParams().height = statusBars.top;
+                v.requestLayout();
+            }
             
             View bottomNav = findViewById(R.id.bottomNav);
             View arScan = findViewById(R.id.btnARScan);
@@ -201,17 +204,23 @@ public class MainActivity extends AppCompatActivity {
             
             if (bottomNav != null) {
                 float density = getResources().getDisplayMetrics().density;
-                bottomNav.getLayoutParams().height = (int) (70 * density) + navBars.bottom;
-                bottomNav.setPadding(bottomNav.getPaddingLeft(), (int) (4 * density), 
-                                  bottomNav.getPaddingRight(), (int) (8 * density) + navBars.bottom);
-                bottomNav.requestLayout();
+                int targetHeight = (int) (70 * density) + navBars.bottom;
+                if (bottomNav.getLayoutParams().height != targetHeight) {
+                    bottomNav.getLayoutParams().height = targetHeight;
+                    bottomNav.setPadding(bottomNav.getPaddingLeft(), (int) (4 * density), 
+                                      bottomNav.getPaddingRight(), (int) (8 * density) + navBars.bottom);
+                    bottomNav.requestLayout();
+                }
             }
             
             if (arScan != null) {
                 android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) arScan.getLayoutParams();
                 float density = getResources().getDisplayMetrics().density;
-                mlp.bottomMargin = (int) (35 * density) + navBars.bottom;
-                arScan.setLayoutParams(mlp);
+                int targetBottom = (int) (35 * density) + navBars.bottom;
+                if (mlp.bottomMargin != targetBottom) {
+                    mlp.bottomMargin = targetBottom;
+                    arScan.setLayoutParams(mlp);
+                }
             }
             
             return insets;
@@ -264,25 +273,24 @@ public class MainActivity extends AppCompatActivity {
         if (navController != null) {
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
                 int destId = destination.getId();
-                int orangeColor = androidx.core.content.ContextCompat.getColor(this, R.color.orange_primary);
                 
                 if (destId == R.id.homeFragment) {
                     updateNavUI(0);
                     rlHeader.setVisibility(View.VISIBLE);
+                    rlHeader.setAlpha(1f);
                     setHeaderState(null, true, true);
                     updateProfileUI();
                     checkAndRestoreErrorState();
                     
-                    getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
                     WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                             .setAppearanceLightStatusBars(true);
                 } else if (destId == R.id.favoritesFragment) {
                     updateNavUI(2);
                     rlHeader.setVisibility(View.VISIBLE);
+                    rlHeader.setAlpha(1f);
                     setHeaderState("My Favorites", false, false);
                     checkAndRestoreErrorState();
                     
-                    getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
                     WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                             .setAppearanceLightStatusBars(true);
                 } else if (destId == R.id.profileFragment) {
@@ -290,7 +298,6 @@ public class MainActivity extends AppCompatActivity {
                     rlHeader.setVisibility(View.GONE);
                     hideErrorOverlay(false);
                     
-                    getWindow().setStatusBarColor(orangeColor);
                     WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                             .setAppearanceLightStatusBars(false);
                 }
@@ -322,6 +329,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void setHeaderState(String title, boolean showProfile, boolean showContext) {
         if (rlHeader.getVisibility() == View.GONE) return;
+        
+        rlHeader.setAlpha(1.0f);
+        rlHeader.setBackgroundColor(Color.WHITE);
         
         if (title != null) {
             tvPageTitle.setText(title);
@@ -504,7 +514,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             @Override
-            public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) {}
+            public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) { }
         });
+    }
+
+    public int getHeaderTotalHeight() {
+        if (rlHeader == null || rlHeader.getVisibility() == View.GONE) return 0;
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        int spacerHeight = (statusBarSpacer != null) ? statusBarSpacer.getHeight() : 0;
+        return spacerHeight + rlHeader.getHeight();
     }
 }
