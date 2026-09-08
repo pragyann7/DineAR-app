@@ -46,6 +46,7 @@ import com.ps.dinear.data.model.OrderRequest
 import com.ps.dinear.data.model.RestaurantMenuResponse
 import com.ps.dinear.data.model.SearchResponse
 import com.google.ar.core.*
+import com.ps.dinear.util.ARStorageManager
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.configure
 import io.github.sceneview.ar.node.AnchorNode
@@ -400,6 +401,9 @@ private fun ARScreen(
                 FileOutputStream(modelFile).use { output ->
                     response.body!!.byteStream().use { input -> input.copyTo(output) }
                 }
+                
+                // Perform LRU cleanup after successful download
+                ARStorageManager.checkAndCleanup(context)
 
                 val model = withContext(Dispatchers.Main) {
                     modelLoader.loadModel("file://${modelFile.absolutePath}")

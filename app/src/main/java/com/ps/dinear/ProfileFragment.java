@@ -107,7 +107,7 @@ public class ProfileFragment extends Fragment {
         }
 
         View btnSettings = view.findViewById(R.id.btnSettings);
-        if (btnSettings != null) btnSettings.setOnClickListener(v -> startActivity(new Intent(getContext(), ServerConfigActivity.class)));
+        if (btnSettings != null) btnSettings.setOnClickListener(v -> startActivity(new Intent(getContext(), SettingsActivity.class)));
 
         View btnMore = view.findViewById(R.id.btnMore);
         if (btnMore != null) {

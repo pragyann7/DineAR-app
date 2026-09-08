@@ -42,6 +42,7 @@ xmlns:tools="http://schemas.android.com/tools">
     <activity android:name=".AddressActivity" />
     <activity android:name=".EditProfileActivity" />
     <activity android:name=".ChangePasswordActivity" />
+    <activity android:name=".SettingsActivity" />
     <activity android:name=".MapAddressPickerActivity" />
     <activity android:name=".PaymentWebViewActivity" />
     <activity android:name=".OrdersActivity" />
