@@ -22,6 +22,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
@@ -55,6 +56,8 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     
     private View layoutShimmer;
     private TabLayout tabLayoutSearch;
+    private ViewPager2 vpPromoCarousel;
+    private TabLayout tlPromoIndicator;
 
     private View llFeaturedRestaurantsContainer;
     private View llHotPicksContainer;
@@ -80,6 +83,9 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
+
+    private final Handler carouselHandler = new Handler(Looper.getMainLooper());
+    private Runnable carouselRunnable;
 
     private final ActivityResultLauncher<Intent> categoryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -139,6 +145,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         fetchFeaturedRestaurants(view);
         setupTabs(view);
         setupFeaturedFoods(view);
+        setupPromoCarousel(view);
         setupProfessionalSections(view);
         setupCommunityReviews(view);
 
@@ -161,15 +168,9 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             requestLocationPermission();
         } catch (Exception ignored) {}
 
-        View cvPromo = view.findViewById(R.id.cvPromoBanner);
+        View cvPromo = view.findViewById(R.id.rlPromoCarouselContainer);
         if (cvPromo != null) cvPromo.setOnClickListener(v -> {
-            if (featuredDish != null) {
-                Intent intent = new Intent(getContext(), com.ps.dinear.menu.FoodDetailsActivity.class);
-                intent.putExtra("selectedItem", featuredDish);
-                intent.putExtra("restaurantSlug", featuredRestaurantSlug);
-                intent.putExtra("restaurantId", featuredRestaurantId);
-                startActivity(intent);
-            }
+            // Replaced by specific promo item click handling in setupPromoCarousel
         });
 
         FavoritesManager.getInstance().addListener(this);
@@ -177,11 +178,37 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         View btnViewAllTrending = view.findViewById(R.id.tvViewAllFeatured);
         if (btnViewAllTrending != null) {
             btnViewAllTrending.setOnClickListener(v -> {
-                if (tabLayoutSearch != null && tabLayoutSearch.getTabAt(1) != null) {
-                    tabLayoutSearch.getTabAt(1).select();
-                    currentSearchQuery = "";
-                    performSearch(view);
-                }
+                Intent intent = new Intent(getContext(), AllFoodsActivity.class);
+                intent.putExtra("title", "Trending Dishes");
+                startActivity(intent);
+            });
+        }
+
+        View btnSeeAllAllRestaurants = view.findViewById(R.id.tvSeeAllAllRestaurants);
+        if (btnSeeAllAllRestaurants != null) {
+            btnSeeAllAllRestaurants.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), AllRestaurantsActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        View btnViewAllHotPicks = view.findViewById(R.id.tvViewAllHotPicks);
+        if (btnViewAllHotPicks != null) {
+            btnViewAllHotPicks.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), AllFoodsActivity.class);
+                intent.putExtra("title", "Hot Picks");
+                intent.putExtra("filter", "hot");
+                startActivity(intent);
+            });
+        }
+
+        View btnViewAllPriceDrops = view.findViewById(R.id.tvViewAllPriceDrops);
+        if (btnViewAllPriceDrops != null) {
+            btnViewAllPriceDrops.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), AllFoodsActivity.class);
+                intent.putExtra("title", "Price Drops");
+                intent.putExtra("filter", "price_drop");
+                startActivity(intent);
             });
         }
     }
@@ -241,8 +268,9 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             token = "Bearer " + token;
         }
         
+        String city = SharedPrefManager.getCity(getContext());
         ApiService api = RetrofitClient.getClient(getContext()).create(ApiService.class);
-        api.getReviews(token, null, null, false, 1, "-created_at", null).enqueue(new Callback<ReviewListResponse>() {
+        api.getReviews(token, null, null, false, 1, "-created_at", null, city).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReviewListResponse> call, @NonNull Response<ReviewListResponse> response) {
                 if (isAdded() && response.isSuccessful() && response.body() != null) {
@@ -277,6 +305,16 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             setupFeaturedFoods(getView());
             setupCommunityReviews(getView());
         }
+        if (carouselRunnable != null) {
+            carouselHandler.removeCallbacks(carouselRunnable);
+            carouselHandler.postDelayed(carouselRunnable, 4000);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        carouselHandler.removeCallbacks(carouselRunnable);
     }
 
     @Override
@@ -361,7 +399,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (root == null || !isAdded()) return;
         int visibility = show ? View.VISIBLE : View.GONE;
         View quickPicks = root.findViewById(R.id.llQuickPicksContainer);
-        View promoBanner = root.findViewById(R.id.cvPromoBanner);
+        View promoBanner = root.findViewById(R.id.rlPromoCarouselContainer);
         View catHeader = root.findViewById(R.id.rlCategoriesHeader);
         View filters = root.findViewById(R.id.rvFilters);
         View exploreHeader = root.findViewById(R.id.rlExploreHeader);
@@ -503,7 +541,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                                 }
                             }
                         }
-                        updatePromoBanner(getView());
+                        // updatePromoBanner(getView()); // Replaced by static carousel
                     } else {
                         if (llPriceDropsContainer != null) llPriceDropsContainer.setVisibility(View.GONE);
                         if (llHotPicksContainer != null) llHotPicksContainer.setVisibility(View.GONE);
@@ -520,20 +558,67 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         });
     }
 
-    private void updatePromoBanner(View root) {
-        if (root == null || featuredDish == null || !isAdded()) return;
+    private void setupPromoCarousel(View root) {
+        if (root == null || !isAdded()) return;
+
+        vpPromoCarousel = root.findViewById(R.id.vpPromoCarousel);
+        tlPromoIndicator = root.findViewById(R.id.tlPromoIndicator);
+
+        if (vpPromoCarousel == null) return;
+
+        List<PromoCarouselAdapter.PromoItem> promos = new ArrayList<>();
+        promos.add(new PromoCarouselAdapter.PromoItem("1", "FLASH SALE", "Epic Burger Feast\n50% Off Today", R.drawable.burger, "Burger"));
+        promos.add(new PromoCarouselAdapter.PromoItem("2", "FESTIVE DEAL", "Celebrate the Season\nwith 30% Off", R.drawable.pizza, "Pizza"));
+        promos.add(new PromoCarouselAdapter.PromoItem("3", "NEW TECH", "The Future is Here:\nExplore in AR", R.drawable.momo, "Momo"));
+
+        PromoCarouselAdapter adapter = new PromoCarouselAdapter(promos, item -> {
+            SearchView searchView = root.findViewById(R.id.searchViewHome);
+            if (searchView != null) {
+                searchView.setQuery(item.actionQuery, true);
+            }
+        });
+
+        vpPromoCarousel.setAdapter(adapter);
         
-        ImageView ivBanner = root.findViewById(R.id.ivPromoBannerImage);
-        TextView tvBannerTitle = root.findViewById(R.id.tvPromoBannerTitle);
+        // Advanced Professional Transformer
+        androidx.viewpager2.widget.CompositePageTransformer compositePageTransformer = new androidx.viewpager2.widget.CompositePageTransformer();
+        compositePageTransformer.addTransformer(new androidx.viewpager2.widget.MarginPageTransformer((int) (getResources().getDisplayMetrics().density * 16)));
+        compositePageTransformer.addTransformer((page, position) -> {
+            float r = 1 - Math.abs(position);
+            page.setScaleY(0.9f + r * 0.1f);
+            page.setAlpha(0.8f + r * 0.2f);
+        });
+        vpPromoCarousel.setPageTransformer(compositePageTransformer);
         
-        if (tvBannerTitle != null) {
-            tvBannerTitle.setText(getString(R.string.special_offer_placeholder, featuredDish.getName()));
+        // Pseudo-infinite scroll setup
+        int startPos = (Integer.MAX_VALUE / 2);
+        startPos = startPos - (startPos % promos.size());
+        vpPromoCarousel.setCurrentItem(startPos, false);
+
+        // Setup indicators for pseudo-infinite scroll
+        if (tlPromoIndicator != null) {
+            tlPromoIndicator.removeAllTabs();
+            for (int i = 0; i < promos.size(); i++) {
+                tlPromoIndicator.addTab(tlPromoIndicator.newTab());
+            }
+            vpPromoCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    TabLayout.Tab tab = tlPromoIndicator.getTabAt(position % promos.size());
+                    if (tab != null) tab.select();
+                }
+            });
         }
-        
-        if (ivBanner != null) {
-            String fullImageUrl = RetrofitClient.getFullUrl(getContext(), featuredDish.getImageUrl());
-            Glide.with(this).load(fullImageUrl).placeholder(R.drawable.burger).into(ivBanner);
-        }
+
+        // Auto-sliding logic (Professional Interval: 6 seconds)
+        carouselHandler.removeCallbacks(carouselRunnable);
+        carouselRunnable = () -> {
+            if (vpPromoCarousel != null && isAdded()) {
+                vpPromoCarousel.setCurrentItem(vpPromoCarousel.getCurrentItem() + 1, true);
+                carouselHandler.postDelayed(carouselRunnable, 6000);
+            }
+        };
+        carouselHandler.postDelayed(carouselRunnable, 6000);
     }
 
     private void setupTabs(View root) {
@@ -676,8 +761,8 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (noRes != null) noRes.setVisibility(View.GONE);
 
         boolean isHome = currentCategory.equals("Home");
-        View cvPromo = root.findViewById(R.id.cvPromoBanner);
-        if (cvPromo != null) cvPromo.setVisibility(isHome ? View.VISIBLE : View.GONE);
+        View cvPromo = root.findViewById(R.id.rlPromoCarouselContainer);
+        if (cvPromo != null) cvPromo.setVisibility(View.VISIBLE); // Carousel stays persistent across categories
         
         if (llAllRestaurantsContainer != null) {
             llAllRestaurantsContainer.setVisibility(View.VISIBLE);

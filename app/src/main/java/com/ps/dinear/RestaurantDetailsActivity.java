@@ -49,6 +49,17 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         
         super.setContentView(R.layout.activity_restaurant_details);
 
+        // Handle Status Bar Insets
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            if (v.getLayoutParams().height != statusBars.top) {
+                v.getLayoutParams().height = statusBars.top;
+                v.requestLayout();
+            }
+            return insets;
+        });
+
         restaurantId = getIntent().getIntExtra("restaurantId", -1);
         restaurantSlug = getIntent().getStringExtra("restaurantSlug");
         name = getIntent().getStringExtra("restaurantName");
@@ -311,7 +322,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         String authHeader = token != null ? "Bearer " + token : null;
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getReviews(authHeader, restaurantId, null, true, 1, "-helpful", null).enqueue(new Callback<ReviewListResponse>() {
+        apiService.getReviews(authHeader, restaurantId, null, true, 1, "-helpful", null, null).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReviewListResponse> call, @NonNull Response<ReviewListResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {

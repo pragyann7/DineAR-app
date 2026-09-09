@@ -133,7 +133,10 @@ public interface ApiService {
     );
 
     @GET("api/orders/")
-    Call<List<Order>> getOrders(@Header("Authorization") String token);
+    Call<com.ps.dinear.data.model.OrderListResponse> getOrders(
+        @Header("Authorization") String token,
+        @Query("page") Integer page
+    );
 
     @GET("api/orders/{id}/")
     Call<Order> getOrderDetails(@Header("Authorization") String token, @Path("id") int id);
@@ -146,7 +149,8 @@ public interface ApiService {
         @Query("include_summary") boolean includeSummary,
         @Query("page") Integer page,
         @Query("ordering") String ordering,
-        @Query("filter") String filter
+        @Query("filter") String filter,
+        @Query("city") String city
     );
 
     @POST("api/reviews/")
