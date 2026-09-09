@@ -31,12 +31,12 @@ public class QuickPickAdapter extends RecyclerView.Adapter<QuickPickAdapter.View
     }
 
     private void populateItems() {
-        items.add(new QuickPickItem("Momo", R.drawable.burger)); // Use appropriate icons if available
-        items.add(new QuickPickItem("Pizza", R.drawable.burger));
+        items.add(new QuickPickItem("Momo", R.drawable.momo)); // Use appropriate icons if available
+        items.add(new QuickPickItem("Pizza", R.drawable.pizza));
         items.add(new QuickPickItem("Burger", R.drawable.burger));
-        items.add(new QuickPickItem("Healthy", R.drawable.bg_skeleton));
-        items.add(new QuickPickItem("Bakery", R.drawable.bg_skeleton));
-        items.add(new QuickPickItem("Cafe", R.drawable.bg_skeleton));
+        items.add(new QuickPickItem("Healthy", R.drawable.healthy));
+        items.add(new QuickPickItem("Bakery", R.drawable.bakery));
+        items.add(new QuickPickItem("Cafe", R.drawable.coffee));
     }
 
     @NonNull

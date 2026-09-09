@@ -202,88 +202,96 @@
 
 
 
-            <!-- All Restaurants Header -->
-            <RelativeLayout
-                android:id="@+id/rlExploreHeader"
+            <!-- All Restaurants Container -->
+            <LinearLayout
+                android:id="@+id/llAllRestaurantsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
+                android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="All Restaurants"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="See All"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-            </RelativeLayout>
-
-            <!-- All Restaurants List -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView"
+                <!-- All Restaurants Header -->
+                <RelativeLayout
+                    android:id="@+id/rlExploreHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16.dp"
-                    android:paddingHorizontal="24.dp"
-                    tools:listitem="@layout/item_restaurant" />
-
-                <!-- No Results Placeholder (Inline) -->
-                <LinearLayout
-                    android:id="@+id/llNoResults"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    android:padding="40.dp">
-
-                    <ImageView
-                        android:id="@+id/ivNoResults"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:src="@drawable/icon_foodcart"
-                        app:tint="@color/gray_text"
-                        android:alpha="0.4" />
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="32.dp">
 
                     <TextView
-                        android:id="@+id/tvNoResultsMessage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16.dp"
-                        android:text="No treats found here!"
+                        android:text="All Restaurants"
                         android:textColor="@color/black"
-                        android:textSize="17sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvNoResultsDescription"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8.dp"
-                        android:text="Try exploring other delicious categories!"
-                        android:textColor="@color/gray_text"
-                        android:textSize="13sp"
-                        android:textAlignment="center"
-                        android:gravity="center" />
+                        android:layout_alignParentEnd="true"
+                        android:text="See All"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                </LinearLayout>
+                </RelativeLayout>
 
-            </FrameLayout>
+                <!-- All Restaurants List -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16.dp"
+                        android:paddingHorizontal="24.dp"
+                        tools:listitem="@layout/item_restaurant" />
+
+                    <!-- No Results Placeholder (Inline) -->
+                    <LinearLayout
+                        android:id="@+id/llNoResults"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:padding="40.dp">
+
+                        <ImageView
+                            android:id="@+id/ivNoResults"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:src="@drawable/icon_foodcart"
+                            app:tint="@color/gray_text"
+                            android:alpha="0.4" />
+
+                        <TextView
+                            android:id="@+id/tvNoResultsMessage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16.dp"
+                            android:text="No treats found here!"
+                            android:textColor="@color/black"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvNoResultsDescription"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8.dp"
+                            android:text="Try exploring other delicious categories!"
+                            android:textColor="@color/gray_text"
+                            android:textSize="13sp"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
+            </LinearLayout>
 
             <!-- Trending Section Container (Keeping it as well) -->
             <LinearLayout
@@ -336,133 +344,167 @@
 
             </LinearLayout>
 
-            <!-- Featured Restaurants Header -->
-            <RelativeLayout
+            <!-- Featured Restaurants Container -->
+            <LinearLayout
+                android:id="@+id/llFeaturedRestaurantsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Featured Restaurants Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Featured Restaurants"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="32.dp">
 
-            </RelativeLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Featured Restaurants"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-            <!-- Featured Restaurants List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvFeaturedRestaurants"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_restaurant_compact" />
+                </RelativeLayout>
 
-            <!-- Hot Picks Header -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Featured Restaurants List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFeaturedRestaurants"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Hot picks from exclusive eaters"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="16dp"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="24.dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_restaurant_compact" />
+            </LinearLayout>
 
-            </RelativeLayout>
-
-            <!-- Hot Picks List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvHotPicks"
+            <!-- Hot Picks Container -->
+            <LinearLayout
+                android:id="@+id/llHotPicksContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_food_card_horizontal" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <!-- Price Drops Header -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Hot Picks Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Price Drops"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="32.dp">
 
-                <TextView
-                    android:id="@+id/tvViewAllPriceDrops"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hot picks from exclusive eaters"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                </RelativeLayout>
+
+                <!-- Hot Picks List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvHotPicks"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="See All"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="16dp"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="24.dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_food_card_horizontal" />
+            </LinearLayout>
 
-            </RelativeLayout>
-
-            <!-- Price Drops List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvPriceDrops"
+            <!-- Price Drops Container -->
+            <LinearLayout
+                android:id="@+id/llPriceDropsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_food_card_horizontal" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-
-
-            <!-- Top Picks Header -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Price Drops Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Top Picks"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="32.dp">
 
-            </RelativeLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Price Drops"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-            <!-- Top Picks List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvTopPicks"
+                    <TextView
+                        android:id="@+id/tvViewAllPriceDrops"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="See All"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </RelativeLayout>
+
+                <!-- Price Drops List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvPriceDrops"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="24.dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_food_card_horizontal" />
+            </LinearLayout>
+
+            <!-- Top Picks Container -->
+            <LinearLayout
+                android:id="@+id/llTopPicksContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_restaurant_compact" />
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Top Picks Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="32.dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Top Picks"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                </RelativeLayout>
+
+                <!-- Top Picks List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvTopPicks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="24.dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_restaurant_compact" />
+            </LinearLayout>
 
 
 
@@ -476,34 +518,43 @@
 
 
 
-            <!-- Community Reviews Header -->
-            <RelativeLayout
+            <!-- Community Reviews Container -->
+            <LinearLayout
+                android:id="@+id/llCommunityReviewsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Community Reviews Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Reviews"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="32.dp">
 
-            </RelativeLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Reviews"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-            <!-- Community Reviews List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvCommunityReviews"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="24.dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_review_home" />
+                </RelativeLayout>
+
+                <!-- Community Reviews List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvCommunityReviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="24.dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_review_home" />
+            </LinearLayout>
 
             <!-- Footer Spacer for FAB -->
             <View
