@@ -100,7 +100,8 @@ public class MainActivity extends AppCompatActivity {
         setupFloatingARButton();
         setupNetworkMonitoring();
         
-        fetchFeaturedDish();
+        // Removed fetchFeaturedDish() from onCreate to avoid duplication with HomeFragment.
+        // It will be fetched by HomeFragment and updated here, or fetched on demand by the AR button.
         updateWelcomeText();
         updateCartBadge();
     }
@@ -128,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
             if (isNetworkAvailable()) {
                 setOverlayLoading(true);
                 refreshActiveContent();
-                fetchFeaturedDish();
             } else {
                 Toast.makeText(this, "Still no connection", Toast.LENGTH_SHORT).show();
             }
@@ -405,8 +405,14 @@ public class MainActivity extends AppCompatActivity {
     private void setupNetworkMonitoring() {
         connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         networkCallback = new ConnectivityManager.NetworkCallback() {
+            private boolean isFirstCallback = true;
+
             @Override
             public void onAvailable(@NonNull Network network) {
+                if (isFirstCallback) {
+                    isFirstCallback = false;
+                    return; // Ignore the initial trigger on registration
+                }
                 runOnUiThread(() -> {
                     refreshActiveContent();
                 });
@@ -531,6 +537,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<SearchResponse> call, @NonNull Throwable t) { }
         });
+    }
+
+    public void setFeaturedDish(MenuItem dish) {
+        this.featuredDish = dish;
     }
 
     public int getHeaderTotalHeight() {
