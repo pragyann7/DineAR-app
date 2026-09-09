@@ -70,6 +70,7 @@ xmlns:tools="http://schemas.android.com/tools">
     <activity android:name=".ReviewsListingActivity" />
     <activity android:name=".ARActivity" />
     <activity android:name=".DiscoverActivity" />
+    <activity android:name=".AllRestaurantsActivity" />
 
 </application>
 

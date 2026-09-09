@@ -146,7 +146,8 @@ public interface ApiService {
         @Query("include_summary") boolean includeSummary,
         @Query("page") Integer page,
         @Query("ordering") String ordering,
-        @Query("filter") String filter
+        @Query("filter") String filter,
+        @Query("city") String city
     );
 
     @POST("api/reviews/")

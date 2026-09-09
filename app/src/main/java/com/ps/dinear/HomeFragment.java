@@ -184,6 +184,14 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                 }
             });
         }
+
+        View btnSeeAllAllRestaurants = view.findViewById(R.id.tvSeeAllAllRestaurants);
+        if (btnSeeAllAllRestaurants != null) {
+            btnSeeAllAllRestaurants.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), AllRestaurantsActivity.class);
+                startActivity(intent);
+            });
+        }
     }
 
     private void setupQuickPicks(View root) {
@@ -241,8 +249,9 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             token = "Bearer " + token;
         }
         
+        String city = SharedPrefManager.getCity(getContext());
         ApiService api = RetrofitClient.getClient(getContext()).create(ApiService.class);
-        api.getReviews(token, null, null, false, 1, "-created_at", null).enqueue(new Callback<ReviewListResponse>() {
+        api.getReviews(token, null, null, false, 1, "-created_at", null, city).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReviewListResponse> call, @NonNull Response<ReviewListResponse> response) {
                 if (isAdded() && response.isSuccessful() && response.body() != null) {

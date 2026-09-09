@@ -226,13 +226,17 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvSeeAllAllRestaurants"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:text="See All"
                         android:textColor="@color/orange_primary"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground" />
 
                 </RelativeLayout>
 

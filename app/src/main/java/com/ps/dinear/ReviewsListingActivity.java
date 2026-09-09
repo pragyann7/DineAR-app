@@ -209,7 +209,7 @@ public class ReviewsListingActivity extends AppCompatActivity {
         String authHeader = token != null ? "Bearer " + token : null;
 
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getReviews(authHeader, restaurantId, foodItemId, page == 1, page, currentOrdering, currentFilter).enqueue(new Callback<ReviewListResponse>() {
+        apiService.getReviews(authHeader, restaurantId, foodItemId, page == 1, page, currentOrdering, currentFilter, null).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
                 isLoading = false;

@@ -247,7 +247,7 @@ public class FoodDetailsActivity extends AppCompatActivity {
         String authHeader = token != null ? "Bearer " + token : null;
         
         ApiService apiService = RetrofitClient.getClient(this).create(ApiService.class);
-        apiService.getReviews(authHeader, null, foodItemId, true, 1, "-helpful", null).enqueue(new Callback<ReviewListResponse>() {
+        apiService.getReviews(authHeader, null, foodItemId, true, 1, "-helpful", null, null).enqueue(new Callback<ReviewListResponse>() {
             @Override
             public void onResponse(Call<ReviewListResponse> call, Response<ReviewListResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
