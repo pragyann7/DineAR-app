@@ -178,11 +178,9 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         View btnViewAllTrending = view.findViewById(R.id.tvViewAllFeatured);
         if (btnViewAllTrending != null) {
             btnViewAllTrending.setOnClickListener(v -> {
-                if (tabLayoutSearch != null && tabLayoutSearch.getTabAt(1) != null) {
-                    tabLayoutSearch.getTabAt(1).select();
-                    currentSearchQuery = "";
-                    performSearch(view);
-                }
+                Intent intent = new Intent(getContext(), AllFoodsActivity.class);
+                intent.putExtra("title", "Trending Dishes");
+                startActivity(intent);
             });
         }
 
@@ -190,6 +188,26 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (btnSeeAllAllRestaurants != null) {
             btnSeeAllAllRestaurants.setOnClickListener(v -> {
                 Intent intent = new Intent(getContext(), AllRestaurantsActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        View btnViewAllHotPicks = view.findViewById(R.id.tvViewAllHotPicks);
+        if (btnViewAllHotPicks != null) {
+            btnViewAllHotPicks.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), AllFoodsActivity.class);
+                intent.putExtra("title", "Hot Picks");
+                intent.putExtra("filter", "hot");
+                startActivity(intent);
+            });
+        }
+
+        View btnViewAllPriceDrops = view.findViewById(R.id.tvViewAllPriceDrops);
+        if (btnViewAllPriceDrops != null) {
+            btnViewAllPriceDrops.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), AllFoodsActivity.class);
+                intent.putExtra("title", "Price Drops");
+                intent.putExtra("filter", "price_drop");
                 startActivity(intent);
             });
         }
@@ -744,7 +762,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
 
         boolean isHome = currentCategory.equals("Home");
         View cvPromo = root.findViewById(R.id.rlPromoCarouselContainer);
-        if (cvPromo != null) cvPromo.setVisibility(isHome ? View.VISIBLE : View.GONE);
+        if (cvPromo != null) cvPromo.setVisibility(View.VISIBLE); // Carousel stays persistent across categories
         
         if (llAllRestaurantsContainer != null) {
             llAllRestaurantsContainer.setVisibility(View.VISIBLE);

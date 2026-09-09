@@ -30,57 +30,73 @@
                     android:scaleType="centerCrop"
                     android:src="@android:drawable/ic_menu_gallery" />
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <View
+                        android:id="@+id/statusBarSpacer"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp" />
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="12dp">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btnBackCardRest"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_marginStart="20dp"
+                            app:cardBackgroundColor="@color/white"
+                            app:cardCornerRadius="22dp"
+                            app:cardElevation="2dp">
+
+                            <ImageView
+                                android:id="@+id/btnBackRestDetails"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="12dp"
+                                android:src="@drawable/icon_back"
+                                app:tint="@color/black" />
+
+                        </androidx.cardview.widget.CardView>
+
+                        <ImageView
+                            android:id="@+id/btnFavoriteRest"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_marginEnd="20.dp"
+                            android:background="@drawable/bg_glass_circle"
+                            android:elevation="4dp"
+                            android:padding="12.dp"
+                            android:src="@drawable/icon_favorite"
+                            app:tint="@color/black" />
+
+                    </RelativeLayout>
+                </LinearLayout>
+
                 <!-- Overlay gradient for top buttons legibility -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
                     android:background="@drawable/bg_gradient_top_shadow" />
 
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/btnBackCardRest"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="46dp"
-                    app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="2dp">
-
-                    <ImageView
-                        android:id="@+id/btnBackRestDetails"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="12dp"
-                        android:src="@drawable/icon_back"
-                        app:tint="@color/black" />
-
-                </androidx.cardview.widget.CardView>
-
-                <ImageView
-                    android:id="@+id/btnFavoriteRest"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_marginTop="46dp"
-                    android:layout_marginEnd="20.dp"
-                    android:background="@drawable/bg_glass_circle"
-                    android:elevation="4dp"
-                    android:padding="12.dp"
-                    android:src="@drawable/icon_favorite"
-                    app:tint="@color/black" />
-
                 <TextView
                     android:id="@+id/tvPromoBadgeDetails"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentBottom="true"
-                    android:layout_marginStart="24.dp"
-                    android:layout_marginBottom="55.dp"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginBottom="55dp"
                     android:background="@drawable/bg_michelin_badge"
                     android:elevation="6dp"
                     android:paddingHorizontal="12.dp"
                     android:paddingVertical="4.dp"
-                    android:text="Michelin Guide"
+                    android:text="Featured"
                     android:textColor="@color/white"
                     android:textSize="12sp"
                     android:textStyle="bold"

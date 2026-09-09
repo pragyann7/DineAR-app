@@ -49,6 +49,17 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         
         super.setContentView(R.layout.activity_restaurant_details);
 
+        // Handle Status Bar Insets
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            if (v.getLayoutParams().height != statusBars.top) {
+                v.getLayoutParams().height = statusBars.top;
+                v.requestLayout();
+            }
+            return insets;
+        });
+
         restaurantId = getIntent().getIntExtra("restaurantId", -1);
         restaurantSlug = getIntent().getStringExtra("restaurantSlug");
         name = getIntent().getStringExtra("restaurantName");

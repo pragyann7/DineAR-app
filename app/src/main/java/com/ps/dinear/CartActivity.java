@@ -104,13 +104,13 @@ public class CartActivity extends AppCompatActivity {
 
         String token = "Bearer " + SharedPrefManager.getAccessToken(this);
         ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
-        api.getOrders(token).enqueue(new Callback<List<Order>>() {
+        api.getOrders(token, 1).enqueue(new Callback<com.ps.dinear.data.model.OrderListResponse>() {
             @Override
-            public void onResponse(Call<List<Order>> call, Response<List<Order>> response) {
+            public void onResponse(Call<com.ps.dinear.data.model.OrderListResponse> call, Response<com.ps.dinear.data.model.OrderListResponse> response) {
                 if (shimmerOrders != null) shimmerOrders.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Order> orders = response.body();
-                    if (orders.isEmpty()) {
+                    List<Order> orders = response.body().getResults();
+                    if (orders == null || orders.isEmpty()) {
                         tvNoOrders.setVisibility(View.VISIBLE);
                     } else {
                         rvOrders.setVisibility(View.VISIBLE);
@@ -124,7 +124,7 @@ public class CartActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<List<Order>> call, Throwable t) {
+            public void onFailure(Call<com.ps.dinear.data.model.OrderListResponse> call, Throwable t) {
                 if (shimmerOrders != null) shimmerOrders.setVisibility(View.GONE);
                 tvNoOrders.setText("Network error");
                 tvNoOrders.setVisibility(View.VISIBLE);

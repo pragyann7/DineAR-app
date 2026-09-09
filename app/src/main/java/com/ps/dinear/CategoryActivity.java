@@ -22,12 +22,25 @@ public class CategoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setStatusBarColor(getResources().getColor(R.color.white));
+        // Handle Edge-to-Edge
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         androidx.core.view.WindowInsetsControllerCompat windowInsetsController =
                 androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         windowInsetsController.setAppearanceLightStatusBars(true);
 
-        super.setContentView(R.layout.activity_category);
+        setContentView(R.layout.activity_category);
+
+        // Handle Status Bar Insets
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            if (v.getLayoutParams().height != statusBars.top) {
+                v.getLayoutParams().height = statusBars.top;
+                v.requestLayout();
+            }
+            return insets;
+        });
 
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
 

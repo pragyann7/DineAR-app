@@ -4,9 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16.dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="24dp"
     app:cardElevation="0dp"
-    app:strokeWidth="0dp">
+    app:strokeColor="#EEEEEE"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,20 +19,23 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <View
-                android:layout_width="150dp"
+                android:layout_width="140dp"
                 android:layout_height="20dp"
                 android:background="@drawable/bg_skeleton" />
+
             <View
-                android:layout_width="60dp"
-                android:layout_height="16dp"
+                android:layout_width="80dp"
+                android:layout_height="24dp"
                 android:layout_alignParentEnd="true"
                 android:background="@drawable/bg_skeleton" />
+
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="14dp"
+            android:layout_height="16dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_skeleton" />
 
@@ -44,15 +49,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp">
+
             <View
                 android:layout_width="80dp"
-                android:layout_height="12dp"
+                android:layout_height="14dp"
                 android:background="@drawable/bg_skeleton" />
+
             <View
-                android:layout_width="70dp"
-                android:layout_height="18dp"
+                android:layout_width="60dp"
+                android:layout_height="20dp"
                 android:layout_alignParentEnd="true"
                 android:background="@drawable/bg_skeleton" />
+
         </RelativeLayout>
 
     </LinearLayout>

@@ -77,11 +77,14 @@ public class AllRestaurantsActivity extends AppCompatActivity {
         });
         rvAllRestaurants.setAdapter(adapter);
 
-        // Apply Insets
-        View topBar = (View) findViewById(R.id.btnBackAllRestaurants).getParent();
-        ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
+        // Handle Status Bar Insets
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
             Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            v.setPadding(v.getPaddingLeft(), statusBars.top, v.getPaddingRight(), v.getPaddingBottom());
+            if (v.getLayoutParams().height != statusBars.top) {
+                v.getLayoutParams().height = statusBars.top;
+                v.requestLayout();
+            }
             return insets;
         });
 

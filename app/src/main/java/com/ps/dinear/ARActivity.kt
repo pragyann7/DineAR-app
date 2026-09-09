@@ -221,14 +221,14 @@ class ARViewModel : ViewModel() {
     fun fetchOrders(context: android.content.Context) {
         val token = SharedPrefManager.getAccessToken(context) ?: return
         val api = RetrofitClient.getClient(context).create(ApiService::class.java)
-        api.getOrders("Bearer $token").enqueue(object : retrofit2.Callback<List<Order>> {
-            override fun onResponse(call: retrofit2.Call<List<Order>>, response: retrofit2.Response<List<Order>>) {
+        api.getOrders("Bearer $token", 1).enqueue(object : retrofit2.Callback<com.ps.dinear.data.model.OrderListResponse> {
+            override fun onResponse(call: retrofit2.Call<com.ps.dinear.data.model.OrderListResponse>, response: retrofit2.Response<com.ps.dinear.data.model.OrderListResponse>) {
                 if (response.isSuccessful && response.body() != null) {
                     _orders.clear()
-                    _orders.addAll(response.body()!!)
+                    _orders.addAll(response.body()!!.results)
                 }
             }
-            override fun onFailure(call: retrofit2.Call<List<Order>>, t: Throwable) {
+            override fun onFailure(call: retrofit2.Call<com.ps.dinear.data.model.OrderListResponse>, t: Throwable) {
             }
         })
     }

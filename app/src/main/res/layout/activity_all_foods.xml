@@ -7,7 +7,7 @@
     android:background="@color/white">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarOrders"
+        android:id="@+id/appBarAllFoods"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
@@ -20,11 +20,12 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
             android:paddingHorizontal="16dp">
 
             <ImageView
-                android:id="@+id/btnBackOrders"
+                android:id="@+id/btnBackAllFoods"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_centerVertical="true"
@@ -34,10 +35,11 @@
                 app:tint="@color/black" />
 
             <TextView
+                android:id="@+id/tvAllFoodsTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="My Orders"
+                android:text="Trending Dishes"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -52,30 +54,22 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvOrders"
+            android:id="@+id/rvAllFoods"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingHorizontal="24dp"
             android:paddingTop="16dp"
             android:paddingBottom="24dp"
-            tools:listitem="@layout/item_order" />
+            tools:listitem="@layout/item_food_vertical" />
 
         <include
-            android:id="@+id/shimmerOrders"
-            layout="@layout/skeleton_list_orders"
-            android:visibility="gone" />
-
-        <ProgressBar
-            android:id="@+id/pbOrders"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="16dp"
+            android:id="@+id/shimmerAllFoods"
+            layout="@layout/skeleton_list_restaurants"
             android:visibility="gone" />
 
         <LinearLayout
-            android:id="@+id/llNoOrders"
+            android:id="@+id/llNoResultsAllFoods"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -85,19 +79,17 @@
             android:padding="40dp">
 
             <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/icon_foodcart"
-                android:alpha="0.2"
-                app:tint="@color/gray_text" />
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/icon_foodcart" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="No orders yet"
+                android:layout_marginTop="16dp"
+                android:text="No dishes found"
                 android:textColor="@color/black"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -105,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:gravity="center"
-                android:text="Your order history will appear here once you place an order."
+                android:text="We couldn't find any dishes at the moment."
                 android:textColor="@color/gray_text"
                 android:textSize="14sp" />
         </LinearLayout>

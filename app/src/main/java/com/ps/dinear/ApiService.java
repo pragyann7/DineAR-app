@@ -133,7 +133,10 @@ public interface ApiService {
     );
 
     @GET("api/orders/")
-    Call<List<Order>> getOrders(@Header("Authorization") String token);
+    Call<com.ps.dinear.data.model.OrderListResponse> getOrders(
+        @Header("Authorization") String token,
+        @Query("page") Integer page
+    );
 
     @GET("api/orders/{id}/")
     Call<Order> getOrderDetails(@Header("Authorization") String token, @Path("id") int id);
