@@ -44,10 +44,30 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
         
         holder.tvName.setText(item.getName());
         
+        String resName = item.getRestaurantName();
+        if (resName != null && !resName.isEmpty()) {
+            holder.tvRestaurantName.setText(resName);
+            holder.tvRestaurantName.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvRestaurantName.setVisibility(View.GONE);
+        }
+        
+        String category = item.getCategory();
+        if (category != null && !category.isEmpty()) {
+            holder.tvCategory.setText(category);
+            holder.tvCategory.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvCategory.setVisibility(View.GONE);
+        }
+        
         if (item.getDiscountPrice() != null && item.getDiscountPrice() > 0) {
             holder.tvPrice.setText(item.getCurrency() + " " + (int)item.getDiscountPrice().doubleValue());
+            holder.tvOriginalPrice.setText(item.getCurrency() + " " + (int)item.getPrice());
+            holder.tvOriginalPrice.setPaintFlags(holder.tvOriginalPrice.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.tvOriginalPrice.setVisibility(View.VISIBLE);
         } else {
             holder.tvPrice.setText(item.getCurrency() + " " + (int)item.getPrice());
+            holder.tvOriginalPrice.setVisibility(View.GONE);
         }
 
         // AR Badge Support
@@ -58,7 +78,9 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
         String fullImageUrl = RetrofitClient.getFullUrl(context, item.getImageUrl());
         Glide.with(context)
                 .load(fullImageUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
+                .placeholder(R.drawable.bg_skeleton)
+                .error(R.drawable.burger)
+                .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade())
                 .centerCrop()
                 .into(holder.ivFood);
                 
@@ -81,7 +103,7 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivFood;
-        TextView tvName, tvPrice;
+        TextView tvName, tvPrice, tvCategory, tvOriginalPrice, tvRestaurantName;
         View flArBadge;
 
         public ViewHolder(@NonNull View itemView) {
@@ -89,6 +111,9 @@ public class FeaturedFoodAdapter extends RecyclerView.Adapter<FeaturedFoodAdapte
             ivFood = itemView.findViewById(R.id.ivFood);
             tvName = itemView.findViewById(R.id.tvFoodName);
             tvPrice = itemView.findViewById(R.id.tvFoodPrice);
+            tvOriginalPrice = itemView.findViewById(R.id.tvOriginalPrice);
+            tvRestaurantName = itemView.findViewById(R.id.tvRestaurantName);
+            tvCategory = itemView.findViewById(R.id.tvFoodCategory);
             flArBadge = itemView.findViewById(R.id.flArBadge);
         }
     }

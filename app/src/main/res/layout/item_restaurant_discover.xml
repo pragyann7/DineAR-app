@@ -5,15 +5,17 @@
     android:layout_width="320dp"
     android:layout_height="wrap_content"
     android:layout_marginEnd="16.dp"
-    app:cardCornerRadius="16.dp"
-    app:cardElevation="4.dp"
-    app:strokeColor="@color/orange_border"
-    app:strokeWidth="0dp">
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#EEEEEE"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clRestaurantItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:padding="12.dp">
 
         <androidx.cardview.widget.CardView

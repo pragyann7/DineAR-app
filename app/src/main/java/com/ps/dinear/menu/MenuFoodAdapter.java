@@ -84,12 +84,14 @@ public class MenuFoodAdapter extends RecyclerView.Adapter<MenuFoodAdapter.ViewHo
         // Favorite Logic (Premium Glow Effect)
         boolean isFav = FavoritesManager.getInstance().isFoodFavorite(item.getId());
         if (isFav) {
-            holder.cardView.setCardBackgroundColor(context.getColor(R.color.orange_fav_bg));
-            holder.cardView.setStrokeWidth(3);
+            holder.cardView.setCardBackgroundColor(context.getColor(R.color.white));
+            holder.cardView.setStrokeWidth(4);
+            holder.cardView.setStrokeColor(android.content.res.ColorStateList.valueOf(context.getColor(R.color.orange_primary)));
             holder.ivFavorite.setVisibility(View.VISIBLE);
         } else {
             holder.cardView.setCardBackgroundColor(context.getColor(R.color.white));
-            holder.cardView.setStrokeWidth(0);
+            holder.cardView.setStrokeWidth(1);
+            holder.cardView.setStrokeColor(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#EEEEEE")));
             holder.ivFavorite.setVisibility(View.GONE);
         }
 

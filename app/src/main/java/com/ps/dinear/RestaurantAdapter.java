@@ -1,12 +1,12 @@
 package com.ps.dinear;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
@@ -16,7 +16,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.ps.dinear.data.model.Restaurant;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -111,20 +111,25 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         }
 
         String fullImageUrl = RetrofitClient.getFullUrl(context, restaurant.getImageUrl());
-        Glide.with(context).load(fullImageUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
+        Glide.with(context)
+                .load(fullImageUrl)
+                .placeholder(R.drawable.bg_skeleton)
+                .error(R.drawable.burger)
+                .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade())
                 .centerCrop()
                 .into(holder.ivRestaurant);
 
         // Favorite Logic (Premium Glow Effect)
         boolean isFav = FavoritesManager.getInstance().isRestaurantFavorite(restaurant.getId());
         if (isFav) {
-            holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.orange_fav_bg));
-            holder.cardView.setStrokeWidth(3); // Apply thin orange border
+            holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white));
+            holder.cardView.setStrokeWidth(4);
+            holder.cardView.setStrokeColor(android.content.res.ColorStateList.valueOf(context.getColor(R.color.orange_primary)));
             holder.ivFavorite.setVisibility(View.VISIBLE);
         } else {
             holder.cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white));
-            holder.cardView.setStrokeWidth(0); // Hide border
+            holder.cardView.setStrokeWidth(1);
+            holder.cardView.setStrokeColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
             holder.ivFavorite.setVisibility(View.GONE);
         }
 
