@@ -10,12 +10,12 @@
         android:id="@+id/tabLayoutFav"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="@android:color/transparent"
         app:layout_constraintTop_toTopOf="parent"
         app:tabIndicatorColor="@color/orange_primary"
         app:tabSelectedTextColor="@color/orange_primary"
         app:tabTextColor="@color/gray_text"
-        app:tabRippleColor="@null">
+        app:tabRippleColor="@null"
+        app:tabIndicatorHeight="3dp">
 
     </com.google.android.material.tabs.TabLayout>
 

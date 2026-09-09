@@ -5,14 +5,15 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
-    app:strokeColor="#E0E0E0"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#EEEEEE"
     app:strokeWidth="1dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:padding="16dp">
 
         <ImageView

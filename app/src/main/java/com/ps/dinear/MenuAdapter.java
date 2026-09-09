@@ -2,6 +2,7 @@ package com.ps.dinear;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,6 +75,10 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         String fullImageUrl = RetrofitClient.getFullUrl(context, item.getImageUrl());
         Glide.with(context)
                 .load(fullImageUrl)
+                .placeholder(R.drawable.bg_skeleton)
+                .error(R.drawable.burger) // fallback to a default image
+                .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade())
+                .centerCrop()
                 .into(holder.image);
 
         // AR Support Display
@@ -99,12 +104,14 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         // Favorite Logic (Premium Glow Effect)
         boolean isFav = FavoritesManager.getInstance().isFoodFavorite(item.getId());
         if (isFav) {
-            holder.cardView.setCardBackgroundColor(context.getColor(R.color.orange_fav_bg));
-            holder.cardView.setStrokeWidth(3);
+            holder.cardView.setCardBackgroundColor(context.getColor(R.color.white));
+            holder.cardView.setStrokeWidth(4);
+            holder.cardView.setStrokeColor(android.content.res.ColorStateList.valueOf(context.getColor(R.color.orange_primary)));
             holder.ivFavoriteFood.setVisibility(View.VISIBLE);
         } else {
             holder.cardView.setCardBackgroundColor(context.getColor(R.color.white));
-            holder.cardView.setStrokeWidth(0);
+            holder.cardView.setStrokeWidth(1);
+            holder.cardView.setStrokeColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
             holder.ivFavoriteFood.setVisibility(View.GONE);
         }
 

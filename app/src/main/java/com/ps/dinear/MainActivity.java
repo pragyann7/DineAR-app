@@ -65,8 +65,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        // Standard Professional Blending:
+        // Set system bars to fully transparent and draw the app content behind them.
+        // The background color is defined in themes.xml (windowBackground).
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            getWindow().setStatusBarContrastEnforced(false);
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
+        
+        // Dark icons for the light background
+        androidx.core.view.WindowInsetsControllerCompat controller = 
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.setAppearanceLightStatusBars(true);
+        controller.setAppearanceLightNavigationBars(true);
 
         if (SharedPrefManager.getDistrict(this) == null) {
             startActivity(new Intent(this, LocationActivity.class));
@@ -331,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
         if (rlHeader.getVisibility() == View.GONE) return;
         
         rlHeader.setAlpha(1.0f);
-        rlHeader.setBackgroundColor(Color.WHITE);
+        // Header is transparent to blend with windowBackground
         
         if (title != null) {
             tvPageTitle.setText(title);

@@ -5,15 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="16.dp"
-    app:cardCornerRadius="20.dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="24dp"
     app:cardElevation="2dp"
-    app:strokeColor="@color/orange_border"
-    app:strokeWidth="0dp">
+    app:strokeColor="#EEEEEE"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:id="@+id/llFoodItemContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:orientation="horizontal"
         android:padding="12.dp">
 
