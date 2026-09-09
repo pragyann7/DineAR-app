@@ -10,7 +10,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="68dp"
         android:layout_height="68dp"
-        app:cardBackgroundColor="#F8F9FA"
+        app:cardBackgroundColor="#F0F0F0"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp">
 
@@ -20,7 +20,7 @@
             android:layout_height="match_parent"
             android:padding="12dp"
             android:scaleType="centerInside"
-            android:src="@drawable/burger" />
+            android:src="@drawable/icon_burger" />
 
     </androidx.cardview.widget.CardView>
 

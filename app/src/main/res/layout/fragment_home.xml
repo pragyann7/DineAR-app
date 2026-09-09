@@ -118,57 +118,35 @@
                     tools:listitem="@layout/item_quick_pick" />
             </LinearLayout>
 
-            <!-- Promo Banner -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cvPromoBanner"
+            <!-- Promo Carousel -->
+            <RelativeLayout
+                android:id="@+id/rlPromoCarouselContainer"
                 android:layout_width="match_parent"
                 android:layout_height="180dp"
-                android:layout_marginHorizontal="24.dp"
-                android:layout_marginTop="32.dp"
-                app:cardCornerRadius="20.dp"
-                app:cardElevation="0dp"
-                android:backgroundTint="#85FF5B00">
+                android:layout_marginTop="32dp">
 
-                <ImageView
-                    android:id="@+id/ivPromoBannerImage"
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/vpPromoCarousel"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/burger" />
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:paddingHorizontal="24dp" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#66000000"
-                    android:gravity="center_vertical"
-                    android:orientation="vertical"
-                    android:padding="24.dp">
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tlPromoIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="12dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginBottom="12dp"
+                    android:background="@android:color/transparent"
+                    app:tabBackground="@drawable/bg_indicator_selector"
+                    app:tabIndicatorHeight="0dp"
+                    app:tabMaxWidth="12dp"
+                    app:tabRippleColor="@null" />
 
-                    <TextView
-                        android:id="@+id/tvPromoBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@color/orange_primary"
-                        android:paddingHorizontal="8.dp"
-                        android:paddingVertical="4.dp"
-                        android:text="LIMITED OFFER"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvPromoBannerTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12.dp"
-                        android:text="30% Off Fine Dining\nTonight"
-                        android:textColor="@color/white"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
+            </RelativeLayout>
 
             <!-- Explore Categories Header -->
             <RelativeLayout
