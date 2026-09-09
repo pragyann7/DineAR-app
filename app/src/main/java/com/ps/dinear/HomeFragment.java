@@ -26,6 +26,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
 import com.ps.dinear.data.model.Restaurant;
+import com.ps.dinear.data.model.Review;
+import com.ps.dinear.data.model.ReviewListResponse;
 import com.ps.dinear.data.model.SearchResponse;
 
 import java.util.ArrayList;
@@ -43,6 +45,15 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     private MenuAdapter menuAdapter;
     private FilterAdapter filterAdapter;
     private FeaturedFoodAdapter featuredFoodAdapter;
+    
+    // Professional New Adapters
+    private QuickPickAdapter quickPickAdapter;
+    private FoodHorizontalAdapter priceDropAdapter;
+    private FoodHorizontalAdapter hotPickAdapter;
+    private RestaurantCompactAdapter featuredRestAdapter;
+    private RestaurantCompactAdapter topRatedAdapter;
+    private ReviewHomeAdapter reviewsAdapter;
+    
     private View layoutShimmer;
     private TabLayout tabLayoutSearch;
     
@@ -111,10 +122,13 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         });
 
         setupSearchView(view);
+        setupQuickPicks(view);
         setupFilters(view);
         setupRestaurants(view);
         setupTabs(view);
         setupFeaturedFoods(view);
+        setupProfessionalSections(view);
+        setupCommunityReviews(view);
 
         // Professional Standard: Dynamically adjust to Activity Header height
         view.post(() -> {
@@ -138,7 +152,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         View cvPromo = view.findViewById(R.id.cvPromoBanner);
         if (cvPromo != null) cvPromo.setOnClickListener(v -> {
             if (featuredDish != null) {
-                Intent intent = new Intent(getContext(), ARActivity.class);
+                Intent intent = new Intent(getContext(), com.ps.dinear.menu.FoodDetailsActivity.class);
                 intent.putExtra("selectedItem", featuredDish);
                 intent.putExtra("restaurantSlug", featuredRestaurantSlug);
                 intent.putExtra("restaurantId", featuredRestaurantId);
@@ -158,6 +172,70 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                 }
             });
         }
+    }
+
+    private void setupQuickPicks(View root) {
+        RecyclerView rv = root.findViewById(R.id.rvQuickPicks);
+        if (rv == null) return;
+        rv.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        quickPickAdapter = new QuickPickAdapter(getContext(), query -> {
+            SearchView searchView = root.findViewById(R.id.searchViewHome);
+            if (searchView != null) {
+                searchView.setQuery(query, true);
+            }
+        });
+        rv.setAdapter(quickPickAdapter);
+    }
+
+    private void setupProfessionalSections(View root) {
+        RecyclerView rvPriceDrops = root.findViewById(R.id.rvPriceDrops);
+        if (rvPriceDrops != null) {
+            rvPriceDrops.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            priceDropAdapter = new FoodHorizontalAdapter(getContext());
+            rvPriceDrops.setAdapter(priceDropAdapter);
+        }
+
+        RecyclerView rvHotPicks = root.findViewById(R.id.rvHotPicks);
+        if (rvHotPicks != null) {
+            rvHotPicks.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            hotPickAdapter = new FoodHorizontalAdapter(getContext());
+            rvHotPicks.setAdapter(hotPickAdapter);
+        }
+
+        RecyclerView rvFeaturedRest = root.findViewById(R.id.rvFeaturedRestaurants);
+        if (rvFeaturedRest != null) {
+            rvFeaturedRest.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            featuredRestAdapter = new RestaurantCompactAdapter(getContext());
+            rvFeaturedRest.setAdapter(featuredRestAdapter);
+        }
+
+        RecyclerView rvTopPicks = root.findViewById(R.id.rvTopPicks);
+        if (rvTopPicks != null) {
+            rvTopPicks.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            topRatedAdapter = new RestaurantCompactAdapter(getContext());
+            rvTopPicks.setAdapter(topRatedAdapter);
+        }
+    }
+
+    private void setupCommunityReviews(View root) {
+        RecyclerView rvReviews = root.findViewById(R.id.rvCommunityReviews);
+        if (rvReviews == null) return;
+        rvReviews.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        reviewsAdapter = new ReviewHomeAdapter(getContext());
+        rvReviews.setAdapter(reviewsAdapter);
+        
+        String token = "Bearer " + SharedPrefManager.getAccessToken(getContext());
+        ApiService api = RetrofitClient.getClient(getContext()).create(ApiService.class);
+        api.getReviews(token, null, null, false, 1, "-created_at", null).enqueue(new Callback<ReviewListResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReviewListResponse> call, @NonNull Response<ReviewListResponse> response) {
+                if (isAdded() && response.isSuccessful() && response.body() != null) {
+                    reviewsAdapter.setData(response.body().getResults());
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<ReviewListResponse> call, @NonNull Throwable t) {}
+        });
     }
 
     @Override
@@ -189,15 +267,14 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     }
 
     private void refreshAdapters() {
-        if (restaurantAdapter != null) {
-            restaurantAdapter.notifyDataSetChanged();
-        }
-        if (menuAdapter != null) {
-            menuAdapter.notifyDataSetChanged();
-        }
-        if (featuredFoodAdapter != null) {
-            featuredFoodAdapter.notifyDataSetChanged();
-        }
+        if (restaurantAdapter != null) restaurantAdapter.notifyDataSetChanged();
+        if (menuAdapter != null) menuAdapter.notifyDataSetChanged();
+        if (featuredFoodAdapter != null) featuredFoodAdapter.notifyDataSetChanged();
+        if (priceDropAdapter != null) priceDropAdapter.notifyDataSetChanged();
+        if (hotPickAdapter != null) hotPickAdapter.notifyDataSetChanged();
+        if (featuredRestAdapter != null) featuredRestAdapter.notifyDataSetChanged();
+        if (topRatedAdapter != null) topRatedAdapter.notifyDataSetChanged();
+        if (reviewsAdapter != null) reviewsAdapter.notifyDataSetChanged();
     }
 
     private void setupSearchView(View root) {
@@ -252,17 +329,40 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     private void toggleHomeContent(View root, boolean show) {
         if (root == null || !isAdded()) return;
         int visibility = show ? View.VISIBLE : View.GONE;
+        View quickPicks = root.findViewById(R.id.llQuickPicksContainer);
         View promoBanner = root.findViewById(R.id.cvPromoBanner);
         View catHeader = root.findViewById(R.id.rlCategoriesHeader);
         View filters = root.findViewById(R.id.rvFilters);
         View exploreHeader = root.findViewById(R.id.rlExploreHeader);
         View trendingContainer = root.findViewById(R.id.llTrendingContainer);
         
+        // Headers and new sections
+        if (quickPicks != null) quickPicks.setVisibility(visibility);
         if (promoBanner != null) promoBanner.setVisibility(visibility);
         if (catHeader != null) catHeader.setVisibility(visibility);
         if (filters != null) filters.setVisibility(visibility);
         if (exploreHeader != null) exploreHeader.setVisibility(visibility);
         if (trendingContainer != null) trendingContainer.setVisibility(visibility);
+        
+        View rvPriceDrops = root.findViewById(R.id.rvPriceDrops);
+        View headerPriceDrops = (View) (rvPriceDrops != null ? rvPriceDrops.getParent() : null);
+        if (headerPriceDrops != null) headerPriceDrops.setVisibility(visibility);
+
+        View rvHotPicks = root.findViewById(R.id.rvHotPicks);
+        View headerHotPicks = (View) (rvHotPicks != null ? rvHotPicks.getParent() : null);
+        if (headerHotPicks != null) headerHotPicks.setVisibility(visibility);
+
+        View rvFeaturedRest = root.findViewById(R.id.rvFeaturedRestaurants);
+        View headerFeaturedRest = (View) (rvFeaturedRest != null ? rvFeaturedRest.getParent() : null);
+        if (headerFeaturedRest != null) headerFeaturedRest.setVisibility(visibility);
+
+        View rvTopPicks = root.findViewById(R.id.rvTopPicks);
+        View headerTopPicks = (View) (rvTopPicks != null ? rvTopPicks.getParent() : null);
+        if (headerTopPicks != null) headerTopPicks.setVisibility(visibility);
+
+        View rvReviews = root.findViewById(R.id.rvCommunityReviews);
+        View headerReviews = (View) (rvReviews != null ? rvReviews.getParent() : null);
+        if (headerReviews != null) headerReviews.setVisibility(visibility);
 
         if (show) {
             View noRes = root.findViewById(R.id.llNoResults);
@@ -350,6 +450,20 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                         java.util.Collections.shuffle(foods);
                         featuredFoodAdapter.setData(foods);
                         
+                        // Populate Price Drops
+                        List<MenuItem> priceDrops = new ArrayList<>();
+                        for (MenuItem item : foods) {
+                            if (item.getDiscountPrice() != null && item.getDiscountPrice() > 0 && item.getDiscountPrice() < item.getPrice()) {
+                                priceDrops.add(item);
+                            }
+                        }
+                        if (priceDropAdapter != null) priceDropAdapter.setData(priceDrops);
+                        
+                        // Populate Hot Picks (Elite/Trending)
+                        List<MenuItem> hotPicks = new ArrayList<>(foods);
+                        java.util.Collections.shuffle(hotPicks);
+                        if (hotPickAdapter != null) hotPickAdapter.setData(hotPicks);
+
                         featuredDish = foods.get(0);
                         List<Restaurant> restaurants = response.body().getRestaurants();
                         if (featuredDish.getRestaurantIds() != null && !featuredDish.getRestaurantIds().isEmpty() && restaurants != null) {
@@ -567,6 +681,16 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                         }
                         recyclerView.setVisibility(View.VISIBLE);
                         
+                        // Populate Featured and Top Picks
+                        List<Restaurant> featured = new ArrayList<>();
+                        List<Restaurant> topPicks = new ArrayList<>();
+                        for (Restaurant r : restaurants) {
+                            if (r.isFeatured()) featured.add(r);
+                            if (r.getRating() >= 4.0) topPicks.add(r);
+                        }
+                        if (featuredRestAdapter != null) featuredRestAdapter.setData(featured);
+                        if (topRatedAdapter != null) topRatedAdapter.setData(topPicks);
+
                         if (restaurantAdapter == null) {
                             restaurantAdapter = new RestaurantAdapter(getContext(), new ArrayList<>(restaurants), restaurant -> {
                                 Intent intent = new Intent(getContext(), RestaurantDetailsActivity.class);

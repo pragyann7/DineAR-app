@@ -63,9 +63,17 @@ public class Review {
         public String getComment() { return comment; }
     }
 
+    @SerializedName("food_item_name")
+    private String foodItemName;
+
+    @SerializedName("restaurant_name")
+    private String restaurantName;
+
     public Review() {}
 
     public int getId() { return id; }
+    public String getFoodItemName() { return foodItemName; }
+    public String getRestaurantName() { return restaurantName; }
     public UserInfo getUser() { return user; }
     public String getUserName() { return user != null ? user.getName() : "Anonymous"; }
     public String getUserAvatar() { return user != null ? user.getAvatar() : null; }
