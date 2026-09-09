@@ -392,10 +392,10 @@ private fun ARScreen(
     var isMenuOpen by remember { mutableStateOf(false) }
 
     fun downloadMarkerDatabase(id: Int, rawUrl: String) {
-        if (viewModel.markerDownloadState is DownloadState.Downloading || viewModel.markerDownloadState is DownloadState.Ready) return
+        if (viewModel.markerDownloadState is DownloadState.Downloading) return
         
         val url = RetrofitClient.getFullUrl(context, rawUrl) ?: return
-        val markerFile = ARStorageManager.getMarkerFile(context, id)
+        val markerFile = ARStorageManager.getMarkerFile(context, id, rawUrl)
         
         if (markerFile.exists()) {
             viewModel.setMarkerReady()
@@ -405,6 +405,10 @@ private fun ARScreen(
         viewModel.setMarkerDownloading()
         activity.lifecycleScope.launch(Dispatchers.IO) {
             try {
+                // Cleanup old markers for this restaurant before downloading new one
+                val dir = context.getExternalFilesDir("markers") ?: File(context.filesDir, "markers")
+                dir.listFiles { _, name -> name.startsWith("marker_${id}_") }?.forEach { it.delete() }
+
                 val request = Request.Builder().url(url).build()
                 val response = viewModel.httpClient.newCall(request).execute()
                 if (!response.isSuccessful || response.body == null) throw Exception("Server error ${response.code}")
@@ -499,13 +503,14 @@ private fun ARScreen(
         }
     }
 
-    LaunchedEffect(session, viewModel.markerDownloadState) {
+    LaunchedEffect(session, viewModel.markerDownloadState, viewModel.restaurantMarkerUrl) {
         val s = session ?: return@LaunchedEffect
+        val mUrl = viewModel.restaurantMarkerUrl ?: return@LaunchedEffect
         if (viewMode != ViewMode.MARKER) return@LaunchedEffect
         
         if (viewModel.markerDownloadState is DownloadState.Ready) {
             withContext(Dispatchers.IO) {
-                val dbFile = ARStorageManager.getMarkerFile(context, restaurantId)
+                val dbFile = ARStorageManager.getMarkerFile(context, restaurantId, mUrl)
                 if (dbFile.exists()) {
                     try {
                         val db = dbFile.inputStream().use { AugmentedImageDatabase.deserialize(s, it) }
