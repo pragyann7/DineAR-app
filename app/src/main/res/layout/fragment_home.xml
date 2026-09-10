@@ -554,6 +554,42 @@
                     tools:listitem="@layout/item_review_home" />
             </LinearLayout>
 
+            <!-- Bottom All Restaurants Container -->
+            <LinearLayout
+                android:id="@+id/llExploreMoreRestaurantsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Bottom Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="24.dp"
+                    android:layout_marginTop="40.dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Explore More Restaurants"
+                        android:textColor="@color/black"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </RelativeLayout>
+
+                <!-- Full List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvExploreMoreRestaurants"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20.dp"
+                    android:paddingHorizontal="24.dp"
+                    android:nestedScrollingEnabled="false"
+                    tools:listitem="@layout/item_restaurant" />
+
+            </LinearLayout>
+
             <!-- Footer Spacer for FAB -->
             <View
                 android:layout_width="match_parent"

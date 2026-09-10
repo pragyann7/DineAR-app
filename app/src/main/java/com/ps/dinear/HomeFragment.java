@@ -42,6 +42,7 @@ import retrofit2.Response;
 public class HomeFragment extends Fragment implements FavoritesManager.FavoritesListener {
 
     private RestaurantAdapter restaurantAdapter;
+    private RestaurantAdapter exploreMoreAdapter;
     private MenuAdapter menuAdapter;
     private FilterAdapter filterAdapter;
     private FeaturedFoodAdapter featuredFoodAdapter;
@@ -65,6 +66,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
     private View llTopPicksContainer;
     private View llCommunityReviewsContainer;
     private View llAllRestaurantsContainer;
+    private View llExploreMoreRestaurantsContainer;
 
     private MenuItem featuredDish;
     private String featuredRestaurantSlug;
@@ -131,6 +133,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         llTopPicksContainer = view.findViewById(R.id.llTopPicksContainer);
         llCommunityReviewsContainer = view.findViewById(R.id.llCommunityReviewsContainer);
         llAllRestaurantsContainer = view.findViewById(R.id.llAllRestaurantsContainer);
+        llExploreMoreRestaurantsContainer = view.findViewById(R.id.llExploreMoreRestaurantsContainer);
         
         view.findViewById(R.id.btnFilter).setOnClickListener(v -> {
             SearchFilterBottomSheet bottomSheet = new SearchFilterBottomSheet(
@@ -263,6 +266,39 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
             topRatedAdapter = new RestaurantCompactAdapter(getContext());
             rvTopPicks.setAdapter(topRatedAdapter);
         }
+
+        RecyclerView rvExploreMore = root.findViewById(R.id.rvExploreMoreRestaurants);
+        if (rvExploreMore != null) {
+            rvExploreMore.setLayoutManager(new LinearLayoutManager(getContext()));
+            exploreMoreAdapter = createRestaurantAdapter(new ArrayList<>());
+            rvExploreMore.setAdapter(exploreMoreAdapter);
+        }
+    }
+
+    private RestaurantAdapter createRestaurantAdapter(List<Restaurant> list) {
+        return new RestaurantAdapter(getContext(), list, restaurant -> {
+            Intent intent = new Intent(getContext(), RestaurantDetailsActivity.class);
+            intent.putExtra("restaurantId", restaurant.getId());
+            intent.putExtra("restaurantSlug", restaurant.getSlug());
+            intent.putExtra("restaurantName", restaurant.getName());
+            intent.putExtra("cuisine", restaurant.getCuisine());
+            intent.putExtra("rating", restaurant.getRating());
+            intent.putExtra("description", restaurant.getDescription());
+            intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
+            intent.putExtra("distance", restaurant.getDistance());
+            intent.putExtra("imageUrl", restaurant.getImageUrl());
+            intent.putExtra("bannerImage", restaurant.getBannerImage());
+            intent.putExtra("address", restaurant.getAddress());
+            intent.putExtra("isFeatured", restaurant.isFeatured());
+            intent.putExtra("latitude", restaurant.getLatitude());
+            intent.putExtra("longitude", restaurant.getLongitude());
+            intent.putExtra("deliveryCharge", restaurant.getDeliveryCharge());
+            if (restaurant.getLocation() != null) {
+                intent.putExtra("city", restaurant.getLocation().getCity());
+                intent.putExtra("district", restaurant.getLocation().getDistrict());
+            }
+            startActivity(intent);
+        });
     }
 
     private void setupCommunityReviews(View root) {
@@ -366,6 +402,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (featuredRestAdapter != null) featuredRestAdapter.notifyDataSetChanged();
         if (topRatedAdapter != null) topRatedAdapter.notifyDataSetChanged();
         if (reviewsAdapter != null) reviewsAdapter.notifyDataSetChanged();
+        if (exploreMoreAdapter != null) exploreMoreAdapter.notifyDataSetChanged();
     }
 
     private void setupSearchView(View root) {
@@ -441,6 +478,7 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
         if (llFeaturedRestaurantsContainer != null) llFeaturedRestaurantsContainer.setVisibility(visibility);
         if (llTopPicksContainer != null) llTopPicksContainer.setVisibility(visibility);
         if (llCommunityReviewsContainer != null) llCommunityReviewsContainer.setVisibility(visibility);
+        if (llExploreMoreRestaurantsContainer != null) llExploreMoreRestaurantsContainer.setVisibility(visibility);
 
         if (show) {
             View noRes = root.findViewById(R.id.llNoResults);
@@ -854,39 +892,34 @@ public class HomeFragment extends Fragment implements FavoritesManager.Favorites
                                     llTopPicksContainer.setVisibility(topPicks.isEmpty() ? View.GONE : View.VISIBLE);
                                 }
                             }
+                            
+                            // Split logic: Only 4 in the middle section, all in the bottom section
+                            List<Restaurant> limited = restaurants.size() > 4 ? new ArrayList<>(restaurants.subList(0, 4)) : new ArrayList<>(restaurants);
+                            if (restaurantAdapter == null) {
+                                restaurantAdapter = createRestaurantAdapter(limited);
+                                recyclerView.setAdapter(restaurantAdapter);
+                            } else {
+                                restaurantAdapter.updateList(limited);
+                            }
+                            
+                            if (exploreMoreAdapter != null) {
+                                exploreMoreAdapter.updateList(restaurants);
+                                if (llExploreMoreRestaurantsContainer != null) {
+                                    llExploreMoreRestaurantsContainer.setVisibility(View.VISIBLE);
+                                }
+                            }
                         } else {
                             if (llFeaturedRestaurantsContainer != null) llFeaturedRestaurantsContainer.setVisibility(View.GONE);
                             if (llTopPicksContainer != null) llTopPicksContainer.setVisibility(View.GONE);
-                        }
+                            if (llExploreMoreRestaurantsContainer != null) llExploreMoreRestaurantsContainer.setVisibility(View.GONE);
 
-                        if (restaurantAdapter == null) {
-                            restaurantAdapter = new RestaurantAdapter(getContext(), new ArrayList<>(restaurants), restaurant -> {
-                                Intent intent = new Intent(getContext(), RestaurantDetailsActivity.class);
-                                intent.putExtra("restaurantId", restaurant.getId());
-                                intent.putExtra("restaurantSlug", restaurant.getSlug());
-                                intent.putExtra("restaurantName", restaurant.getName());
-                                intent.putExtra("cuisine", restaurant.getCuisine());
-                                intent.putExtra("rating", restaurant.getRating());
-                                intent.putExtra("description", restaurant.getDescription());
-                                intent.putExtra("deliveryTime", restaurant.getDeliveryTime());
-                                intent.putExtra("distance", restaurant.getDistance());
-                                intent.putExtra("imageUrl", restaurant.getImageUrl());
-                                intent.putExtra("bannerImage", restaurant.getBannerImage());
-                                intent.putExtra("address", restaurant.getAddress());
-                                intent.putExtra("isFeatured", restaurant.isFeatured());
-                                intent.putExtra("latitude", restaurant.getLatitude());
-                                intent.putExtra("longitude", restaurant.getLongitude());
-                                intent.putExtra("deliveryCharge", restaurant.getDeliveryCharge());
-                                if (restaurant.getLocation() != null) {
-                                    intent.putExtra("city", restaurant.getLocation().getCity());
-                                    intent.putExtra("district", restaurant.getLocation().getDistrict());
-                                }
-                                startActivity(intent);
-                            });
-                        } else {
-                            restaurantAdapter.updateList(restaurants);
+                            if (restaurantAdapter == null) {
+                                restaurantAdapter = createRestaurantAdapter(new ArrayList<>(restaurants));
+                                recyclerView.setAdapter(restaurantAdapter);
+                            } else {
+                                restaurantAdapter.updateList(restaurants);
+                            }
                         }
-                        recyclerView.setAdapter(restaurantAdapter);
                     }
                     View scroll = root.findViewById(R.id.nestedScrollView);
                     if (scroll != null) scroll.setVisibility(View.VISIBLE);
