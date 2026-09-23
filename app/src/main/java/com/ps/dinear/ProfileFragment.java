@@ -131,8 +131,16 @@ public class ProfileFragment extends Fragment {
                 View dialogView = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
                 AlertDialog dialog = new AlertDialog.Builder(requireContext())
                     .setView(dialogView)
+                    .setCancelable(true)
                     .create();
-                if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                
+                if (dialog.getWindow() != null) {
+                    dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                }
+
+                ((TextView) dialogView.findViewById(R.id.dialogTitle)).setText("Sign Out");
+                ((TextView) dialogView.findViewById(R.id.dialogMessage)).setText("Are you sure you want to log out? You will need to sign in again to access your account.");
+                
                 dialogView.findViewById(R.id.btnDialogCancel).setOnClickListener(v1 -> dialog.dismiss());
                 dialogView.findViewById(R.id.btnDialogConfirm).setOnClickListener(v1 -> {
                     dialog.dismiss();

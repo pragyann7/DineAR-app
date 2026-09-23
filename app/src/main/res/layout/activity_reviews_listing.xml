@@ -251,7 +251,7 @@
                                 android:layout_height="24dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/icon_3d"
-                                app:tint="#7E57C2" />
+                                app:tint="@color/orange_text" />
                         </com.google.android.material.card.MaterialCardView>
 
                         <LinearLayout
@@ -265,7 +265,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="96% AR Match Accuracy"
-                                android:textColor="#7E57C2"
+                                android:textColor="@color/orange_text"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
