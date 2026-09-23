@@ -96,13 +96,13 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:src="@drawable/icon_3d"
-                app:tint="#7E57C2" />
+                app:tint="@color/orange_text" />
             <TextView
                 android:id="@+id/tvARPortionMatch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:textColor="#7E57C2"
+                android:textColor="@color/orange_text"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 tools:text="AR Match: 100%" />

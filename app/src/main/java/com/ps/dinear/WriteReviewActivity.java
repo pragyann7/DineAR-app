@@ -145,7 +145,7 @@ public class WriteReviewActivity extends AppCompatActivity {
         
         int highlightColor = (percent == null) ? 
             android.graphics.Color.parseColor("#616161") : 
-            android.graphics.Color.parseColor("#7E57C2");   
+            getResources().getColor(R.color.orange_primary);   
             
         selectedBtn.setBackgroundTintList(ColorStateList.valueOf(highlightColor));
         selectedBtn.setTextColor(android.graphics.Color.WHITE);

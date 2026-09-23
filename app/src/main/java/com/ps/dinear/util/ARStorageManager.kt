@@ -24,9 +24,16 @@ object ARStorageManager {
         }
     }
 
-    fun getMarkerFile(context: Context, restaurantId: Int): File {
+    fun getMarkerFile(context: Context, restaurantId: Int, url: String? = null): File {
         val dir = context.getExternalFilesDir("markers") ?: File(context.filesDir, "markers")
         if (!dir.exists()) dir.mkdirs()
+        
+        if (url != null) {
+            // Use a simplified hash of the URL to support cache busting when the marker is replaced
+            val urlHash = url.substringAfterLast("/").substringBeforeLast(".").take(8)
+            return File(dir, "marker_${restaurantId}_${urlHash}.imgdb")
+        }
+        
         return File(dir, "marker_${restaurantId}.imgdb")
     }
 
